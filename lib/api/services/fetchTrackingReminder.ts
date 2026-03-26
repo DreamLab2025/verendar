@@ -69,10 +69,21 @@ export interface ReminderPartCategory {
   id: string;
   name: string;
   code: string;
+  /** Một số API trả `slug` (vd. ENGINE-OIL) thay cho hoặc cùng với `code` */
+  slug?: string;
   description: string;
   iconUrl: string;
+  iconMediaFileId?: string | null;
   identificationSigns: string;
   consequencesIfNotHandled: string;
+}
+
+export interface PartCategoryRemindersResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string;
+  data: VehicleReminder[];
+  metadata: unknown;
 }
 export const TrackingReminderService = {
   applyTracking: async (userVehicleId: string, payload: ApplyTrackingRequest) => {

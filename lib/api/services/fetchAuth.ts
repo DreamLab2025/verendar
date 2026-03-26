@@ -67,7 +67,7 @@ export interface AuthResult {
   success: boolean;
   user?: User | null;
   error?: string;
-  message?: string; 
+  message?: string;
 }
 
 export interface JwtPayload {
@@ -96,14 +96,8 @@ export const AuthService = {
   forgotPassword: (email: string) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/forgot-password", { email }),
 
-  resetPassword: (payload: {
-    email: string;
-    otpCode: string;
-    newPassword: string;
-    confirmNewPassword: string;
-  }) => api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/reset-password", payload),
-
-
+  resetPassword: (payload: { email: string; otpCode: string; newPassword: string; confirmNewPassword: string }) =>
+    api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/reset-password", payload),
 };
 
 export default AuthService;

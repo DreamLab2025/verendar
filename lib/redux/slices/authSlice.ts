@@ -4,6 +4,8 @@ import { jwtDecode } from "jwt-decode";
 import type { AppDispatch, RootState } from "@/lib/redux/store";
 import { AuthService } from "@/lib/api/services/fetchAuth";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
+import api8080Service from "@/lib/api/api8080Service";
+import apiService from "@/lib/api/apiService";
 
 interface User {
   id: string;
@@ -84,6 +86,9 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       deleteCookie("authToken", { path: "/" });
+      deleteCookie("auth-token", { path: "/" });
+      api8080Service.setAuthToken(null);
+      apiService.setAuthToken(null);
     },
     clearError: (state) => {
       state.error = null;
@@ -102,6 +107,9 @@ const authSlice = createSlice({
         state.user = decodeUser(action.payload.accessToken);
         state.isAuthenticated = true;
         setCookie("authToken", action.payload.accessToken, getAuthCookieConfig());
+        setCookie("auth-token", action.payload.accessToken, getAuthCookieConfig());
+        api8080Service.setAuthToken(action.payload.accessToken);
+        apiService.setAuthToken(action.payload.accessToken);
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.isLoading = false;

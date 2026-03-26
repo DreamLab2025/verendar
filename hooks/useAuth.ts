@@ -6,7 +6,9 @@ import { setCookie, getCookie, deleteCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import api8080Service from "@/lib/api/api8080Service";
+import apiService from "@/lib/api/apiService";
 import type { ApiError } from "@/lib/api/apiService";
+import { getAuthCookieConfig } from "@/utils/cookieConfig";
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: null, accessToken: null, loading: false, error: null });
@@ -51,13 +53,12 @@ export function useAuth() {
       const user = buildUserFromToken(token);
 
       // ✅ LƯU COOKIE
-      setCookie("auth-token", token, {
-        path: "/",
-        sameSite: "lax",
-      });
+      setCookie("authToken", token, getAuthCookieConfig());
+      setCookie("auth-token", token, getAuthCookieConfig()); // Backward compatibility
 
       // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
       api8080Service.setAuthToken(token);
+      apiService.setAuthToken(token);
       setState({
         user,
         accessToken: token,
@@ -204,9 +205,11 @@ export function useAuth() {
       path: "/",
       domain: undefined, // Xóa trên tất cả domains
     });
+    deleteCookie("authToken", { path: "/" });
 
     // ✅ CLEAR TOKEN Ở TẤT CẢ API SERVICES
     api8080Service.setAuthToken(null);
+    apiService.setAuthToken(null);
 
     // ✅ CLEAR REACT QUERY CACHE (xóa toàn bộ cache)
     queryClient.clear();
@@ -234,7 +237,7 @@ export function useAuth() {
   const initAuthFromStorage = async () => {
     setState((s) => ({ ...s, loading: true }));
 
-    const token = getCookie("auth-token") as string | undefined;
+    const token = (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
     if (!token) {
       setState((s) => ({ ...s, loading: false }));
       return;
@@ -251,6 +254,7 @@ export function useAuth() {
 
     // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
     api8080Service.setAuthToken(token);
+    apiService.setAuthToken(token);
 
     setState((s) => ({ ...s, accessToken: token }));
 
