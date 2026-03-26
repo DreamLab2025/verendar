@@ -1,8 +1,127 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { CarFront, Eye, EyeOff, Loader2 } from "lucide-react";
+
+import { useAuth } from "@/hooks/useAuth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 export default function LoginPage() {
+  const router = useRouter();
+  const { login, accessToken, loading, error, clearError } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (accessToken) {
+      router.replace("/");
+    }
+  }, [accessToken, router]);
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    clearError();
+
+    const result = await login(email.trim(), password);
+    if (result.success) {
+      router.replace("/");
+    }
+  };
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center gap-4 px-6">
-      <h1 className="text-2xl font-semibold">Dang nhap Verendar</h1>
-      <p className="text-muted-foreground">Trang login placeholder - ket noi form auth o buoc tiep theo.</p>
+    <main className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/10 via-background to-background" />
+
+      <Card className="relative z-10 w-full max-w-md border-border/70 bg-background/85 shadow-xl backdrop-blur">
+        <CardHeader className="space-y-4">
+          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/15 text-primary">
+            <CarFront className="size-6" />
+          </div>
+          <div className="space-y-1 text-center">
+            <CardTitle className="text-2xl">Dang nhap Verendar</CardTitle>
+            <CardDescription>Dang nhap de tiep tuc quan ly phuong tien cua ban.</CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Mat khau</Label>
+                <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                  Quen mat khau?
+                </Link>
+              </div>
+
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Nhap mat khau"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+
+            {error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Dang dang nhap...
+                </>
+              ) : (
+                "Dang nhap"
+              )}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Chua co tai khoan?{" "}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              Dang ky ngay
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </main>
   );
 }

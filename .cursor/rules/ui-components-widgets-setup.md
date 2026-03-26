@@ -1,6 +1,6 @@
-# UI Components Setup Project Cho Hau - Verendar
+# UI Components Setup Guide - Complete Code Reference
 
-Tài liệu này chứa toàn bộ code của UI components cho Verendar, phục vụ setup project cho Hau và có thể tái sử dụng khi mở rộng module trong cùng dự án.
+Tài liệu này chứa toàn bộ code của tất cả UI components, có thể copy trực tiếp sang project khác.
 
 ## Mục Lục
 
@@ -28,12 +28,6 @@ Project sử dụng **53 UI components** được build trên:
 - **Class Variance Authority (CVA)** - Component variants
 - **React Hook Form** - Form management
 - **TanStack Table** - Data tables
-
-### Context Verendar
-
-- UI tập trung cho các màn hình: auth, user, vehicle, maintenance, notifications, admin.
-- Ưu tiên pattern widget/module để dễ bảo trì theo đặc thù nghiệp vụ xe cá nhân.
-- Tất cả CTA/chữ ví dụ nên phản ánh domain Verendar (xe, bảo dưỡng, phụ tùng, garage, map).
 
 > ⚠️ **Tailwind CSS v4**: Project này dùng Tailwind v4. KHÔNG có `tailwind.config.ts`. Theme được define trong `globals.css` với `@theme {}`. PostCSS chỉ cần `@tailwindcss/postcss`.
 
@@ -80,7 +74,7 @@ export default config;
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #cd2626;
+  --color-primary: oklch(0.6 0.2 250);
   --color-background: oklch(1 0 0);
   --font-sans: "Open Sans", sans-serif;
   /* ...thêm custom tokens ở đây */
@@ -2045,12 +2039,14 @@ function EmptyState({ className, ...props }: React.HTMLAttributes<HTMLDivElement
       <Card className="max-w-sm w-full mx-auto text-center shadow-md">
         <CardContent className="p-8">
           <div className="text-gray-400 text-6xl mb-4">🏠</div>
-          <h2 className="text-2xl font-bold mb-2 text-gray-900">Chua co du lieu xe ca nhan</h2>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">
+            Chưa có bất động sản nào để so sánh
+          </h2>
           <p className="text-gray-600 mb-6">
-            Hay quay ve Verendar de them xe, theo doi lich bao tri va nhac thay phu tung.
+            Hãy quay về My Revo và chọn bất động sản để bắt đầu so sánh nhé.
           </p>
           <Button asChild className="w-full">
-            <Link href="/my-vehicles">Ve Verendar</Link>
+            <Link href="/myrevo">Về My Revo</Link>
           </Button>
         </CardContent>
       </Card>
@@ -2778,7 +2774,7 @@ export function ThemeToggle() {
 
 ## Widget Components
 
-Các widget components phức tạp sử dụng trong Verendar:
+Các widget components phức tạp sử dụng trong Beyond8:
 
 ### `components/widget/confirm-dialog.tsx`
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans, Quicksand } from "next/font/google";
 import "./globals.css";
+import { RootShell } from "@/components/layout/root-shell";
 import { Providers } from "@/lib/providers";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -32,7 +33,7 @@ export default function RootLayout({
     <html lang="vi" className={`${openSans.variable} ${quicksand.variable}`} suppressHydrationWarning>
       <body>
         <Providers>
-          {children}
+          <RootShell>{children}</RootShell>
           <Toaster position="bottom-center" richColors closeButton />
         </Providers>
       </body>

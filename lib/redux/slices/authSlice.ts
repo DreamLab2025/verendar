@@ -2,8 +2,10 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { deleteCookie, setCookie } from "cookies-next";
 import { jwtDecode } from "jwt-decode";
 import type { AppDispatch, RootState } from "@/lib/redux/store";
-import { fetchAuth, type LoginRequest } from "@/lib/api/services/fetchAuth";
+import { AuthService } from "@/lib/api/services/fetchAuth";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
+import api8080Service from "@/lib/api/api8080Service";
+import apiService from "@/lib/api/apiService";
 
 interface User {
   id: string;
@@ -19,6 +21,11 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+interface LoginRequest {
+  email: string;
+  password: string;
 }
 
 let refreshTimer: NodeJS.Timeout | null = null;
@@ -59,9 +66,9 @@ export const loginAsync = createAsyncThunk(
   "auth/login",
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
-      const response = await fetchAuth.login(credentials);
-      if (!response.isSuccess) return rejectWithValue(response.message);
-      return response.data;
+      const response = await AuthService.login(credentials.email, credentials.password);
+      if (!response.data.isSuccess) return rejectWithValue(response.data.message);
+      return response.data.data;
     } catch {
       return rejectWithValue("Login failed");
     }
@@ -79,6 +86,9 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       deleteCookie("authToken", { path: "/" });
+      deleteCookie("auth-token", { path: "/" });
+      api8080Service.setAuthToken(null);
+      apiService.setAuthToken(null);
     },
     clearError: (state) => {
       state.error = null;
@@ -97,6 +107,9 @@ const authSlice = createSlice({
         state.user = decodeUser(action.payload.accessToken);
         state.isAuthenticated = true;
         setCookie("authToken", action.payload.accessToken, getAuthCookieConfig());
+        setCookie("auth-token", action.payload.accessToken, getAuthCookieConfig());
+        api8080Service.setAuthToken(action.payload.accessToken);
+        apiService.setAuthToken(action.payload.accessToken);
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.isLoading = false;
