@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { deleteCookie, setCookie } from "cookies-next";
 import { jwtDecode } from "jwt-decode";
 import type { AppDispatch, RootState } from "@/lib/redux/store";
-import { fetchAuth, type LoginRequest } from "@/lib/api/services/fetchAuth";
+import { AuthService } from "@/lib/api/services/fetchAuth";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
 
 interface User {
@@ -19,6 +19,11 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+interface LoginRequest {
+  email: string;
+  password: string;
 }
 
 let refreshTimer: NodeJS.Timeout | null = null;
@@ -59,9 +64,9 @@ export const loginAsync = createAsyncThunk(
   "auth/login",
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
-      const response = await fetchAuth.login(credentials);
-      if (!response.isSuccess) return rejectWithValue(response.message);
-      return response.data;
+      const response = await AuthService.login(credentials.email, credentials.password);
+      if (!response.data.isSuccess) return rejectWithValue(response.data.message);
+      return response.data.data;
     } catch {
       return rejectWithValue("Login failed");
     }
