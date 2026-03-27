@@ -19,7 +19,6 @@ type DesktopVehicleColumnProps = {
   currentIndex: number;
   isAddSlot: boolean;
   onSelect: (index: number) => void;
-  /** % khai báo — chỉ có đúng cho xe đang chọn (API parts theo xe); xe khác hiển thị 0 tới khi chọn. */
   declarationPercentForSelected: number;
 };
 
@@ -33,6 +32,7 @@ export function DesktopVehicleColumn({
 }: DesktopVehicleColumnProps) {
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(null);
   const router = useRouter();
+
   const handleVehicleCardClick = (v: UserVehicle, index: number) => {
     onSelect(index);
     setExpandedVehicleId((prev) => (prev === v.id ? null : v.id));
@@ -60,6 +60,7 @@ export function DesktopVehicleColumn({
       </div>
       <Separator className="mb-4 h-px w-[60%] self-center bg-neutral-200 dark:bg-neutral-700" />
       <h1 className="mb-4 text-[16px] font-bold text-[#80868E] dark:text-neutral-400">Chọn Xe Của bạn</h1>
+
       <div className="scrollbar-hide flex min-h-0 flex-1 flex-col justify-between gap-3 overflow-y-auto overflow-x-hidden overscroll-contain pr-1">
         {vehicles.map((v, index) => {
           const active = !isAddSlot && currentIndex === index;
@@ -83,11 +84,9 @@ export function DesktopVehicleColumn({
               )}
             >
               {expanded ? (
-                <div className="flex w-full min-w-0 flex-col ">
+                <div className="flex w-full min-w-0 flex-col">
                   <div className="flex items-center justify-between gap-2 px-0.5">
-                    <span className="text-[15px] font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
-                      {pct}%
-                    </span>
+                    <span className="text-[15px] font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{pct}%</span>
                     <span
                       className="h-3 w-3 shrink-0 rounded-full shadow-sm ring-2 ring-white dark:ring-neutral-950"
                       style={{ backgroundColor: BRAND }}
@@ -99,44 +98,28 @@ export function DesktopVehicleColumn({
                       <div className="relative h-auto w-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                         <div
                           className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-500"
-                          style={{
-                            height: `${pct}%`,
-                            backgroundColor: BRAND,
-                          }}
+                          style={{ height: `${pct}%`, backgroundColor: BRAND }}
                         />
                       </div>
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col items-center">
                       <LicensePlateBadge licensePlate={v.licensePlate} size="md" className="mx-auto w-fit max-w-full" />
-
-                      <div className="relative  h-[188px] w-full shrink-0 overflow-hidden rounded-x">
+                      <div className="relative h-[188px] w-full shrink-0 overflow-hidden rounded-x">
                         {v.variant?.imageUrl ? (
-                          <SafeImage
-                            src={v.variant?.imageUrl}
-                            alt={v.variant?.model?.name}
-                            fill={true}
-                            className="object-cover "
-                          />
+                          <SafeImage src={v.variant.imageUrl} alt={v.variant?.model?.name} fill className="object-cover" />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-[10px] text-neutral-400">
-                            No image
-                          </div>
+                          <div className="flex h-full items-center justify-center text-[10px] text-neutral-400">No image</div>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex w-full px-2 min-w-0 items-center justify-between gap-2.5 ">
+                <div className="flex w-full min-w-0 items-center justify-between gap-2.5 px-2">
                   <LicensePlateBadge licensePlate={v.licensePlate} size="md" className="min-w-0" />
                   <div className="relative h-18 w-18 shrink-0 overflow-hidden rounded-xl">
                     {v.variant?.imageUrl ? (
-                      <SafeImage
-                        src={v.variant?.imageUrl}
-                        alt={v.variant?.model?.name}
-                        fill={true}
-                        className="object-cover "
-                      />
+                      <SafeImage src={v.variant.imageUrl} alt={v.variant?.model?.name} fill className="object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[9px] text-neutral-400">—</div>
                     )}
@@ -160,10 +143,7 @@ export function DesktopVehicleColumn({
               : "border-neutral-300 bg-white hover:border-[#E22028]/50 dark:border-neutral-700 dark:bg-neutral-950",
           )}
         >
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md"
-            style={{ backgroundColor: BRAND }}
-          >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-md" style={{ backgroundColor: BRAND }}>
             <Plus className="h-6 w-6" />
           </div>
           <span className="text-[12px] font-medium text-neutral-600 dark:text-neutral-400">Thêm xe</span>
@@ -172,3 +152,4 @@ export function DesktopVehicleColumn({
     </section>
   );
 }
+
