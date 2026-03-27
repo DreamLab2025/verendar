@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { UserVehicle, UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,8 +8,8 @@ import { useUserVehicleReminders } from "@/hooks/useTrackingReminder";
 import { DesktopCenterOverviewTab } from "@/components/common/DesktopCenterOverviewTab";
 import { DesktopCenterPartsTab } from "@/components/common/DesktopCenterPartsTab";
 import { DesktopCenterRemindersTab } from "@/components/common/DesktopCenterRemindersTab";
+import { DesktopCreateVehicleFlow } from "@/components/common/DesktopCreateVehicleFlow";
 
-const BRAND = "#E22028";
 const labelMuted = "text-[12px] text-neutral-500 dark:text-neutral-400";
 
 type DesktopCenterPanelProps = {
@@ -38,17 +37,8 @@ export function DesktopCenterPanel({
 
   if (isAddSlot || !vehicle) {
     return (
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden bg-white px-5 py-6 dark:bg-neutral-950 sm:px-6">
-        <p className="max-w-sm text-center text-[14px] leading-relaxed text-neutral-500 dark:text-neutral-400">
-          Chọn một xe trong danh sách hoặc thêm xe mới để xem tổng quan.
-        </p>
-        <Link
-          href="/vehicle/add"
-          className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white"
-          style={{ backgroundColor: BRAND }}
-        >
-          Thêm xe
-        </Link>
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#F9F8F6] px-5 py-6 dark:bg-neutral-950 sm:px-6">
+        <DesktopCreateVehicleFlow />
       </section>
     );
   }
