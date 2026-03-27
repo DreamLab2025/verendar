@@ -100,4 +100,13 @@ export const TrackingReminderService = {
     );
     return response.data;
   },
+
+  getRemindersByPartCategorySlug: async (userVehicleId: string, partCategorySlug: string) => {
+    const safeSlug = encodeURIComponent(partCategorySlug);
+    const response = await api8080Service.get<PartCategoryRemindersResponse>(
+      `/api/v1/part-categories/${safeSlug}/reminders`,
+      { userVehicleId },
+    );
+    return response.data;
+  },
 };

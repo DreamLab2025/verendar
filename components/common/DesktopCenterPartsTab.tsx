@@ -8,22 +8,20 @@ import { Package, Wrench } from "lucide-react";
 import ScrollPickerPanel, { type PickerItem } from "@/components/ui/customize/scroll-picker-panel";
 import SafeImage from "@/components/ui/SafeImage";
 import type { UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
-import type { VehicleReminder } from "@/lib/api/services/fetchTrackingReminder";
 import { getReminderLevelConfig } from "@/lib/config/reminderLevelConfig";
 import { cn } from "@/lib/utils";
+import { usePartCategoryReminders } from "@/hooks/useTrackingReminder";
 
 const BRAND = "#E22028";
 
 type PartPickerItem = PickerItem & { part: UserVehiclePart };
 
 type DesktopCenterPartsTabProps = {
-  vehicleId: string;
+  userVehicleId: string;
   parts: UserVehiclePart[];
   isLoadingParts: boolean;
   selectedPartId: string | null;
   onTogglePart: (partId: string) => void;
-  reminders: VehicleReminder[];
-  isLoadingReminders: boolean;
 };
 
 function formatDate(iso: string) {
@@ -34,72 +32,141 @@ function formatDate(iso: string) {
   }
 }
 
-function PartStatusDetail({
-  item,
-  reminders,
-  vehicleId,
-}: {
-  item: PickerItem;
-  reminders: VehicleReminder[];
-  vehicleId: string;
-}) {
+function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehicleId: string }) {
   const part = (item as PartPickerItem).part;
+  const partCategorySlug = part?.partCategorySlug?.trim();
+  const { reminders, isLoading, isError } = usePartCategoryReminders(userVehicleId, partCategorySlug, true);
   if (!part) return null;
+  const reminder = reminders.find((r) => r.status === "Active") ?? reminders[0];
+  const partMeta = reminder?.partCategory;
+  const formatMaybeDate = (value: string | null | undefined) => (value ? formatDate(value) : "—");
+  const formatMaybeNumber = (value: number | null | undefined) =>
+    typeof value === "number" ? value.toLocaleString("vi-VN") : "—";
 
-  const reminder = reminders.find(
-    (r) => r.partCategory.id === part.partCategoryId || r.partCategory.code === part.partCategoryCode,
-  );
+  if (isLoading) {
+    return (
+      <div className="space-y-3 py-2" aria-busy="true">
+        <div className="h-6 w-48 animate-pulse rounded bg-red-100/70 dark:bg-neutral-700" />
+        <div className="h-32 w-full animate-pulse rounded-xl bg-neutral-200/90 dark:bg-neutral-700/90" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 px-2 py-8 text-center">
+        <div className="rounded-full bg-amber-500/10 p-4 dark:bg-amber-500/15">
+          <Wrench className="size-10 text-amber-600 dark:text-amber-400" aria-hidden />
+        </div>
+        <div className="space-y-1">
+          <p className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100">{part.partCategoryName}</p>
+          <p className="max-w-sm text-[13px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+            Không tải được dữ liệu nhắc nhở cho phụ tùng này. Vui lòng thử lại sau.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (reminder) {
     const cfg = getReminderLevelConfig(reminder.level);
     return (
-      <div className="flex min-h-0 flex-col gap-5">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-red-600 dark:text-red-400">
-            Nhắc nhở
-          </p>
-          <h3 className="mt-1.5 text-[18px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-            {part.partCategoryName}
-          </h3>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="overflow-hidden rounded-2xl dark:border-neutral-800 dark:bg-neutral-950/60"
+      >
+        <div className="border-b border-neutral-200/90 px-5 py-4 dark:border-neutral-800">
+          <div className="flex items-start gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-[12px] font-bold text-red-600 dark:bg-red-900/30 dark:text-red-300">
+              {Math.round(reminder.percentageRemaining)}%
+            </div>
+            <div className="min-w-0">
+              <h3 className="truncate text-[17px] font-semibold text-neutral-900 dark:text-neutral-100">
+                {part.partCategoryName}
+              </h3>
+              <p className="text-[13px] font-medium text-red-600 dark:text-red-400">Cần bảo dưỡng</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+                <span
+                  className="rounded-full px-2 py-0.5 font-semibold"
+                  style={{ backgroundColor: cfg.hexColorLight, color: cfg.hexColor }}
+                >
+                  {cfg.labelVi}
+                </span>
+                <span>{reminder.status}</span>
+                <span>{reminder.isNotified ? "Đã gửi thông báo" : "Chưa gửi thông báo"}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div
-          className="rounded-2xl border bg-white p-4 shadow-sm ring-1 ring-black/3 dark:bg-neutral-950/50 dark:ring-white/6"
-          style={{ borderColor: cfg.hexBorderColor }}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-              style={{ backgroundColor: cfg.hexColorLight, color: cfg.hexColor }}
-            >
-              {cfg.labelVi}
-            </span>
-            <span className="text-[13px] tabular-nums text-neutral-700 dark:text-neutral-300">
-              Còn lại ~{Math.round(reminder.percentageRemaining)}%
+        <div className="divide-y divide-neutral-200/90 dark:divide-neutral-800">
+          <div className="flex items-center justify-between px-5 py-3 text-[13px]">
+            <span className="text-neutral-500 dark:text-neutral-400">Hiện tại</span>
+            <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+              {formatMaybeNumber(reminder.currentOdometer)} km
             </span>
           </div>
-          <dl className="mt-4 grid gap-3 text-[13px] sm:grid-cols-2">
-            <div>
-              <dt className="text-neutral-500 dark:text-neutral-400">Km còn lại (ước tính)</dt>
-              <dd className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                {reminder.remainingKm.toLocaleString("vi-VN")} km
-              </dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500 dark:text-neutral-400">Dự kiến đến hạn</dt>
-              <dd className="font-semibold text-neutral-900 dark:text-neutral-100">
-                {formatDate(reminder.targetDate)}
-              </dd>
-            </div>
-            <div className="sm:col-span-2">
-              <dt className="text-neutral-500 dark:text-neutral-400">Odo mục tiêu</dt>
-              <dd className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                {reminder.targetOdometer.toLocaleString("vi-VN")} km
-              </dd>
-            </div>
-          </dl>
+          <div className="flex items-center justify-between px-5 py-3 text-[13px]">
+            <span className="text-neutral-500 dark:text-neutral-400">Mốc bảo dưỡng</span>
+            <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+              {formatMaybeNumber(reminder.targetOdometer)} km
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-5 py-3 text-[13px]">
+            <span className="text-neutral-500 dark:text-neutral-400">Vượt quá</span>
+            <span className="font-semibold tabular-nums text-red-600 dark:text-red-400">
+              {formatMaybeNumber(Math.abs(reminder.remainingKm))} km
+            </span>
+          </div>
         </div>
-      </div>
+
+        <div className="border-t border-neutral-200/90 px-5 py-3 text-[12px] text-neutral-600 dark:border-neutral-800 dark:text-neutral-300">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>
+              Ngày đến hạn:{" "}
+              <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                {formatMaybeDate(reminder.targetDate)}
+              </span>
+            </span>
+            {/* <span>Cycle: <span className="font-medium text-neutral-900 dark:text-neutral-100">{reminder.trackingCycleId}</span></span> */}
+          </div>
+        </div>
+
+        {partMeta ? (
+          <div className="border-t border-neutral-200/90 px-5 py-4 dark:border-neutral-800">
+            <p className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-200">Dấu hiệu nhận biết</p>
+            <div className="mt-2 space-y-1.5 text-[12px] leading-relaxed text-neutral-700 dark:text-neutral-300">
+              {(partMeta.identificationSigns || "Chưa có dữ liệu")
+                .split(";")
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((sign, idx) => (
+                  <p key={`sign-${idx}`}>• {sign}</p>
+                ))}
+            </div>
+
+            <p className="mt-4 text-[12px] font-semibold text-neutral-800 dark:text-neutral-200">
+              Hậu quả nếu không xử lý
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(partMeta.consequencesIfNotHandled || "Chưa có dữ liệu")
+                .split(";")
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((risk, idx) => (
+                  <span
+                    key={`risk-${idx}`}
+                    className="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-700 dark:bg-red-900/25 dark:text-red-300"
+                  >
+                    {risk}
+                  </span>
+                ))}
+            </div>
+          </div>
+        ) : null}
+      </motion.div>
     );
   }
 
@@ -116,27 +183,23 @@ function PartStatusDetail({
             : "Chưa khai báo phụ tùng — khai báo để nhận nhắc nhở thay thế và bảo dưỡng đúng lúc."}
         </p>
       </div>
-      {!part.isDeclared ? (
-        <Link
-          href={`/vehicle/${vehicleId}`}
-          className="inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-          style={{ backgroundColor: BRAND }}
-        >
-          Khai báo phụ tùng
-        </Link>
-      ) : null}
+      <Link
+        href={`/vehicle/${userVehicleId}`}
+        className="inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+        style={{ backgroundColor: BRAND }}
+      >
+        Khai báo phụ tùng
+      </Link>
     </div>
   );
 }
 
 export function DesktopCenterPartsTab({
-  vehicleId,
+  userVehicleId,
   parts,
   isLoadingParts,
   selectedPartId,
   onTogglePart,
-  reminders,
-  isLoadingReminders,
 }: DesktopCenterPartsTabProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [panelHeight, setPanelHeight] = useState(480);
@@ -224,7 +287,7 @@ export function DesktopCenterPartsTab({
       >
         <p className="text-[14px] text-neutral-600 dark:text-neutral-400">Chưa có danh sách phụ tùng cho xe này.</p>
         <Link
-          href={`/vehicle/${vehicleId}`}
+          href={`/vehicle/${userVehicleId}`}
           className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white"
           style={{ backgroundColor: BRAND }}
         >
@@ -256,7 +319,7 @@ export function DesktopCenterPartsTab({
 
         <div ref={containerRef} className="min-h-0 w-full flex-1">
           <ScrollPickerPanel
-            key={`${vehicleId}-${parts.map((p) => p.id).join("-")}`}
+            key={`${userVehicleId}-${parts.map((p) => p.id).join("-")}`}
             items={pickerItems as PickerItem[]}
             visibleCount={6}
             slotGap={12}
@@ -264,16 +327,7 @@ export function DesktopCenterPartsTab({
             defaultSelectedKey={defaultKey}
             onSelect={handleSelect}
             renderItem={renderItem}
-            renderDetail={(item) =>
-              isLoadingReminders ? (
-                <div className="space-y-3 py-2" aria-busy="true">
-                  <div className="h-6 w-48 animate-pulse rounded bg-red-100/70 dark:bg-neutral-700" />
-                  <div className="h-32 w-full animate-pulse rounded-xl bg-neutral-200/90 dark:bg-neutral-700/90" />
-                </div>
-              ) : (
-                <PartStatusDetail item={item} reminders={reminders} vehicleId={vehicleId} />
-              )
-            }
+            renderDetail={(item) => <PartStatusDetail item={item} userVehicleId={userVehicleId} />}
             accentColor={BRAND}
             itemClassName={cn("transition-transform")}
             activeItemClassName="ring-2 ring-white/35"

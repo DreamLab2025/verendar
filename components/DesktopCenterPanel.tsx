@@ -105,13 +105,11 @@ export function DesktopCenterPanel({
         <TabsContent value="parts" className={tabPanelClass}>
           <div className={tabScrollAreaClass}>
             <DesktopCenterPartsTab
-              vehicleId={vehicle.id}
+              userVehicleId={vehicle.id}
               parts={parts}
               isLoadingParts={isLoadingParts}
               selectedPartId={selectedPartId}
               onTogglePart={(id) => setSelectedPartId(id)}
-              reminders={reminders}
-              isLoadingReminders={isLoadingReminders}
             />
           </div>
         </TabsContent>

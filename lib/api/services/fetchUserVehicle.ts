@@ -60,7 +60,7 @@ export interface UserVehiclePart {
   id: string;
   partCategoryId: string;
   partCategoryName: string;
-  partCategoryCode: string;
+  partCategorySlug: string;
   iconUrl: string;
   isDeclared: boolean;
   description: string;
