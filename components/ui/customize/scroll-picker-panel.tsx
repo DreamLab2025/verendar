@@ -110,12 +110,13 @@ const ScrollPickerPanel = ({
         }
       };
 
-      // Update active index immediately
+      // Update active index immediately (do not call onSelect inside setState updater — it updates parent during child's update)
+      let nextIdx = 0;
       setActiveIdx((prev) => {
-        const next = wrap(prev + dir);
-        onSelect?.(items[next]);
-        return next;
+        nextIdx = wrap(prev + dir);
+        return nextIdx;
       });
+      queueMicrotask(() => onSelect?.(items[nextIdx]));
 
       animRef.current = requestAnimationFrame(tick);
     },
@@ -146,7 +147,7 @@ const ScrollPickerPanel = ({
       pendingDir.current = steps > 0 ? 1 : -1;
 
       setActiveIdx(next);
-      onSelect?.(items[next]);
+      queueMicrotask(() => onSelect?.(items[next]));
 
       const startOffset = steps;
       const startTime = performance.now();
@@ -175,7 +176,8 @@ const ScrollPickerPanel = ({
   );
 
   useEffect(() => {
-    if (items[activeIdx]) onSelect?.(items[activeIdx]);
+    const item = items[activeIdx];
+    if (item) queueMicrotask(() => onSelect?.(item));
     // Chỉ đồng bộ lần mount; navigate đã gọi onSelect trong doNavigate
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
