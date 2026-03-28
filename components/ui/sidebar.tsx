@@ -2,10 +2,19 @@
 
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { PanelLeft } from "lucide-react";
+import { LogOut, MoreVertical, PanelLeft } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useOwnerSessionLogout } from "@/hooks/useOwnerSessionLogout";
+import { readAuthUserFromCookies, type AuthCookieUser } from "@/lib/auth/read-auth-cookie-user";
+import { cn } from "@/lib/utils";
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_ICON = "4.5rem";
@@ -20,6 +29,8 @@ type SidebarContextValue = {
   isMobile: boolean;
   state: "expanded" | "collapsed";
   toggleSidebar: () => void;
+  /** Khớp với `<Sidebar collapsible />` — chỉ `icon` mới thu gọn footer tài khoản theo `open`. */
+  collapsible: "offcanvas" | "icon" | "none";
 };
 
 const SidebarContext = React.createContext<SidebarContextValue | null>(null);
@@ -50,12 +61,15 @@ type SidebarProviderProps = React.HTMLAttributes<HTMLDivElement> & {
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Phải trùng `collapsible` trên `<Sidebar />` (vd. garage owner dùng `offcanvas`). */
+  collapsible?: "offcanvas" | "icon" | "none";
 };
 
 export function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange,
+  collapsible = "icon",
   className,
   style,
   children,
@@ -104,6 +118,7 @@ export function SidebarProvider({
         isMobile,
         state: open ? "expanded" : "collapsed",
         toggleSidebar,
+        collapsible,
       }}
     >
       <div
@@ -223,8 +238,111 @@ export function SidebarContent({ className, ...props }: React.HTMLAttributes<HTM
   return <div className={cn("flex-1 space-y-4 overflow-y-auto p-3", className)} {...props} />;
 }
 
-export function SidebarFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("border-t border-border/60 p-3 group-data-[state=collapsed]/sidebar:px-2", className)} {...props} />;
+const SIDEBAR_ACCOUNT_FALLBACK: AuthCookieUser = {
+  displayName: "Tài khoản",
+  userName: "—",
+  email: "—",
+  initials: "?",
+};
+
+type SidebarAccountFooterProps = {
+  className?: string;
+  /** Chỉ avatar + menu: ẩn tên/email (sidebar thu gọn). */
+  compact?: boolean;
+};
+
+/** Dùng trong sidebar shadcn hoặc sidebar tùy biến (garage dashboard, menu mobile). */
+export function SidebarAccountFooter({ className, compact }: SidebarAccountFooterProps) {
+  const logout = useOwnerSessionLogout();
+  const [user, setUser] = React.useState<AuthCookieUser | null>(null);
+
+  React.useEffect(() => {
+    const sync = () => setUser(readAuthUserFromCookies());
+    sync();
+    const onFocus = () => sync();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  const u = user ?? SIDEBAR_ACCOUNT_FALLBACK;
+
+  const menu = (
+    <DropdownMenuContent side="top" align="end" className="w-44">
+      <DropdownMenuItem
+        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+        onSelect={() => logout()}
+      >
+        <LogOut className="size-4" />
+        Đăng xuất
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
+
+  if (compact) {
+    return (
+      <div className={cn("flex justify-center p-1", className)}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Tài khoản"
+              title={u.displayName}
+            >
+              <Avatar className="size-9">
+                <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">{u.initials}</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          {menu}
+        </DropdownMenu>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("flex min-w-0 items-center gap-2 p-2 pr-1", className)}>
+      <Avatar className="size-9 shrink-0">
+        <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">{u.initials}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className="truncate text-sm font-medium text-foreground" title={u.displayName}>
+          {u.displayName}
+        </p>
+        <p className="truncate text-xs text-muted-foreground" title={u.email}>
+          {u.email}
+        </p>
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+            aria-label="Tài khoản"
+          >
+            <MoreVertical className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        {menu}
+      </DropdownMenu>
+    </div>
+  );
+}
+
+export function SidebarFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const sidebarCtx = React.useContext(SidebarContext);
+  const accountCompact = Boolean(
+    sidebarCtx && sidebarCtx.collapsible === "icon" && !sidebarCtx.open,
+  );
+
+  return (
+    <div className={cn("border-t border-border/60 p-3 group-data-[state=collapsed]/sidebar:px-2", className)} {...props}>
+      {children}
+      <SidebarAccountFooter compact={accountCompact} className="border-0 bg-transparent p-0" />
+    </div>
+  );
 }
 
 export function SidebarGroup({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
