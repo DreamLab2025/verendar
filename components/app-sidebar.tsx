@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -122,20 +121,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background/70 p-2 text-left transition-colors hover:bg-accent/70"
-        >
-          <Avatar className="size-9">
-            <AvatarFallback>VH</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 group-data-[state=collapsed]/sidebar:hidden">
-            <p className="truncate text-sm font-medium">Hau Vu</p>
-            <p className="truncate text-xs text-muted-foreground">Free plan</p>
-          </div>
-        </button>
-      </SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }

@@ -17,6 +17,14 @@ interface RootShellProps {
 
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 
+/** Route group `(owner)` — layout riêng trong `app/(owner)`, không bọc AppSidebar. */
+function isOwnerAppRoute(pathname: string | null) {
+  if (!pathname) return false;
+  if (pathname === "/garage") return true;
+  if (pathname === "/garage-dashboard" || pathname.startsWith("/garage-dashboard/")) return true;
+  return false;
+}
+
 export function RootShell({ children }: RootShellProps) {
   const pathname = usePathname();
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -28,7 +36,7 @@ export function RootShell({ children }: RootShellProps) {
     api8080Service.setAuthToken(token);
   }, []);
 
-  if (isAuthRoute) {
+  if (isAuthRoute || isOwnerAppRoute(pathname)) {
     return <>{children}</>;
   }
 

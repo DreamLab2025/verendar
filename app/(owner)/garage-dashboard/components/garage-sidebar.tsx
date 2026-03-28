@@ -1,0 +1,75 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CarFront } from "lucide-react";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+
+import { getGarageDashboardNavItems, isGarageDashboardNavActive } from "../garage-nav";
+
+interface GarageSidebarProps {
+  garageId: string;
+  garageName: string;
+}
+
+export function GarageSidebar({ garageId, garageName }: GarageSidebarProps) {
+  const pathname = usePathname();
+  const items = getGarageDashboardNavItems(garageId);
+
+  return (
+    <Sidebar
+      collapsible="icon"
+      variant="sidebar"
+      className={cn(
+        "h-dvh min-h-0 max-h-dvh self-stretch border-border/60 bg-muted/20 shadow-none",
+        "hidden lg:flex",
+      )}
+    >
+      <SidebarHeader className="border-b border-border/60 bg-background/90 p-0 backdrop-blur-md">
+        <div className="flex h-14 min-h-14 items-center gap-2 px-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+            <CarFront className="size-4" />
+          </div>
+          <span
+            className="min-w-0 flex-1 truncate text-sm font-semibold group-data-[state=collapsed]/sidebar:hidden"
+            title={garageName}
+          >
+            {garageName}
+          </span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="space-y-0">
+        <nav className="flex flex-col gap-1" aria-label="Garage dashboard">
+          {items.map(({ title: label, href, icon: Icon, exact }) => {
+            const active = isGarageDashboardNavActive(pathname, href, exact);
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={label}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors",
+                  "group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-2",
+                  active
+                    ? "bg-primary/15 font-medium text-primary"
+                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" aria-hidden />
+                <span className="truncate group-data-[state=collapsed]/sidebar:hidden">{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </SidebarContent>
+      <SidebarFooter className="mt-auto border-border/60 bg-background/90 backdrop-blur-md" />
+    </Sidebar>
+  );
+}
