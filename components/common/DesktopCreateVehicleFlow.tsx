@@ -42,8 +42,7 @@ export function DesktopCreateVehicleFlow() {
   const [modelCollapsed, setModelCollapsed] = useState(false);
   const [form, setForm] = useState({
     licensePlate: "",
-    nickname: "",
-    vinNumber: "",
+    vin: "",
     purchaseDate: "",
     currentOdometer: "",
   });
@@ -91,17 +90,13 @@ export function DesktopCreateVehicleFlow() {
 
   const handleSubmitCreateVehicle = async () => {
     if (!vehicleVariantId || !isValidForm) return;
-    const [y, m, d] = form.purchaseDate.split("-").map(Number);
-    const purchaseDateIso = new Date(y, (m || 1) - 1, d || 1, 0, 0, 0).toISOString();
-
     const loadingToast = toast.loading("Đang đăng ký xe...");
     try {
       await createVehicle({
         vehicleVariantId,
         licensePlate: form.licensePlate.trim(),
-        nickname: form.nickname.trim(),
-        vinNumber: form.vinNumber.trim(),
-        purchaseDate: purchaseDateIso,
+        vin: form.vin.trim(),
+        purchaseDate: form.purchaseDate.trim(),
         currentOdometer: Number(form.currentOdometer),
       });
       toast.success("Đăng ký xe thành công! Hãy chọn xe vừa tạo ở cột trái.", { id: loadingToast });
@@ -111,7 +106,7 @@ export function DesktopCreateVehicleFlow() {
       setModelId(null);
       setVehicleVariantId(null);
       setModelKeyword("");
-      setForm({ licensePlate: "", nickname: "", vinNumber: "", purchaseDate: "", currentOdometer: "" });
+      setForm({ licensePlate: "", vin: "", purchaseDate: "", currentOdometer: "" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đăng ký xe thất bại";
       toast.error(message, { id: loadingToast });
@@ -537,18 +532,10 @@ export function DesktopCreateVehicleFlow() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-[12px] text-muted-foreground">Tên gợi nhớ</Label>
+                      <Label className="text-[12px] text-muted-foreground">VIN</Label>
                       <Input
-                        value={form.nickname}
-                        onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))}
-                        placeholder="VD: Xe đi làm"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[12px] text-muted-foreground">VIN number</Label>
-                      <Input
-                        value={form.vinNumber}
-                        onChange={(e) => setForm((p) => ({ ...p, vinNumber: e.target.value }))}
+                        value={form.vin}
+                        onChange={(e) => setForm((p) => ({ ...p, vin: e.target.value }))}
                         placeholder="Nhập VIN"
                       />
                     </div>
