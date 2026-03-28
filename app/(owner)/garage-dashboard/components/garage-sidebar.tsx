@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { CarFront } from "lucide-react";
 
 import {
@@ -12,15 +12,16 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-import { getGarageDashboardNavItems, isGarageDashboardNavActive } from "../garage-nav";
+import { getGarageDashboardNavItems, isGarageDashboardNavItemActive } from "../garage-nav";
 
 interface GarageSidebarProps {
   garageId: string;
-  garageName: string;
+  businessName: string;
 }
 
-export function GarageSidebar({ garageId, garageName }: GarageSidebarProps) {
+export function GarageSidebar({ garageId, businessName }: GarageSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const items = getGarageDashboardNavItems(garageId);
 
   return (
@@ -35,20 +36,20 @@ export function GarageSidebar({ garageId, garageName }: GarageSidebarProps) {
       <SidebarHeader className="border-b border-border/60 bg-background/90 p-0 backdrop-blur-md">
         <div className="flex h-14 min-h-14 items-center gap-2 px-3">
           <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-            <CarFront className="size-4" />
+            <CarFront className="size-4" aria-hidden />
           </div>
           <span
             className="min-w-0 flex-1 truncate text-sm font-semibold group-data-[state=collapsed]/sidebar:hidden"
-            title={garageName}
+            title={businessName}
           >
-            {garageName}
+            {businessName}
           </span>
         </div>
       </SidebarHeader>
       <SidebarContent className="space-y-0">
         <nav className="flex flex-col gap-1" aria-label="Garage dashboard">
-          {items.map(({ title: label, href, icon: Icon, exact }) => {
-            const active = isGarageDashboardNavActive(pathname, href, exact);
+          {items.map(({ title: label, href, icon: Icon, tab }) => {
+            const active = isGarageDashboardNavItemActive(pathname, garageId, searchParams, tab);
             return (
               <Link
                 key={href}

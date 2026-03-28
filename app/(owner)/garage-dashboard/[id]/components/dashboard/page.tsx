@@ -1,15 +1,22 @@
-import { GarageDashboardHomeNextStepsCard } from "./components/garage-dashboard-home-next-steps-card";
-import { GarageDashboardHomeStatsGrid } from "./components/garage-dashboard-home-stats-grid";
 import { getMockOwnerGarageById, mockOwnerBranches } from "@/lib/mocks/owner-garage-mock";
 
-export default async function GarageDashboardHomePage({ params }: { params: Promise<{ id: string }> }) {
+import { GarageStats } from "./components/garage-stats";
+
+export default async function GarageDashboardOverviewPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const garage = getMockOwnerGarageById(id);
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
-      <GarageDashboardHomeStatsGrid garage={garage} branchCount={mockOwnerBranches.length} />
-      <GarageDashboardHomeNextStepsCard />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Tổng quan</h2>
+        <p className="text-sm text-muted-foreground md:text-base">Thống kê nhanh garage (mock)</p>
+      </div>
+      <GarageStats garage={garage} branchCount={mockOwnerBranches.length} />
     </div>
   );
 }

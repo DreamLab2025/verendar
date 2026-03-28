@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface GarageSettingsPlaceholderCardProps {
+interface SettingsCardProps {
   garageId: string;
 }
 
-export function GarageSettingsPlaceholderCard({ garageId }: GarageSettingsPlaceholderCardProps) {
+export function SettingsCard({ garageId }: SettingsCardProps) {
   return (
     <Card className="max-w-xl border-border/70">
       <CardHeader>

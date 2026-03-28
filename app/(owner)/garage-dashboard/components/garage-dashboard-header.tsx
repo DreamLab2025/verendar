@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { PanelLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,8 @@ export function GarageDashboardHeader({
   className,
 }: GarageDashboardHeaderProps) {
   const pathname = usePathname();
-  const pageLabel = getGarageDashboardPageLabel(pathname, garageId);
+  const searchParams = useSearchParams();
+  const pageLabel = getGarageDashboardPageLabel(pathname, garageId, searchParams);
   const { open, toggleSidebar } = useSidebar();
 
   return (

@@ -1,7 +1,33 @@
 import type { PaginationMetadata, RequestParams } from "../apiService";
 import api8080Service from "../api8080Service";
 
-export type GarageStatus = string;
+/** Trạng thái garage theo BE (chuỗi giá trị cố định). */
+export enum GarageStatus {
+  Pending = "Pending",
+  Active = "Active",
+  Suspended = "Suspended",
+  Rejected = "Rejected",
+}
+
+/** Nhãn hiển thị tiếng Việt cho từng `GarageStatus`. */
+export const GARAGE_STATUS_LABEL_VI: Record<GarageStatus, string> = {
+  [GarageStatus.Pending]: "Chờ duyệt",
+  [GarageStatus.Active]: "Đang hoạt động",
+  [GarageStatus.Suspended]: "Tạm ngưng",
+  [GarageStatus.Rejected]: "Từ chối",
+};
+
+export function getGarageStatusLabelVi(status: string | null | undefined): string {
+  if (status == null || status === "") return "—";
+  if (Object.values(GarageStatus).includes(status as GarageStatus)) {
+    return GARAGE_STATUS_LABEL_VI[status as GarageStatus];
+  }
+  return status;
+}
+
+export function isGarageStatusActive(status: string | null | undefined): boolean {
+  return status === GarageStatus.Active;
+}
 
 export interface GarageDto {
   id: string;
@@ -11,25 +37,73 @@ export interface GarageDto {
   shortName: string | null;
   taxCode: string | null;
   logoUrl: string | null;
-  status: GarageStatus;
+  status: GarageStatus | string;
   createdAt: string;
   updatedAt: string | null;
+}
+
+/** Trạng thái chi nhánh theo BE. */
+export enum GarageBranchStatus {
+  Active = "Active",
+  Inactive = "Inactive",
+}
+
+/** Nhãn hiển thị tiếng Việt cho từng `GarageBranchStatus`. */
+export const GARAGE_BRANCH_STATUS_LABEL_VI: Record<GarageBranchStatus, string> = {
+  [GarageBranchStatus.Active]: "Đang hoạt động",
+  [GarageBranchStatus.Inactive]: "Ngưng hoạt động",
+};
+
+export function getGarageBranchStatusLabelVi(status: string | null | undefined): string {
+  if (status == null || status === "") return "—";
+  if (Object.values(GarageBranchStatus).includes(status as GarageBranchStatus)) {
+    return GARAGE_BRANCH_STATUS_LABEL_VI[status as GarageBranchStatus];
+  }
+  return status;
+}
+
+export function isGarageBranchStatusActive(status: string | null | undefined): boolean {
+  return status === GarageBranchStatus.Active;
+}
+
+/** Địa chỉ chi nhánh khi BE trả object (vd. /garages/me). */
+export interface GarageBranchAddressPartsDto {
+  provinceCode?: string;
+  wardCode?: string;
+  houseNumber?: string;
+  streetDetail?: string;
 }
 
 export interface GarageBranchDto {
   id: string;
   name: string | null;
   slug: string | null;
-  address: string | null;
+  address: string | GarageBranchAddressPartsDto | null;
   phoneNumber: string | null;
   latitude: number;
   longitude: number;
-  status: string;
+  status: GarageBranchStatus | string;
+}
+
+export function formatGarageBranchAddress(address: GarageBranchDto["address"]): string {
+  if (address == null) return "—";
+  if (typeof address === "string") {
+    const t = address.trim();
+    return t.length > 0 ? t : "—";
+  }
+  const parts = [address.houseNumber, address.streetDetail, address.wardCode, address.provinceCode].filter(
+    (x): x is string => typeof x === "string" && x.trim().length > 0,
+  );
+  return parts.length > 0 ? parts.join(", ") : "—";
 }
 
 export interface GarageMeDto extends GarageDto {
   branchCount: number;
   branches: GarageBranchDto[];
+  /** Chủ sở hữu / người đại diện — BE có thể bổ sung */
+  ownerDisplayName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
 }
 
 export interface GaragesListResponse {
@@ -84,7 +158,7 @@ export interface GarageUpdateResponse {
 }
 
 export interface PatchGarageStatusPayload {
-  status: string;
+  status: GarageStatus | string;
   reason: string;
 }
 
@@ -145,7 +219,7 @@ export interface GarageBranchMapItemDto {
   longitude: number;
   mapLinks: unknown | null;
   phoneNumber: string | null;
-  status: string;
+  status: GarageBranchStatus | string;
   garage: GarageDto | null;
   averageRating: number | null;
   reviewCount: number;
@@ -209,7 +283,7 @@ export interface GarageBranchDetailDto {
   workingHours: unknown | null;
   phoneNumber: string | null;
   taxCode: string | null;
-  status: string;
+  status: GarageBranchStatus | string;
   averageRating: number | null;
   reviewCount: number;
   createdAt: string;
@@ -238,7 +312,7 @@ export interface GarageBranchDeleteResponse {
 
 /** Body PATCH /api/v1/garages/{garageId}/branches/{branchId}/status */
 export interface PatchGarageBranchStatusPayload {
-  status: string;
+  status: GarageBranchStatus | string;
 }
 
 /** PATCH branch status — `data` là chi nhánh đầy đủ */

@@ -1,14 +1,15 @@
 import { Activity, Building2, Users } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getGarageStatusLabelVi } from "@/lib/api/services/fetchGarage";
 import type { MockOwnerGarage } from "@/lib/mocks/owner-garage-mock";
 
-interface GarageDashboardHomeStatsGridProps {
+interface GarageStatsProps {
   garage: MockOwnerGarage | null;
   branchCount: number;
 }
 
-export function GarageDashboardHomeStatsGrid({ garage, branchCount }: GarageDashboardHomeStatsGridProps) {
+export function GarageStats({ garage, branchCount }: GarageStatsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <Card className="border-border/70 bg-card/70">
@@ -27,7 +28,7 @@ export function GarageDashboardHomeStatsGrid({ garage, branchCount }: GarageDash
           <Activity className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold capitalize">{garage?.status ?? "—"}</p>
+          <p className="text-2xl font-bold">{getGarageStatusLabelVi(garage?.status)}</p>
           <CardDescription>{garage?.taxCode ? `MST ${garage.taxCode}` : "Mock"}</CardDescription>
         </CardContent>
       </Card>

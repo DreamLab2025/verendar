@@ -12,14 +12,29 @@ export interface MockOwnerGarage {
   branchCount: number;
 }
 
+/** Khớp response branch API (địa chỉ tách field). */
+export interface GarageBranchAddressDto {
+  provinceCode: string;
+  wardCode: string;
+  houseNumber: string;
+  streetDetail: string;
+}
+
 export interface MockOwnerBranch {
   id: string;
   name: string;
-  address: string;
-  status: string;
+  slug: string;
+  address: GarageBranchAddressDto;
   phoneNumber: string;
-  averageRating: number;
-  reviewCount: number;
+  latitude: number;
+  longitude: number;
+  status: string;
+}
+
+export function formatGarageBranchAddressLine(address: GarageBranchAddressDto): string {
+  const parts = [address.houseNumber, address.streetDetail].filter((s) => s?.trim());
+  if (parts.length > 0) return parts.join(" ");
+  return `Phường/xã ${address.wardCode} · Mã tỉnh/TP ${address.provinceCode}`;
 }
 
 export const mockOwnerGarage: MockOwnerGarage = {
@@ -34,31 +49,49 @@ export const mockOwnerGarage: MockOwnerGarage = {
 
 export const mockOwnerBranches: MockOwnerBranch[] = [
   {
-    id: "mock-branch-001",
-    name: "Chi nhánh Lê Lợi",
-    address: "123 Lê Lợi, Phường Bến Nghé, TP.HCM",
+    id: "22222222-2222-2222-2222-222222222211",
+    name: "Chi nhánh Hoàn Kiếm",
+    slug: "chi-nhanh-hoan-kiem-demo",
+    address: {
+      provinceCode: "01",
+      wardCode: "00070",
+      houseNumber: "36",
+      streetDetail: "Phố Hàng Bạc",
+    },
+    phoneNumber: "0901234567",
+    latitude: 21.0285,
+    longitude: 105.8542,
     status: "Active",
-    phoneNumber: "0283 900 0001",
-    averageRating: 4.7,
-    reviewCount: 128,
   },
   {
-    id: "mock-branch-002",
-    name: "Chi nhánh Nguyễn Huệ",
-    address: "45 Nguyễn Huệ, Quận 1, TP.HCM",
+    id: "33333333-3333-3333-3333-333333333322",
+    name: "Chi nhánh Ba Đình",
+    slug: "chi-nhanh-ba-dinh-demo",
+    address: {
+      provinceCode: "01",
+      wardCode: "00004",
+      houseNumber: "12",
+      streetDetail: "Đường Điện Biên Phủ",
+    },
+    phoneNumber: "0912345678",
+    latitude: 21.036,
+    longitude: 105.834,
     status: "Active",
-    phoneNumber: "0283 900 0002",
-    averageRating: 4.5,
-    reviewCount: 86,
   },
   {
-    id: "mock-branch-003",
-    name: "Chi nhánh Thủ Đức",
-    address: "78 Võ Văn Ngân, TP. Thủ Đức",
+    id: "44444444-4444-4444-4444-444444444433",
+    name: "Chi nhánh Cầu Giấy",
+    slug: "chi-nhanh-cau-giay-demo",
+    address: {
+      provinceCode: "01",
+      wardCode: "00103",
+      houseNumber: "88",
+      streetDetail: "Phố Trần Thái Tông",
+    },
+    phoneNumber: "0923456789",
+    latitude: 21.028,
+    longitude: 105.801,
     status: "Pending",
-    phoneNumber: "0283 900 0003",
-    averageRating: 0,
-    reviewCount: 0,
   },
 ];
 
