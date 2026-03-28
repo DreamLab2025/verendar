@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { SidebarAccountFooter } from "@/components/ui/sidebar";
 import { useMobile } from "@/hooks/useMobile";
 import { cn } from "@/lib/utils";
 
-import { getGarageDashboardNavItems, isGarageDashboardNavActive } from "../garage-nav";
+import { getGarageDashboardNavItems, isGarageDashboardNavItemActive } from "../garage-nav";
 
 interface NavGarageMenuProps {
   garageId: string;
@@ -27,6 +27,7 @@ interface NavGarageMenuProps {
 export function NavGarageMenu({ garageId }: NavGarageMenuProps) {
   const isMobile = useMobile();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = React.useState(false);
   const items = getGarageDashboardNavItems(garageId);
 
@@ -45,8 +46,8 @@ export function NavGarageMenu({ garageId }: NavGarageMenuProps) {
           <DialogDescription>Chọn mục để điều hướng</DialogDescription>
         </DialogHeader>
         <nav className="flex max-h-[min(50vh,320px)] flex-col overflow-y-auto p-2" aria-label="Garage dashboard mobile">
-          {items.map(({ title: label, href, icon: Icon, exact }) => {
-            const active = isGarageDashboardNavActive(pathname, href, exact);
+          {items.map(({ title: label, href, icon: Icon, tab }) => {
+            const active = isGarageDashboardNavItemActive(pathname, garageId, searchParams, tab);
             return (
               <Link
                 key={href}
