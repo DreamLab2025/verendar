@@ -15,7 +15,7 @@ import {
   useMotionValue,
   type Transition,
 } from "framer-motion";
-import { LicensePlateBadge } from "./LicensePlateBadge";
+import { LicensePlateBadge } from "@/components/shared/LicensePlateBadge";
 import { OdometerRoller } from "@/components/odometer/OdometerRoller";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";

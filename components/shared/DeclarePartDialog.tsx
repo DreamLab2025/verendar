@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { DeclarePartFlow } from "@/components/common/DeclarePartFlow";
+import { DeclarePartFlow } from "@/components/shared/DeclarePartFlow";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
 import { cn } from "@/lib/utils";

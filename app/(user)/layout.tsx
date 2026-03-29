@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { UserLayoutSurfaces } from "@/components/layout/user-layout-surfaces";
+import { UserLayoutSurfaces } from "@/components/shell/user-layout-surfaces";
 
 /**
  * Layout khu vực người dùng: nền root + `UserLayoutSurfaces` (một `children`, mobile/desktop chỉ khác CSS).

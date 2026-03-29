@@ -6,7 +6,7 @@ import { getCookie } from "cookies-next";
 import { useEffect } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import apiService from "@/lib/api/apiService";

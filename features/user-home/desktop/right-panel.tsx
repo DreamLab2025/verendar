@@ -6,7 +6,7 @@ import { ClipboardList } from "lucide-react";
 import type { UserVehicle } from "@/lib/api/services/fetchUserVehicle";
 import type { MaintenanceRecordListItem } from "@/lib/api/services/fetchMaintenanceRecord";
 import type { OdometerHistoryItem } from "@/lib/api/services/fetchOdometer";
-import { OdometerHistorySection } from "@/components/common/OdometerHistorySection";
+import { OdometerHistorySection } from "@/components/shared/OdometerHistorySection";
 import {
   Timeline,
   TimelineContent,
@@ -31,7 +31,7 @@ function formatShort(iso: string) {
   }
 }
 
-type DesktopRightPanelProps = {
+export type RightPanelProps = {
   vehicle: UserVehicle | null;
   maintenanceRecords: MaintenanceRecordListItem[];
   isLoadingMaintenance: boolean;
@@ -41,14 +41,14 @@ type DesktopRightPanelProps = {
   alwaysShow?: boolean;
 };
 
-export function DesktopRightPanel({
+export function RightPanel({
   vehicle,
   maintenanceRecords,
   isLoadingMaintenance,
   odometerHistory,
   isLoadingOdometerHistory,
   alwaysShow = false,
-}: DesktopRightPanelProps) {
+}: RightPanelProps) {
   const sortedRecords = useMemo(() => {
     return [...maintenanceRecords].sort(
       (a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime(),
@@ -75,7 +75,7 @@ export function DesktopRightPanel({
           : "hidden h-full w-[18%] lg:flex",
       )}
     >
-      {/* Trang home desktop: cột phải odo + bảo dưỡng. Trang `/vehicle/[id]`: gộp trong tab Lịch sử ở DesktopCenterPanel */}
+      {/* Trang home desktop: cột phải odo + bảo dưỡng. Trang `/vehicle/[id]`: gộp trong tab Lịch sử ở CenterPanel */}
       <OdometerHistorySection
         odometerHistory={odometerHistory}
         isLoadingOdometerHistory={isLoadingOdometerHistory}

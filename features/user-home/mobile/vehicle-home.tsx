@@ -6,10 +6,10 @@ import { motion } from "framer-motion";
 import type { UserVehicle } from "@/lib/api/services/fetchUserVehicle";
 import { cn } from "@/lib/utils";
 import SafeImage from "@/components/ui/SafeImage";
-import { LicensePlateBadge } from "@/components/common/LicensePlateBadge";
+import { LicensePlateBadge } from "@/components/shared/LicensePlateBadge";
 import { Button } from "@/components/ui/button";
 
-type MobileVehicleHomeProps = {
+export type VehicleHomeProps = {
   vehicles: UserVehicle[];
   onRequestAddVehicle: () => void;
   isAddSlot: boolean;
@@ -117,7 +117,7 @@ function MobileHomeVehicleCard({ vehicle: v }: { vehicle: UserVehicle }) {
   );
 }
 
-export function MobileVehicleHome({ vehicles, onRequestAddVehicle, isAddSlot }: MobileVehicleHomeProps) {
+export function VehicleHome({ vehicles, onRequestAddVehicle, isAddSlot }: VehicleHomeProps) {
   return (
     <section className="flex w-full flex-col gap-5">
       <motion.ul className="flex flex-col gap-4 p-2" variants={listVariants} initial="hidden" animate="show">

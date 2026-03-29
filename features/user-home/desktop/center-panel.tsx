@@ -9,16 +9,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUserVehicleReminders } from "@/hooks/useTrackingReminder";
-import { DesktopCenterOverviewTab } from "@/components/common/DesktopCenterOverviewTab";
-import { DesktopCenterPartsTab } from "@/components/common/DesktopCenterPartsTab";
-import { DesktopCenterRemindersTab } from "@/components/common/DesktopCenterRemindersTab";
-import { DesktopCreateVehicleFlow } from "@/components/common/DesktopCreateVehicleFlow";
-import { VehicleHistoryTabContent } from "@/components/common/VehicleHistoryTabContent";
-import { UpdateOdometerDialog } from "@/components/common/UpdateOdometerDialog";
+import { DesktopCenterOverviewTab } from "@/components/shared/DesktopCenterOverviewTab";
+import { DesktopCenterPartsTab } from "@/components/shared/DesktopCenterPartsTab";
+import { DesktopCenterRemindersTab } from "@/components/shared/DesktopCenterRemindersTab";
+import { CreateVehicleFlow } from "@/features/vehicle-create";
+import { VehicleHistoryTabContent } from "@/components/shared/VehicleHistoryTabContent";
+import { UpdateOdometerDialog } from "@/components/shared/UpdateOdometerDialog";
 
 const labelMuted = "text-[12px] text-neutral-500 dark:text-neutral-400";
 
-type DesktopCenterPanelProps = {
+export type CenterPanelProps = {
   vehicle: UserVehicle | null;
   isAddSlot: boolean;
   onCreateFlowSuccess?: () => void;
@@ -38,7 +38,7 @@ type DesktopCenterPanelProps = {
   };
 };
 
-export function DesktopCenterPanel({
+export function CenterPanel({
   vehicle,
   isAddSlot,
   onCreateFlowSuccess,
@@ -48,7 +48,7 @@ export function DesktopCenterPanel({
   declarationPercent,
   surface = "home",
   vehicleDetailHistory,
-}: DesktopCenterPanelProps) {
+}: CenterPanelProps) {
   const isVehicleDetail = surface === "vehicleDetail";
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [odometerDialogOpen, setOdometerDialogOpen] = useState(false);
@@ -62,7 +62,7 @@ export function DesktopCenterPanel({
   if (isAddSlot || !vehicle) {
     return (
       <section className="flex min-h-0 min-w-0 flex-1 touch-pan-y flex-col overflow-x-hidden overflow-y-auto overscroll-y-auto bg-transparent px-0 py-2 dark:bg-transparent max-lg:border-0 max-lg:shadow-none max-lg:backdrop-blur-none dark:max-lg:bg-transparent lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:bg-[#F9F8F6] lg:px-6 lg:py-4 dark:lg:bg-neutral-950">
-        <DesktopCreateVehicleFlow onSuccess={onCreateFlowSuccess} onRequestExit={onCreateFlowExit} />
+        <CreateVehicleFlow onSuccess={onCreateFlowSuccess} onRequestExit={onCreateFlowExit} />
       </section>
     );
   }

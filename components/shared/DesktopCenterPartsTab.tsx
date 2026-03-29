@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Package, Wrench } from "lucide-react";
 
-import { DeclarePartFlow } from "@/components/common/DeclarePartFlow";
+import { DeclarePartFlow } from "@/components/shared/DeclarePartFlow";
 import { Button } from "@/components/ui/button";
 import ScrollPickerPanel, { type PickerItem } from "@/components/ui/customize/scroll-picker-panel";
 import SafeImage from "@/components/ui/SafeImage";

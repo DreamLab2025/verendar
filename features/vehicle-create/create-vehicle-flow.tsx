@@ -30,13 +30,13 @@ const fadeUp = {
 
 const springSoft = { type: "spring" as const, stiffness: 420, damping: 32 };
 
-type DesktopCreateVehicleFlowProps = {
+export type CreateVehicleFlowProps = {
   onSuccess?: () => void;
   /** Chỉ mobile UI: nút đóng thoát luồng (khi user đã có xe). */
   onRequestExit?: () => void;
 };
 
-export function DesktopCreateVehicleFlow({ onSuccess, onRequestExit }: DesktopCreateVehicleFlowProps) {
+export function CreateVehicleFlow({ onSuccess, onRequestExit }: CreateVehicleFlowProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [vehicleTypeId, setVehicleTypeId] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<string | null>(null);

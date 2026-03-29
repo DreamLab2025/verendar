@@ -7,8 +7,8 @@ import type { UserVehicle } from "@/lib/api/services/fetchUserVehicle";
 import { cn } from "@/lib/utils";
 import SafeImage from "@/components/ui/SafeImage";
 import { Button } from "@/components/ui/button";
-import { LicensePlateBadge } from "./common/LicensePlateBadge";
-import { UpdateOdometerDialog } from "./common/UpdateOdometerDialog";
+import { LicensePlateBadge } from "@/components/shared/LicensePlateBadge";
+import { UpdateOdometerDialog } from "@/components/shared/UpdateOdometerDialog";
 import { Separator } from "@radix-ui/react-select";
 
 const BRAND = "#E22028";
@@ -17,7 +17,7 @@ const easeCard = "cubic-bezier(0.22, 1, 0.36, 1)";
 const durMs = 320;
 const layoutSync = { duration: durMs / 1000, ease: [0.22, 1, 0.36, 1] as const };
 
-type DesktopVehicleColumnProps = {
+export type VehicleColumnProps = {
   vehicles: UserVehicle[];
   /** Card đang mở rộng (đồng bộ với khối giữa/phải) — controlled từ page */
   expandedVehicleId: string | null;
@@ -32,7 +32,7 @@ type DesktopVehicleColumnProps = {
   declarationPercentForSelected: number;
 };
 
-export function DesktopVehicleColumn({
+export function VehicleColumn({
   vehicles,
   expandedVehicleId,
   onExpandedChange,
@@ -42,7 +42,7 @@ export function DesktopVehicleColumn({
   onSelect,
   onRequestAddVehicle,
   declarationPercentForSelected,
-}: DesktopVehicleColumnProps) {
+}: VehicleColumnProps) {
   const [odometerDialogOpen, setOdometerDialogOpen] = useState(false);
   const expandedVehicle = expandedVehicleId ? vehicles.find((x) => x.id === expandedVehicleId) : undefined;
 
