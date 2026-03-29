@@ -4,12 +4,14 @@ import { PartTrackingReminder, ReminderDetailStatus, TrackingCycleSummary } from
 export type ReminderLevel = "Critical" | "High" | "Medium" | "Low" | "Normal" | "Warning";
 
 export interface ApplyTrackingRequest {
-  partCategoryCode: string;
+  /** Slug loại phụ tùng (vd. `engine-oil`) — BE validate `PartCategorySlug` */
+  partCategorySlug: string;
   lastReplacementOdometer: number;
   lastReplacementDate: string;
   predictedNextOdometer: number;
   predictedNextDate: string;
   aiReasoning: string;
+  /** Độ tin cậy chuẩn hóa 0..1 (BE không chấp nhận thang 0..100) */
   confidenceScore: number;
 }
 

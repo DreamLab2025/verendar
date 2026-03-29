@@ -14,8 +14,10 @@ export function useApplyTracking() {
     mutationKey: ["apply-tracking"],
     mutationFn: ({ userVehicleId, payload }: { userVehicleId: string; payload: ApplyTrackingRequest }) =>
       TrackingReminderService.applyTracking(userVehicleId, payload),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["user-vehicle-parts"] });
+      queryClient.invalidateQueries({ queryKey: ["part-category-reminders", variables.userVehicleId] });
+      queryClient.invalidateQueries({ queryKey: ["user-vehicle-reminders", variables.userVehicleId] });
       toast.success(data.message || "Áp dụng cấu hình thành công!");
     },
     onError: (err: Error) => {
