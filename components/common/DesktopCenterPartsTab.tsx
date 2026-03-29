@@ -80,7 +80,7 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain rounded-2xl dark:border-neutral-800 dark:bg-neutral-950/60"
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain"
       >
         <div className="border-b border-neutral-200/90 px-5 py-4 dark:border-neutral-800">
           <div className="flex items-start gap-3">
@@ -242,16 +242,32 @@ export function DesktopCenterPartsTab({
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
+    if (!el || typeof ResizeObserver === "undefined" || typeof window === "undefined") return;
+
+    /** Phải theo viewport (lg), không dùng `el.clientWidth` — cột giữa ~60% màn hình luôn < 1024px */
+    const mql = window.matchMedia("(min-width: 1024px)");
+
     const apply = () => {
       const h = el.clientHeight;
-      // Khớp chiều cao panel chi tiết; chỉ giới hạn tối thiểu để picker vẫn dùng được
-      setPanelHeight(Math.max(360, h));
+      const isDesktopViewport = mql.matches;
+      if (!isDesktopViewport) {
+        const capped = h >= 180 ? Math.min(Math.max(Math.round(h * 0.42), 260), 320) : 280;
+        setPanelHeight(capped);
+      } else if (h > 0) {
+        setPanelHeight(Math.max(360, h));
+      }
     };
+
     const ro = new ResizeObserver(apply);
     ro.observe(el);
+    const onViewport = () => apply();
+    mql.addEventListener("change", onViewport);
     apply();
-    return () => ro.disconnect();
+
+    return () => {
+      ro.disconnect();
+      mql.removeEventListener("change", onViewport);
+    };
   }, [parts.length, isLoadingParts]);
 
   const defaultKey = selectedPartId && parts.some((p) => p.id === selectedPartId) ? selectedPartId : parts[0]?.id;
@@ -292,13 +308,14 @@ export function DesktopCenterPartsTab({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-        className="flex min-h-[420px] flex-col gap-4 rounded-2xl border border-neutral-200/90 bg-white p-6 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.05)] ring-1 ring-red-600/10 dark:border-neutral-800 dark:bg-neutral-900/50 dark:ring-white/5"
+        className="flex min-h-[420px] flex-col gap-4 px-3 sm:px-4 max-lg:min-h-[320px] max-lg:gap-3 lg:px-6 lg:rounded-2xl lg:border lg:border-neutral-200/90 lg:bg-white lg:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.05)] lg:ring-1 lg:ring-red-600/10 dark:lg:border-neutral-800 dark:lg:bg-neutral-900/50 dark:lg:ring-white/5"
       >
         <div className="h-5 w-40 animate-pulse rounded bg-red-100/60 dark:bg-neutral-800" />
         <div className="h-4 w-full max-w-md animate-pulse rounded bg-neutral-100 dark:bg-neutral-800/80" />
-        <div className="mt-4 flex flex-1 gap-4">
-          <div className="w-16 shrink-0 animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-800" />
-          <div className="min-h-[280px] flex-1 animate-pulse rounded-2xl bg-neutral-50 dark:bg-neutral-800/80" />
+        <div className="mt-4 flex flex-1 gap-4 max-lg:flex-col max-lg:gap-3">
+          <div className="h-12 w-full max-w-full animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800 lg:hidden" />
+          <div className="hidden w-16 shrink-0 animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-800 lg:block" />
+          <div className="min-h-[200px] flex-1 animate-pulse rounded-lg bg-neutral-100/80 dark:bg-neutral-800/80 lg:min-h-[280px] lg:rounded-2xl lg:bg-neutral-50 dark:lg:bg-neutral-800/80" />
         </div>
       </motion.div>
     );
@@ -309,7 +326,7 @@ export function DesktopCenterPartsTab({
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-16 text-center ring-1 ring-red-600/10 dark:border-neutral-700 dark:bg-neutral-900/40 dark:ring-white/4"
+        className="flex flex-col items-center justify-center gap-3 border-y border-dashed border-neutral-200 px-3 py-14 text-center dark:border-neutral-700 sm:px-4 lg:rounded-2xl lg:border lg:border-dashed lg:border-neutral-300 lg:bg-white lg:px-6 lg:py-16 lg:ring-1 lg:ring-red-600/10 dark:lg:bg-neutral-900/40 dark:lg:ring-white/4"
       >
         <p className="text-[14px] text-neutral-600 dark:text-neutral-400">Chưa có danh sách phụ tùng cho xe này.</p>
         <Link
@@ -328,10 +345,10 @@ export function DesktopCenterPartsTab({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className="flex min-h-0 flex-1 flex-col gap-4"
+      className="flex min-h-0 flex-1 flex-col gap-4 px-3 sm:px-4 lg:px-0"
     >
-      <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-neutral-200/90 bg-white p-7 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.05)] ring-1 ring-red-600/10 dark:border-neutral-800 dark:bg-neutral-900/55 dark:ring-white/6 sm:p-5">
-        <header className="mb-5 shrink-0 border-b border-neutral-100 pb-4 dark:border-neutral-800/80">
+      <section className="flex min-h-0 flex-1 flex-col max-lg:bg-transparent lg:rounded-2xl lg:border lg:border-neutral-200/90 lg:bg-white lg:p-7 lg:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.05)] lg:ring-1 lg:ring-red-600/10 dark:lg:border-neutral-800 dark:lg:bg-neutral-900/55 dark:lg:ring-white/6">
+        <header className="mb-4 shrink-0 border-b border-neutral-200/80 pb-3 dark:border-neutral-800/80 lg:mb-5 lg:border-neutral-100 lg:pb-4">
           <h3
             className="border-l-[3px] border-solid pl-3 text-[15px] font-bold tracking-tight text-neutral-900 dark:text-neutral-100"
             style={{ borderLeftColor: BRAND }}
@@ -358,7 +375,7 @@ export function DesktopCenterPartsTab({
             itemClassName={cn("transition-transform")}
             activeItemClassName="ring-2 ring-white/35"
             detailClassName="scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-            className="w-full max-w-full"
+            className="w-full max-w-full min-h-0 lg:flex-1"
           />
         </div>
       </section>

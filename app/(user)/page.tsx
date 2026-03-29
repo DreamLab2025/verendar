@@ -5,9 +5,7 @@ import { useUserVehicles } from "@/hooks/useUserVehice";
 import { useUserVehicleParts } from "@/hooks/useVehiclePart";
 import { useMaintenanceRecordsByVehicle } from "@/hooks/useMaintenanceRecord";
 import { useOdometerHistory } from "@/hooks/useOdometer";
-import { DesktopCenterPanel } from "@/components/DesktopCenterPanel";
-import { DesktopVehicleColumn } from "@/components/DesktopVehicleColumn";
-import { DesktopRightPanel } from "@/components/DesktopRightPanel";
+import { UserHomeDesktopView, UserHomeMobileView } from "@/components/user-home/user-home-views";
 
 export default function UserHomePage() {
   const { vehicles, isLoading } = useUserVehicles({
@@ -65,6 +63,14 @@ export default function UserHomePage() {
     setShowCreateVehicle(false);
   };
 
+  /** Mobile: thoát form thêm xe, quay về danh sách (chỉ khi đã có xe). */
+  const handleExitCreateFlow = () => {
+    setShowCreateVehicle(false);
+    if (vehicles.length > 0) {
+      queueMicrotask(() => setExpandedVehicleId(vehicles[0].id));
+    }
+  };
+
   const { parts, isLoading: isLoadingParts } = useUserVehicleParts(vehicleId, dataEnabled);
 
   const { data: maintenanceResponse, isLoading: isLoadingMaintenance } = useMaintenanceRecordsByVehicle(
@@ -88,65 +94,51 @@ export default function UserHomePage() {
   if (isLoading) {
     return (
       <>
-        <div className="h-full min-h-0 w-[22%] shrink-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-900" />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="h-14 shrink-0 animate-pulse rounded-md border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950" />
-          <div className="mt-4 flex min-h-0 flex-1 gap-4">
-            <div className="min-h-0 min-w-0 flex-1 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-900" />
-            <div className="hidden w-[18%] shrink-0 animate-pulse rounded-md bg-neutral-100 lg:block dark:bg-neutral-900" />
-          </div>
+        <div className="h-44 w-full shrink-0 animate-pulse rounded-2xl bg-neutral-200/90 lg:hidden dark:bg-neutral-800/80" />
+        <div className="hidden lg:contents">
+          <>
+            <div className="h-full min-h-0 w-[22%] shrink-0 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-900" />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <div className="h-14 shrink-0 animate-pulse rounded-md border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950" />
+              <div className="mt-4 flex min-h-0 flex-1 gap-4">
+                <div className="min-h-0 min-w-0 flex-1 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-900" />
+                <div className="hidden w-[18%] shrink-0 animate-pulse rounded-md bg-neutral-100 lg:block dark:bg-neutral-900" />
+              </div>
+            </div>
+          </>
         </div>
       </>
     );
   }
 
+  const shared = {
+    vehicles,
+    createFlowOpen,
+    showVehicleDetail,
+    detailVehicle,
+    currentVehicle,
+    hasVehicles,
+    safeIndex,
+    expandedVehicleId,
+    showCreateVehicle,
+    parts,
+    isLoadingParts,
+    maintenanceRecords,
+    isLoadingMaintenance,
+    odometerHistory,
+    isLoadingOdometerHistory,
+    declarationPercent,
+    onCreateFlowSuccess: handleCreateFlowSuccess,
+    onCreateFlowExit: hasVehicles ? handleExitCreateFlow : undefined,
+    onRequestAddVehicle: handleRequestAddVehicle,
+    onSelectVehicle: handleSelectVehicle,
+    onExpandedChange: setExpandedVehicleId,
+  };
+
   return (
     <>
-      <DesktopVehicleColumn
-        vehicles={vehicles}
-        expandedVehicleId={expandedVehicleId}
-        onExpandedChange={setExpandedVehicleId}
-        currentVehicleId={expandedVehicleId}
-        currentIndex={safeIndex}
-        isAddSlot={showCreateVehicle && hasVehicles}
-        onSelect={handleSelectVehicle}
-        onRequestAddVehicle={handleRequestAddVehicle}
-        declarationPercentForSelected={declarationPercent}
-      />
-
-      {createFlowOpen ? (
-        <DesktopCenterPanel
-          vehicle={hasVehicles ? currentVehicle : null}
-          isAddSlot
-          onCreateFlowSuccess={handleCreateFlowSuccess}
-          parts={parts}
-          isLoadingParts={isLoadingParts}
-          declarationPercent={declarationPercent}
-        />
-      ) : showVehicleDetail ? (
-        <>
-          <DesktopCenterPanel
-            vehicle={detailVehicle}
-            isAddSlot={false}
-            onCreateFlowSuccess={handleCreateFlowSuccess}
-            parts={parts}
-            isLoadingParts={isLoadingParts}
-            declarationPercent={declarationPercent}
-          />
-          <DesktopRightPanel
-            vehicle={detailVehicle}
-            maintenanceRecords={maintenanceRecords}
-            isLoadingMaintenance={isLoadingMaintenance}
-            odometerHistory={odometerHistory}
-            isLoadingOdometerHistory={isLoadingOdometerHistory}
-          />
-        </>
-      ) : (
-        <div
-          className="min-h-0 min-w-0 flex-1 rounded-lg bg-[#F9F8F6] dark:bg-neutral-950"
-          aria-hidden
-        />
-      )}
+      <UserHomeMobileView {...shared} />
+      <UserHomeDesktopView {...shared} />
     </>
   );
 }

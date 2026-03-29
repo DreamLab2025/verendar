@@ -56,7 +56,7 @@ export function DesktopVehicleColumn({
   };
 
   return (
-    <section className="flex h-full min-h-0 w-[22%] shrink-0 flex-col rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+    <section className="flex w-full shrink-0 flex-col rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900/40 sm:p-4 lg:h-full lg:min-h-0 lg:w-[22%] lg:overflow-hidden">
       {expandedVehicle && (
         <UpdateOdometerDialog
           open={odometerDialogOpen}
@@ -66,10 +66,12 @@ export function DesktopVehicleColumn({
           licensePlate={expandedVehicle.licensePlate}
         />
       )}
-      <div className="mb-2 flex h-14 shrink-0 items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Car className="h-6 w-6 text-neutral-900 dark:text-neutral-100" />
-          <h2 className="text-[16px] font-bold text-neutral-900 dark:text-neutral-100">Xe của bạn</h2>
+      <div className="mb-2 flex min-h-[44px] shrink-0 flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Car className="size-6 shrink-0 text-neutral-900 dark:text-neutral-100" />
+          <h2 className="truncate text-[15px] font-bold text-neutral-900 sm:text-[16px] dark:text-neutral-100">
+            Xe của bạn
+          </h2>
         </div>
         {!isAddSlot && expandedVehicle && (
           <Button
@@ -77,10 +79,10 @@ export function DesktopVehicleColumn({
             onClick={() => setOdometerDialogOpen(true)}
             variant="default"
             size="sm"
-            className="h-auto w-auto rounded-lg px-4 py-2 text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+            className="min-h-[44px] rounded-lg px-4 py-2.5 text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
             style={{ backgroundColor: BRAND }}
           >
-            <Gauge className="h-4 w-4 text-white" />
+            <Gauge className="size-4 shrink-0 text-white" />
             Cập Nhật Odo
           </Button>
         )}
@@ -88,7 +90,7 @@ export function DesktopVehicleColumn({
       <Separator className="mb-4 h-px w-[60%] self-center bg-neutral-200 dark:bg-neutral-700" />
       <h1 className="mb-4 text-[16px] font-bold text-[#80868E] dark:text-neutral-400">Chọn Xe Của bạn</h1>
 
-      <div className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden overscroll-contain pr-1">
+      <div className="scrollbar-hide flex flex-col gap-2 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 lg:min-h-0 lg:flex-1">
         {vehicles.map((v, index) => {
           const active = !isAddSlot && currentIndex === index;
           const expanded = expandedVehicleId === v.id;
@@ -101,9 +103,9 @@ export function DesktopVehicleColumn({
               aria-expanded={expanded}
               onClick={() => handleVehicleCardClick(v, index)}
               className={cn(
-                "w-full rounded-2xl border bg-white text-left dark:bg-neutral-950",
+                "w-full rounded-2xl border bg-white text-left touch-manipulation dark:bg-neutral-950",
                 "transition-[padding,box-shadow] duration-200 ease-out",
-                expanded ? "p-3" : "p-2.5",
+                expanded ? "p-3" : "min-h-[44px] p-2.5",
                 active && expanded
                   ? "border-[#E22028] shadow-md ring-1 ring-[#E22028]/20"
                   : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700",
@@ -224,7 +226,7 @@ export function DesktopVehicleColumn({
             onRequestAddVehicle();
           }}
           className={cn(
-            "mt-auto flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors",
+            "mt-auto flex min-h-[120px] touch-manipulation flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors",
             isAddSlot
               ? "border-[#E22028] bg-red-50/50 dark:bg-red-950/20"
               : "border-neutral-300 bg-white hover:border-[#E22028]/50 dark:border-neutral-700 dark:bg-neutral-950",

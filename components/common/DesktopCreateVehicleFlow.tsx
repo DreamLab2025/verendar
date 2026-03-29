@@ -32,9 +32,11 @@ const springSoft = { type: "spring" as const, stiffness: 420, damping: 32 };
 
 type DesktopCreateVehicleFlowProps = {
   onSuccess?: () => void;
+  /** Chỉ mobile UI: nút đóng thoát luồng (khi user đã có xe). */
+  onRequestExit?: () => void;
 };
 
-export function DesktopCreateVehicleFlow({ onSuccess }: DesktopCreateVehicleFlowProps) {
+export function DesktopCreateVehicleFlow({ onSuccess, onRequestExit }: DesktopCreateVehicleFlowProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [vehicleTypeId, setVehicleTypeId] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<string | null>(null);
@@ -133,56 +135,123 @@ export function DesktopCreateVehicleFlow({ onSuccess }: DesktopCreateVehicleFlow
     if (step > 1) setStep((prev) => (prev - 1) as 1 | 2 | 3);
   };
 
+  const stepIndicatorRow = (
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-1 font-mono text-[11px] tabular-nums text-muted-foreground">
+      {[1, 2, 3, 4].map((s) => (
+        <span key={s} className="flex items-center">
+          <span
+            className={cn(
+              "inline-flex min-w-[1.75rem] items-center justify-center transition-colors",
+              step === s && "font-semibold text-primary",
+              step > s && "text-primary/80",
+            )}
+          >
+            {step > s ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : String(s).padStart(2, "0")}
+          </span>
+          {s < 4 ? <span className="mx-1.5 text-muted-foreground/35">/</span> : null}
+        </span>
+      ))}
+    </div>
+  );
+
+  const mobileNavActions = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleBack}
+        disabled={step === 1}
+        className="min-h-11 flex-1 touch-manipulation"
+      >
+        Quay lại
+      </Button>
+      {step < 4 ? (
+        <Button
+          type="button"
+          onClick={handleNext}
+          disabled={!canGoNext}
+          className="min-h-11 flex-1 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          Tiếp theo
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          onClick={handleSubmitCreateVehicle}
+          disabled={!isValidForm || !vehicleVariantId || isCreatingVehicle}
+          className="min-h-11 flex-1 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          {isCreatingVehicle ? "Đang tạo..." : "Đăng ký xe"}
+        </Button>
+      )}
+    </>
+  );
+
+  const desktopNavActions = (
+    <>
+      <Button variant="ghost" onClick={handleBack} disabled={step === 1} className="text-muted-foreground">
+        Quay lại
+      </Button>
+      {step < 4 ? (
+        <Button
+          onClick={handleNext}
+          disabled={!canGoNext}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          Tiếp theo
+        </Button>
+      ) : (
+        <Button
+          onClick={handleSubmitCreateVehicle}
+          disabled={!isValidForm || !vehicleVariantId || isCreatingVehicle}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          {isCreatingVehicle ? "Đang tạo..." : "Đăng ký xe"}
+        </Button>
+      )}
+    </>
+  );
+
   return (
-    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl bg-background ring-1 ring-border/60">
-      <div className="border-b border-border/70 px-6 py-4">
+    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden max-lg:rounded-none max-lg:bg-transparent max-lg:ring-0 lg:rounded-2xl lg:bg-background lg:ring-1 lg:ring-border/60">
+      {/* Mobile: bước + Quay lại / Tiếp theo ở trên — không bọc card, chỉ phân tách nhẹ */}
+      <div className="shrink-0 space-y-3 border-b border-border/30 px-0 pb-3 pt-0 max-lg:bg-transparent lg:hidden">
+        <div className="flex items-start gap-1">
+          {onRequestExit ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="mt-0.5 -ml-1 size-10 shrink-0 touch-manipulation text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+              onClick={onRequestExit}
+              aria-label="Đóng và quay lại danh sách xe"
+            >
+              <X className="size-5" aria-hidden />
+            </Button>
+          ) : null}
+          <div className="min-w-0 flex-1 pr-1">
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Tạo xe mới</h3>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+              Hoàn thành 4 bước để thêm xe vào danh sách của bạn
+            </p>
+          </div>
+        </div>
+        {stepIndicatorRow}
+        <div className="flex gap-2">{mobileNavActions}</div>
+      </div>
+
+      <div className="hidden border-b border-border/70 px-6 py-4 lg:block">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold tracking-tight text-foreground">Tạo xe mới</h3>
             <p className="mt-0.5 text-sm text-muted-foreground">Hoàn thành 4 bước để thêm xe vào danh sách của bạn</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={handleBack} disabled={step === 1} className="text-muted-foreground">
-              Quay lại
-            </Button>
-            {step < 4 ? (
-              <Button
-                onClick={handleNext}
-                disabled={!canGoNext}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Tiếp theo
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubmitCreateVehicle}
-                disabled={!isValidForm || !vehicleVariantId || isCreatingVehicle}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {isCreatingVehicle ? "Đang tạo..." : "Đăng ký xe"}
-              </Button>
-            )}
-          </div>
+          <div className="flex items-center gap-2">{desktopNavActions}</div>
         </div>
       </div>
 
-      <div className="border-b border-border/70 px-6 py-3">
-        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 font-mono text-[11px] tabular-nums text-muted-foreground">
-          {[1, 2, 3, 4].map((s) => (
-            <span key={s} className="flex items-center">
-              <span
-                className={cn(
-                  "inline-flex min-w-[1.75rem] items-center justify-center transition-colors",
-                  step === s && "font-semibold text-primary",
-                  step > s && "text-primary/80",
-                )}
-              >
-                {step > s ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : String(s).padStart(2, "0")}
-              </span>
-              {s < 4 ? <span className="mx-1.5 text-muted-foreground/35">/</span> : null}
-            </span>
-          ))}
-        </div>
+      <div className="hidden border-b border-border/70 px-6 py-3 lg:block">
+        {stepIndicatorRow}
         <div className="mt-3 h-px w-full overflow-hidden bg-muted">
           <motion.div
             className="h-full bg-primary"
@@ -193,8 +262,8 @@ export function DesktopCreateVehicleFlow({ onSuccess }: DesktopCreateVehicleFlow
         </div>
       </div>
 
-      <div className="grid h-full min-h-0 flex-1 grid-cols-12 grid-rows-[minmax(0,1fr)] items-stretch gap-4 overflow-y-auto overflow-x-hidden overscroll-contain px-6 py-4">
-        <div className={cn("col-span-8 min-w-0", step === 3 ? "flex min-h-0 h-full flex-col" : "")}>
+      <div className="grid min-h-0 flex-1 touch-pan-y grid-cols-1 grid-rows-[minmax(0,1fr)] items-stretch gap-4 overflow-x-hidden overflow-y-auto overscroll-y-auto px-0 py-2 max-lg:bg-transparent lg:grid-cols-12 lg:px-6 lg:py-4">
+        <div className={cn("min-w-0 lg:col-span-8", step === 3 ? "flex min-h-0 h-full flex-col" : "")}>
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -588,7 +657,7 @@ export function DesktopCreateVehicleFlow({ onSuccess }: DesktopCreateVehicleFlow
           </AnimatePresence>
         </div>
 
-        <aside className="sticky top-0 z-10 col-span-4 flex h-fit min-h-0 w-full max-w-full flex-col self-start border-l border-border/60 pl-6 sm:pl-7">
+        <aside className="hidden h-fit min-h-0 w-full max-w-full flex-col self-start border-l border-border/60 lg:sticky lg:top-0 lg:z-10 lg:col-span-4 lg:flex lg:pl-7">
           <header className="shrink-0 pb-3">
             <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Đang chọn</p>
             <p className="mt-0.5 text-sm font-medium text-foreground">
