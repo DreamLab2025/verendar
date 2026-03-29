@@ -17,7 +17,7 @@ export function LicensePlateBadge({ licensePlate, size = "md", className }: Lice
   return (
     <div
       className={cn(
-        "inline-flex max-w-full shrink-0 items-stretch overflow-hidden rounded-lg border border-black bg-black",
+        "inline-flex max-w-full shrink-0 items-stretch overflow-hidden rounded-lg border-2 border-black bg-black shadow-sm",
         isSm ? "h-10" : "h-11",
         className,
       )}
@@ -28,13 +28,13 @@ export function LicensePlateBadge({ licensePlate, size = "md", className }: Lice
           alt=""
           width={isSm ? 46 : 52}
           height={isSm ? 40 : 48}
-          className="h-full w-auto object-contain"
+          className="h-full w-auto object-contain contrast-[1.05] saturate-[1.08]"
           unoptimized
         />
       </div>
       <div
         className={cn(
-          "flex items-center rounded-l-lg border border-white bg-white",
+          "flex items-center rounded-l-md border-l-2 border-black bg-white",
           isSm ? "px-2.5" : "px-3 py-2",
         )}
       >

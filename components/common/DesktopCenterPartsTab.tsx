@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Package, Wrench } from "lucide-react";
 
+import { DeclarePartFlow } from "@/components/common/DeclarePartFlow";
+import { Button } from "@/components/ui/button";
 import ScrollPickerPanel, { type PickerItem } from "@/components/ui/customize/scroll-picker-panel";
 import SafeImage from "@/components/ui/SafeImage";
 import type { UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
@@ -35,7 +37,10 @@ function formatDate(iso: string) {
 function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehicleId: string }) {
   const part = (item as PartPickerItem).part;
   const partCategorySlug = part?.partCategorySlug?.trim();
-  const { reminders, isLoading, isError } = usePartCategoryReminders(userVehicleId, partCategorySlug, true);
+  const { reminders, isLoading, isError, refetch } = usePartCategoryReminders(userVehicleId, partCategorySlug, true);
+  /** Chỉ hiện flow khai báo khi đúng part đang được mở (đổi part trong picker là tự ẩn, không cần effect) */
+  const [declarePartId, setDeclarePartId] = useState<string | null>(null);
+  const showDeclareFlow = declarePartId === part.id && !part.isDeclared;
   if (!part) return null;
   const reminder = reminders.find((r) => r.status === "Active") ?? reminders[0];
   const partMeta = reminder?.partCategory;
@@ -45,7 +50,7 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
 
   if (isLoading) {
     return (
-      <div className="space-y-3 py-2" aria-busy="true">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-3 py-2" aria-busy="true">
         <div className="h-6 w-48 animate-pulse rounded bg-red-100/70 dark:bg-neutral-700" />
         <div className="h-32 w-full animate-pulse rounded-xl bg-neutral-200/90 dark:bg-neutral-700/90" />
       </div>
@@ -54,7 +59,7 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
 
   if (isError) {
     return (
-      <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 px-2 py-8 text-center">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-4 px-2 py-8 text-center">
         <div className="rounded-full bg-amber-500/10 p-4 dark:bg-amber-500/15">
           <Wrench className="size-10 text-amber-600 dark:text-amber-400" aria-hidden />
         </div>
@@ -75,7 +80,7 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="overflow-hidden rounded-2xl dark:border-neutral-800 dark:bg-neutral-950/60"
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain rounded-2xl dark:border-neutral-800 dark:bg-neutral-950/60"
       >
         <div className="border-b border-neutral-200/90 px-5 py-4 dark:border-neutral-800">
           <div className="flex items-start gap-3">
@@ -170,8 +175,26 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
     );
   }
 
+  if (showDeclareFlow && !part.isDeclared) {
+    return (
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <DeclarePartFlow
+          key={part.id}
+          userVehicleId={userVehicleId}
+          part={part}
+          variant="embedded"
+          onDismiss={() => setDeclarePartId(null)}
+          onDeclared={() => {
+            void refetch();
+            setDeclarePartId(null);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 px-2 py-8 text-center">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-4 px-2 py-8 text-center">
       <div className="rounded-full bg-red-600/10 p-4 dark:bg-red-500/15">
         <Wrench className="size-10 text-red-600 dark:text-red-400" aria-hidden />
       </div>
@@ -183,13 +206,16 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
             : "Chưa khai báo phụ tùng — khai báo để nhận nhắc nhở thay thế và bảo dưỡng đúng lúc."}
         </p>
       </div>
-      <Link
-        href={`/vehicle/${userVehicleId}`}
-        className="inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-        style={{ backgroundColor: BRAND }}
-      >
-        Khai báo phụ tùng
-      </Link>
+      {!part.isDeclared ? (
+        <Button
+          type="button"
+          onClick={() => setDeclarePartId(part.id)}
+          className="rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+          style={{ backgroundColor: BRAND }}
+        >
+          Khai báo phụ tùng
+        </Button>
+      ) : null}
     </div>
   );
 }

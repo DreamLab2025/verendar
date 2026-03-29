@@ -30,7 +30,11 @@ const fadeUp = {
 
 const springSoft = { type: "spring" as const, stiffness: 420, damping: 32 };
 
-export function DesktopCreateVehicleFlow() {
+type DesktopCreateVehicleFlowProps = {
+  onSuccess?: () => void;
+};
+
+export function DesktopCreateVehicleFlow({ onSuccess }: DesktopCreateVehicleFlowProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [vehicleTypeId, setVehicleTypeId] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<string | null>(null);
@@ -100,6 +104,7 @@ export function DesktopCreateVehicleFlow() {
         currentOdometer: Number(form.currentOdometer),
       });
       toast.success("Đăng ký xe thành công! Hãy chọn xe vừa tạo ở cột trái.", { id: loadingToast });
+      onSuccess?.();
       setStep(1);
       setVehicleTypeId(null);
       setBrandId(null);
@@ -189,12 +194,7 @@ export function DesktopCreateVehicleFlow() {
       </div>
 
       <div className="grid h-full min-h-0 flex-1 grid-cols-12 grid-rows-[minmax(0,1fr)] items-stretch gap-4 overflow-y-auto overflow-x-hidden overscroll-contain px-6 py-4">
-        <div
-          className={cn(
-            "col-span-8 min-w-0",
-            step === 3 ? "flex min-h-0 h-full flex-col" : "",
-          )}
-        >
+        <div className={cn("col-span-8 min-w-0", step === 3 ? "flex min-h-0 h-full flex-col" : "")}>
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -293,9 +293,16 @@ export function DesktopCreateVehicleFlow() {
                         <span className="flex min-w-0 items-center gap-2">
                           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white dark:bg-neutral-900">
                             {selectedBrand.logoUrl ? (
-                              <SafeImage src={selectedBrand.logoUrl} alt={selectedBrand.name} fill className="object-contain p-1" />
+                              <SafeImage
+                                src={selectedBrand.logoUrl}
+                                alt={selectedBrand.name}
+                                fill
+                                className="object-contain p-1"
+                              />
                             ) : (
-                              <span className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">—</span>
+                              <span className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                —
+                              </span>
                             )}
                           </span>
                           <span className="truncate text-sm font-medium text-foreground">{selectedBrand.name}</span>
@@ -335,10 +342,14 @@ export function DesktopCreateVehicleFlow() {
                                   {b.logoUrl ? (
                                     <SafeImage src={b.logoUrl} alt={b.name} fill className="object-contain p-1.5" />
                                   ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">—</div>
+                                    <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                      —
+                                    </div>
                                   )}
                                 </div>
-                                <span className="line-clamp-2 text-center text-[10px] font-medium leading-tight">{b.name}</span>
+                                <span className="line-clamp-2 text-center text-[10px] font-medium leading-tight">
+                                  {b.name}
+                                </span>
                               </motion.button>
                             ))}
                           </div>
@@ -350,7 +361,9 @@ export function DesktopCreateVehicleFlow() {
                   {brandId ? (
                     <div className="shrink-0">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Model</p>
+                        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                          Model
+                        </p>
                         <div className="flex shrink-0 items-center gap-1">
                           {!modelCollapsed && modelId ? (
                             <Button
@@ -373,7 +386,9 @@ export function DesktopCreateVehicleFlow() {
                           className="flex w-full items-center justify-between gap-2 rounded-lg bg-muted/35 px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
                         >
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium text-foreground">{selectedModel.name}</span>
+                            <span className="block truncate text-sm font-medium text-foreground">
+                              {selectedModel.name}
+                            </span>
                             <span className="mt-0.5 block text-[10px] tabular-nums text-muted-foreground">
                               {selectedModel.releaseYear != null ? String(selectedModel.releaseYear) : "—"}
                             </span>
@@ -397,7 +412,9 @@ export function DesktopCreateVehicleFlow() {
                               ))}
                             </div>
                           ) : models.length === 0 ? (
-                            <p className="py-6 text-center text-sm text-muted-foreground">Không có model phù hợp. Thử đổi từ khóa lọc.</p>
+                            <p className="py-6 text-center text-sm text-muted-foreground">
+                              Không có model phù hợp. Thử đổi từ khóa lọc.
+                            </p>
                           ) : (
                             <div className="columns-2 gap-x-10 gap-y-0 [column-fill:_balance] sm:columns-3">
                               {models.map((m) => {
@@ -494,11 +511,18 @@ export function DesktopCreateVehicleFlow() {
                                           className="object-cover"
                                         />
                                       ) : (
-                                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">—</div>
+                                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                                          —
+                                        </div>
                                       )}
                                     </div>
                                     <div className="space-y-0.5 bg-background/95 px-2 py-1.5 dark:bg-background/90">
-                                      <p className={cn("line-clamp-2 text-[11px] font-medium leading-tight", active && "text-primary")}>
+                                      <p
+                                        className={cn(
+                                          "line-clamp-2 text-[11px] font-medium leading-tight",
+                                          active && "text-primary",
+                                        )}
+                                      >
                                         {v.color || "Variant"}
                                       </p>
                                       <p className="font-mono text-[9px] text-muted-foreground">{v.hexCode || "—"}</p>

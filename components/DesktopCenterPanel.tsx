@@ -15,6 +15,7 @@ const labelMuted = "text-[12px] text-neutral-500 dark:text-neutral-400";
 type DesktopCenterPanelProps = {
   vehicle: UserVehicle | null;
   isAddSlot: boolean;
+  onCreateFlowSuccess?: () => void;
   parts: UserVehiclePart[];
   isLoadingParts: boolean;
   declarationPercent: number;
@@ -23,6 +24,7 @@ type DesktopCenterPanelProps = {
 export function DesktopCenterPanel({
   vehicle,
   isAddSlot,
+  onCreateFlowSuccess,
   parts,
   isLoadingParts,
   declarationPercent,
@@ -38,7 +40,7 @@ export function DesktopCenterPanel({
   if (isAddSlot || !vehicle) {
     return (
       <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#F9F8F6] px-5 py-6 dark:bg-neutral-950 sm:px-6">
-        <DesktopCreateVehicleFlow />
+        <DesktopCreateVehicleFlow onSuccess={onCreateFlowSuccess} />
       </section>
     );
   }

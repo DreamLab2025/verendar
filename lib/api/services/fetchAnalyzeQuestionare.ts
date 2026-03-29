@@ -7,20 +7,31 @@ export interface QuestionAnswer {
 
 export interface AnalyzeQuestionnaireRequest {
   userVehicleId: string;
-  vehicleModelId: string;
-  partCategoryCode: string;
+  /** Slug loại phụ tùng, vd. `engine-oil` — BE tự lấy model từ xe */
+  partCategorySlug: string;
   answers: QuestionAnswer[];
 }
 
 export interface AIRecommendation {
-  partCategoryCode: string;
+  partCategorySlug: string;
+  /** Một số phiên bản API cũ */
+  partCategoryCode?: string;
   lastReplacementOdometer: number;
   lastReplacementDate: string;
   predictedNextOdometer: number;
   predictedNextDate: string;
-  confidenceScore: number;
   reasoning: string;
   needsImmediateAttention: boolean;
+  /** API mới */
+  confidenceTier?: "low" | "medium" | "high";
+  analysisPhase?: "baseline" | "personalized";
+  earliestNextOdometer?: number;
+  latestNextOdometer?: number;
+  earliestNextDate?: string | null;
+  latestNextDate?: string | null;
+  rangeNarrowsWhen?: string[];
+  /** API cũ — thay bằng confidenceTier */
+  confidenceScore?: number;
 }
 
 export interface AIMetadata {

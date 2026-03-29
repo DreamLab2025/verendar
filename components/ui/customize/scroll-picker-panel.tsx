@@ -351,42 +351,44 @@ const ScrollPickerPanel = ({
       {/* ── Right Detail — nền & viền theo accent */}
       <div
         className={cn(
-          "box-border h-full min-h-0 flex-1 overflow-auto rounded-2xl border bg-neutral-50/95 p-6 text-neutral-900 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_-4px_rgba(226,32,40,0.08)] dark:border-neutral-700/80 dark:bg-neutral-900/90 dark:text-neutral-100 dark:shadow-none sm:p-7",
+          "box-border flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-neutral-50/95 p-6 text-neutral-900 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_-4px_rgba(226,32,40,0.08)] dark:border-neutral-700/80 dark:bg-neutral-900/90 dark:text-neutral-100 dark:shadow-none sm:p-7",
           detailClassName,
         )}
         style={{
           borderColor: accentColor.startsWith("#") && accentColor.length === 7 ? `${accentColor}33` : accentColor,
         }}
       >
-        {selectedItem ? (
-          renderDetail ? (
-            renderDetail(selectedItem)
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {selectedItem ? (
+            renderDetail ? (
+              renderDetail(selectedItem)
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "#888",
+                    margin: "0 0 4px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    fontWeight: 500,
+                  }}
+                >
+                  Selected
+                </p>
+                <h3 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 12px" }}>{selectedItem.label}</h3>
+                <p style={{ fontSize: 13, color: "#666" }}>
+                  Key:{" "}
+                  <code style={{ background: "#e8e8e8", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>
+                    {selectedItem.key}
+                  </code>
+                </p>
+              </div>
+            )
           ) : (
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "#888",
-                  margin: "0 0 4px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  fontWeight: 500,
-                }}
-              >
-                Selected
-              </p>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 12px" }}>{selectedItem.label}</h3>
-              <p style={{ fontSize: 13, color: "#666" }}>
-                Key:{" "}
-                <code style={{ background: "#e8e8e8", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>
-                  {selectedItem.key}
-                </code>
-              </p>
-            </div>
-          )
-        ) : (
-          <p style={{ color: "#999", fontSize: 14 }}>No item selected</p>
-        )}
+            <p className="text-[14px] text-neutral-500 dark:text-neutral-400">No item selected</p>
+          )}
+        </div>
       </div>
     </div>
   );

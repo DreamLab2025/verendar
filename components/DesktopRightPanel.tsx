@@ -37,7 +37,6 @@ function isManualOdometer(row: OdometerHistoryItem) {
 
 type DesktopRightPanelProps = {
   vehicle: UserVehicle | null;
-  isAddSlot: boolean;
   maintenanceRecords: MaintenanceRecordListItem[];
   isLoadingMaintenance: boolean;
   odometerHistory: OdometerHistoryItem[];
@@ -46,7 +45,6 @@ type DesktopRightPanelProps = {
 
 export function DesktopRightPanel({
   vehicle,
-  isAddSlot,
   maintenanceRecords,
   isLoadingMaintenance,
   odometerHistory,
@@ -81,7 +79,7 @@ export function DesktopRightPanel({
     return () => window.clearTimeout(t);
   }, [isLoadingOdometerHistory, sortedOdo, vehicle?.id]);
 
-  if (isAddSlot || !vehicle) {
+  if (!vehicle) {
     return (
       <aside className="hidden h-full min-h-0 w-[300px] shrink-0 border-l border-neutral-200 bg-neutral-50/50 lg:block dark:border-neutral-800 dark:bg-neutral-900/30" />
     );
