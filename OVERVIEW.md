@@ -34,6 +34,7 @@ Luôn parse lớp ngoài trước, rồi mới dùng `data` / `metadata`.
 | Cách gọi | `data` khi thành công |
 |----------|----------------------|
 | `GET /api/v1/notifications?pageNumber=1&pageSize=10` | Mảng thông báo (xem bảng field bên dưới) |
+| `GET ...&isRead=false` / `&isRead=true` | *(Tùy chọn)* Lọc **chưa đọc** / **đã đọc** — FE gửi query `isRead` (camelCase, cùng style `pageNumber`/`pageSize` nếu gateway đồng nhất). |
 | `GET /api/v1/notifications/status` | `{ unReadCount, hasUnread }` |
 | `GET /api/v1/notifications/{id}` | Một object cùng shape với phần tử trong list |
 | `POST /api/v1/notifications/read-all` | Số nguyên — số bản ghi vừa đánh dấu đã đọc |

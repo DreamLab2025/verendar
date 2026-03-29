@@ -5,10 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getCookie } from "cookies-next";
 import { useEffect } from "react";
-import { Bell, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
+import { NotificationInboxPopover } from "@/components/shell/notification-inbox-popover";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import apiService from "@/lib/api/apiService";
@@ -51,11 +52,7 @@ export function RootShell({ children }: RootShellProps) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="size-10 rounded-full md:size-9" asChild>
-              <Link href="/notifications" aria-label="Thông báo">
-                <Bell className="size-[1.35rem] md:size-5" aria-hidden />
-              </Link>
-            </Button>
+            <NotificationInboxPopover />
             <Button variant="ghost" size="icon" className="size-10 rounded-full md:size-9" asChild>
               <Link href="/settings" aria-label="Ngôn ngữ và cài đặt">
                 <Globe className="size-[1.35rem] md:size-5" aria-hidden />

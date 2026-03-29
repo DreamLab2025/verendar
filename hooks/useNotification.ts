@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import NotificationService, { ApiNotification, InAppNotificationPayload, MarkAsReadResponse, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
 
@@ -45,6 +45,34 @@ export function useInvalidateNotificationStatus() {
   };
 }
 
+const INBOX_PAGE_SIZE = 7;
+
+/** Hộp thông báo: query `isRead` (camelCase) khớp `notification.isRead` trên BE — tab chưa đọc = `false`, đã đọc = `true`. */
+export function useNotificationInboxInfinite(isRead: boolean, enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: ["notifications", "inbox", { isRead, pageSize: INBOX_PAGE_SIZE }],
+    queryFn: async ({ pageParam }) => {
+      const body = await NotificationService.getNotifications({
+        PageNumber: pageParam,
+        PageSize: INBOX_PAGE_SIZE,
+        isRead,
+        IsDescending: true,
+      });
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được thông báo");
+      }
+      return body;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (last) => {
+      const m = last.metadata;
+      if (!m || typeof m === "string") return undefined;
+      return m.hasNextPage ? m.pageNumber + 1 : undefined;
+    },
+    enabled,
+  });
+}
+
 export function useNotifications(params: NotificationQueryParams, enabled: boolean = true) {
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["notifications", "list", params],
@@ -80,9 +108,9 @@ export function mapApiNotificationToNotification(apiNotif: ApiNotification): Not
     type = "odometer_update";
   }
   const level = type === "reminder" ? (apiNotif.priority as ReminderLevel) : undefined;
-  const reminderId = type === "reminder" ? apiNotif.entityId : undefined;
-  const userVehicleId = type === "odometer_update" ? apiNotif.entityId : undefined;
-  const vehicleId = type === "odometer_update" ? apiNotif.entityId : undefined;
+  const reminderId = type === "reminder" ? (apiNotif.entityId ?? undefined) : undefined;
+  const userVehicleId = type === "odometer_update" ? (apiNotif.entityId ?? undefined) : undefined;
+  const vehicleId = type === "odometer_update" ? (apiNotif.entityId ?? undefined) : undefined;
 
   return {
     id: apiNotif.id ,
@@ -151,6 +179,7 @@ export function useNotificationListener() {
       // Invalidate notification status and list to refresh
       queryClient.invalidateQueries({ queryKey: ["notifications", "status"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "inbox"] });
     };
 
     // Get current connection state
@@ -206,6 +235,7 @@ export function useMarkAllAsRead() {
       // Invalidate notification status and list to refresh
       queryClient.invalidateQueries({ queryKey: ["notifications", "status"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "inbox"] });
 
       if (data.isSuccess) {
         toast.success(`Đã đánh dấu ${data.data} thông báo là đã đọc`);
@@ -229,6 +259,7 @@ export function useMarkAsRead() {
       queryClient.invalidateQueries({ queryKey: ["notifications", "status"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "detail"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "inbox"] });
     },
     onError: (error: Error) => {
       // Silently fail - don't show error toast for mark as read
