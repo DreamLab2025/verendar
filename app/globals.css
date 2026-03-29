@@ -82,25 +82,30 @@
    * Dialog “Cập nhật số km”: trượt lên khi mở, trượt xuống khi đóng.
    * Ghi đè animate-in/zoom mặc định của shadcn Dialog (chỉ áp cho class này).
    */
+  /**
+   * Chỉ animate opacity + scale — KHÔNG dùng transform/translate3d trong keyframes.
+   * Tailwind v4 căn giữa dialog bằng property `translate` (left/top 50% + translate -50%);
+   * nếu keyframes ghi đè `transform` sẽ lệch vị trí trên desktop.
+   */
   @keyframes ver-odo-modal-in {
     from {
       opacity: 0;
-      transform: translate3d(-50%, calc(-50% + 1.75rem), 0) scale(0.96);
+      scale: 0.96;
     }
     to {
       opacity: 1;
-      transform: translate3d(-50%, -50%, 0) scale(1);
+      scale: 1;
     }
   }
 
   @keyframes ver-odo-modal-out {
     from {
       opacity: 1;
-      transform: translate3d(-50%, -50%, 0) scale(1);
+      scale: 1;
     }
     to {
       opacity: 0;
-      transform: translate3d(-50%, calc(-50% + 1.25rem), 0) scale(0.96);
+      scale: 0.96;
     }
   }
 

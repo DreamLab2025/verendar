@@ -88,15 +88,14 @@ export function RightPanel({
       {/* —— Lịch sử bảo dưỡng (dưới) —— */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/70 bg-background/90 shadow-xl backdrop-blur-sm dark:bg-background/80 lg:rounded-md lg:border lg:border-neutral-200 lg:bg-white lg:shadow-none lg:backdrop-blur-none dark:lg:border-neutral-800 dark:lg:bg-neutral-950">
         <div className="shrink-0 border-b border-neutral-200 p-4 dark:border-neutral-800">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-center gap-3">
-                <ClipboardList className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
-                <h3 className="text-[14px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-                  Lịch sử bảo dưỡng
-                </h3>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex items-center justify-center gap-3">
+              <ClipboardList className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
+              <h3 className="text-[14px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+                Lịch sử bảo dưỡng
+              </h3>
+            </div>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
                 <span
                   className={cn(
                     "inline-flex items-center gap-1.5  px-2.5 py-1 text-[10px] font-medium text-neutral-600",
@@ -115,14 +114,13 @@ export function RightPanel({
                   <span className="h-2 w-2 rounded-full shadow-sm" style={{ backgroundColor: BRAND }} />
                   Gần đây
                 </span>
-              </div>
             </div>
           </div>
         </div>
 
-        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4">
+        <div className="scrollbar-hide flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-hidden overscroll-contain p-4">
           {isLoadingMaintenance ? (
-            <div className="space-y-3 pl-1" aria-busy="true" aria-label="Đang tải lịch sử">
+            <div className="w-full max-w-[280px] space-y-3 pl-1" aria-busy="true" aria-label="Đang tải lịch sử">
               {[0, 1, 2].map((k) => (
                 <div key={k} className="flex gap-3">
                   <div className="flex w-4 justify-center pt-1">
@@ -133,9 +131,11 @@ export function RightPanel({
               ))}
             </div>
           ) : sortedRecords.length === 0 ? (
-            <p className="text-[12px] text-neutral-500 dark:text-neutral-400">Chưa có lịch sử bảo dưỡng.</p>
+            <p className="w-full text-center text-[12px] text-neutral-500 dark:text-neutral-400">
+              Chưa có lịch sử bảo dưỡng.
+            </p>
           ) : (
-            <Timeline className="pl-0.5">
+            <Timeline className="w-full max-w-[280px] pl-0.5">
               <TimelineTrack />
               <TimelineList>
                 {sortedRecords.slice(0, 8).map((rec, i) => {

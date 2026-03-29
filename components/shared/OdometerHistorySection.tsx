@@ -71,12 +71,12 @@ export function OdometerHistorySection({
       <div
         ref={odoListScrollRef}
         className={cn(
-          "scrollbar-hide min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 pb-4",
+          "scrollbar-hide flex min-h-0 flex-1 flex-col items-center overflow-y-auto overflow-x-hidden overscroll-contain px-4 pb-4",
           listClassName,
         )}
       >
         {isLoadingOdometerHistory ? (
-          <div className="space-y-3" aria-busy="true" aria-label="Đang tải lịch sử odo">
+          <div className="w-full max-w-[300px] space-y-3" aria-busy="true" aria-label="Đang tải lịch sử odo">
             {[0, 1, 2].map((k) => (
               <div key={k} className="grid grid-cols-[1fr_20px_1fr] gap-2">
                 <div className="h-14 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-900" />
@@ -88,9 +88,11 @@ export function OdometerHistorySection({
             ))}
           </div>
         ) : sortedOdo.length === 0 ? (
-          <p className="text-[12px] text-neutral-500 dark:text-neutral-400">Chưa có bản ghi cập nhật odo.</p>
+          <p className="w-full text-center text-[12px] text-neutral-500 dark:text-neutral-400">
+            Chưa có bản ghi cập nhật odo.
+          </p>
         ) : (
-          <div className="relative">
+          <div className="relative w-full max-w-[300px]">
             <div
               className="pointer-events-none absolute bottom-6 left-1/2 top-2 -translate-x-1/2 border-l border-dashed border-neutral-300 dark:border-neutral-700"
               aria-hidden

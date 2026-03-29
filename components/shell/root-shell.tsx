@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getCookie } from "cookies-next";
 import { useEffect } from "react";
+import { Bell, Globe } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
@@ -48,9 +50,18 @@ export function RootShell({ children }: RootShellProps) {
               <p className="hidden text-xs text-muted-foreground sm:block">Quan ly xe thong minh</p>
             </div>
           </div>
-          <Button size="sm" className="shrink-0 rounded-full px-4 text-xs shadow-sm md:rounded-md md:text-sm">
-            Tao lich nhac
-          </Button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Button variant="ghost" size="icon" className="size-10 rounded-full md:size-9" asChild>
+              <Link href="/notifications" aria-label="Thông báo">
+                <Bell className="size-[1.35rem] md:size-5" aria-hidden />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" className="size-10 rounded-full md:size-9" asChild>
+              <Link href="/settings" aria-label="Ngôn ngữ và cài đặt">
+                <Globe className="size-[1.35rem] md:size-5" aria-hidden />
+              </Link>
+            </Button>
+          </div>
         </header>
         <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden pb-[calc(3.75rem+env(safe-area-inset-bottom))] md:pb-0">
           {children}

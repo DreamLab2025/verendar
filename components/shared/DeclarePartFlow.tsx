@@ -10,7 +10,8 @@ import type { AIRecommendation } from "@/lib/api/services/fetchAnalyzeQuestionar
 import { analyzeQuestionnaireService } from "@/lib/api/services/fetchAnalyzeQuestionare";
 import type { ApplyTrackingRequest } from "@/lib/api/services/fetchTrackingReminder";
 import type { UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
-import { getPartQuestions, type Question } from "@/lib/data/partQuestions";
+import type { Question } from "@/lib/api/services/fetchPartCategoryQuestionnaire";
+import { usePartCategoryQuestionnaire } from "@/hooks/usePartCategoryQuestionnaire";
 import { useApplyTracking } from "@/hooks/useTrackingReminder";
 import { cn } from "@/lib/utils";
 
@@ -157,7 +158,16 @@ export function DeclarePartFlow({
 
   const { applyAsync, isApplying } = useApplyTracking();
 
-  const config = useMemo(() => getPartQuestions(part.partCategorySlug), [part.partCategorySlug]);
+  const {
+    config: questionnaireConfig,
+    hasQuestions,
+    isPending: questionnaireLoading,
+    isError: questionnaireError,
+    error: questionnaireErrorObj,
+    refetch: refetchQuestionnaire,
+  } = usePartCategoryQuestionnaire(part.partCategorySlug, true);
+
+  const config = hasQuestions ? questionnaireConfig : undefined;
   const slugForApi = useMemo(() => part.partCategorySlug.trim().toLowerCase(), [part.partCategorySlug]);
 
   const answeredCount = useMemo(() => {
@@ -265,6 +275,50 @@ export function DeclarePartFlow({
     variant === "embedded"
       ? cn("flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden")
       : "flex  min-h-0 flex-1 flex-col overflow-hidden";
+
+  if (questionnaireLoading) {
+    return (
+      <div className={cn(shellClass, variant === "embedded" && "min-h-[280px]")}>
+        <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
+          <h2 className="text-left text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            {part.partCategoryName}
+          </h2>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center text-sm text-neutral-600 dark:text-neutral-400">
+          <Loader2 className="size-8 animate-spin text-neutral-400" aria-hidden />
+          <p>Đang tải bộ câu hỏi…</p>
+        </div>
+        <div className="border-t border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onDismiss}>
+            {variant === "embedded" ? "Quay lại" : "Đóng"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (questionnaireError) {
+    return (
+      <div className={cn(shellClass, variant === "embedded" && "min-h-[280px]")}>
+        <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
+          <h2 className="text-left text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            {part.partCategoryName}
+          </h2>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center text-sm text-neutral-600 dark:text-neutral-400">
+          <p>{questionnaireErrorObj?.message ?? "Không tải được bộ câu hỏi."}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetchQuestionnaire()}>
+            Thử lại
+          </Button>
+        </div>
+        <div className="border-t border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onDismiss}>
+            {variant === "embedded" ? "Quay lại" : "Đóng"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!config) {
     return (
