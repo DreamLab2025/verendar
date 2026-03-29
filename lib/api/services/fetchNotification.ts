@@ -9,6 +9,8 @@ export interface NotificationQueryParams extends RequestParams {
   PageNumber: number;
   PageSize: number;
   IsDescending?: boolean;
+  /** Lọc chưa đọc (`false`) / đã đọc (`true`) — tùy BE có bật filter trên list */
+  isRead?: boolean;
 }
 
 export interface MarkAllAsReadResponse {
@@ -36,14 +38,16 @@ export interface ApiNotification {
   title: string;
   message: string;
   notificationType: string;
-  priority: "Critical" | "High" | "Medium" | "Low" | "Normal" | "Warning";
+  priority: string;
   status: string;
-  entityType: "MaintenanceReminder" | "OdometerReminder" | "System" | "Promotion";
-  entityId: string;
+  entityType: string | null;
+  entityId: string | null;
   actionUrl: string | null;
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+  /** List thường trả `null` — chi tiết mới có đủ (theo OVERVIEW) */
+  maintenanceItems?: unknown[] | null;
 }
 
 export interface ApiNotificationDetail extends ApiNotification {
