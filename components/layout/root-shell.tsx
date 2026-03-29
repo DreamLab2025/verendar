@@ -20,7 +20,7 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 /** Route group `(owner)` — layout riêng trong `app/(owner)`, không bọc AppSidebar. */
 function isOwnerAppRoute(pathname: string | null) {
   if (!pathname) return false;
-  if (pathname === "/garage") return true;
+  if (pathname === "/garage" || pathname.startsWith("/garage/")) return true;
   if (pathname === "/garage-dashboard" || pathname.startsWith("/garage-dashboard/")) return true;
   return false;
 }

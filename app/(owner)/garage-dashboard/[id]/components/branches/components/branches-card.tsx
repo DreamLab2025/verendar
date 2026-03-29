@@ -12,6 +12,7 @@ import {
   type GarageBranchDto,
 } from "@/lib/api/services/fetchGarage";
 import { useGarageBranchesInfinite } from "@/hooks/useGarage";
+import { AwsBranchMiniMap } from "@/components/maps/aws-branch-mini-map";
 import { cn } from "@/lib/utils";
 
 interface BranchesCardProps {
@@ -133,11 +134,16 @@ export function BranchesCard({
             <div key={branch.id} className="min-w-0">
               <Card className={cn("gap-0 overflow-hidden p-0", isRefetching && "opacity-80")}>
                 <div className="relative aspect-4/3 w-full min-h-48 bg-muted sm:min-h-56 md:min-h-64">
-                  <div className="absolute inset-0 bg-linear-to-b from-muted to-muted/60" aria-hidden />
-                  <span className="sr-only">
-                    Bản đồ (tạm trống). Tọa độ {branch.latitude}, {branch.longitude}
-                  </span>
-                  <div className="absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2 sm:inset-x-4 sm:top-4">
+                  <div className="absolute inset-0 z-0">
+                    <AwsBranchMiniMap
+                      className="rounded-none"
+                      latitude={branch.latitude}
+                      longitude={branch.longitude}
+                      name={branch.name?.trim() || "—"}
+                      statusLabel={statusLabel}
+                    />
+                  </div>
+                  <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-2 sm:inset-x-4 sm:top-4">
                     <div className="flex flex-wrap gap-2">
                       <span className="rounded-full bg-foreground px-2.5 py-1 text-xs font-medium text-background">
                         Chi nhánh

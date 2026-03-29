@@ -66,7 +66,14 @@ export function isGarageBranchStatusActive(status: string | null | undefined): b
   return status === GarageBranchStatus.Active;
 }
 
-/** Địa chỉ chi nhánh khi BE trả object (vd. /garages/me). */
+/** Địa chỉ branch dạng object — POST/PUT body & chi tiết branch. */
+export interface GarageBranchAddressDto {
+  provinceCode: string;
+  wardCode: string;
+  streetDetail: string;
+}
+
+/** Địa chỉ khi BE trả object lỏng hơn (list, dữ liệu cũ). */
 export interface GarageBranchAddressPartsDto {
   provinceCode?: string;
   wardCode?: string;
@@ -233,16 +240,30 @@ export interface GarageBranchesMapsListResponse {
   metadata: PaginationMetadata | null;
 }
 
-export interface CreateGarageBranchAddressPayload {
-  provinceCode: string;
-  wardCode: string;
-  houseNumber: string;
-  streetDetail: string;
+/** Body `address` — POST/PUT /api/v1/garages/{garageId}/branches */
+export type CreateGarageBranchAddressPayload = GarageBranchAddressDto;
+
+/** Một ngày trong `workingHours.schedule` (key thường là mã ngày / weekday). */
+export interface GarageBranchDaySchedule {
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
 }
 
-/** Lịch làm việc — `schedule` theo schema BE (object tự do) */
+export interface GarageBranchWorkingHoursDto {
+  schedule: Record<string, GarageBranchDaySchedule>;
+}
+
+/** Lịch làm việc — body gửi lên; `schedule` có thể rỗng `{}`. */
 export interface CreateGarageBranchWorkingHoursPayload {
   schedule: Record<string, unknown>;
+}
+
+export interface GarageBranchMapLinksDto {
+  googleMaps: string;
+  appleMaps: string;
+  waze: string;
+  openStreetMap: string;
 }
 
 /** Body POST /api/v1/garages/{garageId}/branches */
@@ -259,16 +280,7 @@ export interface CreateGarageBranchPayload {
 /** Body PUT /api/v1/garages/{garageId}/branches/{branchId} — cùng schema với POST */
 export type UpdateGarageBranchPayload = CreateGarageBranchPayload;
 
-/** Response POST branch — envelope chuẩn; `data` là chi nhánh vừa tạo (cùng dạng list) */
-export interface GarageBranchCreateResponse {
-  isSuccess: boolean;
-  statusCode?: number;
-  message: string | null;
-  data: GarageBranchDto;
-  metadata: null;
-}
-
-/** GET /api/v1/garages/{garageId}/branches/{branchId} */
+/** GET /api/v1/garages/{garageId}/branches/{branchId} — cùng dạng `data` sau POST */
 export interface GarageBranchDetailDto {
   id: string;
   garageId: string;
@@ -276,11 +288,11 @@ export interface GarageBranchDetailDto {
   slug: string | null;
   description: string | null;
   coverImageUrl: string | null;
-  address: string | null;
+  address: GarageBranchAddressDto | string | null;
   latitude: number;
   longitude: number;
-  mapLinks: unknown | null;
-  workingHours: unknown | null;
+  mapLinks: GarageBranchMapLinksDto | null;
+  workingHours: GarageBranchWorkingHoursDto | null;
   phoneNumber: string | null;
   taxCode: string | null;
   status: GarageBranchStatus | string;
@@ -290,12 +302,21 @@ export interface GarageBranchDetailDto {
   updatedAt: string | null;
 }
 
+/** Response POST /api/v1/garages/{garageId}/branches */
+export interface GarageBranchCreateResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageBranchDetailDto;
+  metadata: string | null;
+}
+
 export interface GarageBranchDetailResponse {
   isSuccess: boolean;
   statusCode?: number;
   message: string | null;
   data: GarageBranchDetailDto;
-  metadata: null;
+  metadata: string | null;
 }
 
 /** PUT branch — `data` là chi nhánh đầy đủ sau cập nhật */

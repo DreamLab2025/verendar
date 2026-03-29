@@ -112,7 +112,9 @@ export function BranchesToolbar({
         </DropdownMenu>
 
         <Button type="button" size="default" className="shrink-0 px-4" asChild>
-          <Link href={`/garage-dashboard/${garageId}/branches/new`}><Plus className="size-4 shrink-0" aria-hidden /> Tạo chi nhánh</Link>
+          <Link href={`/garage/${garageId}/branches/new`}>
+            <Plus className="size-4 shrink-0" aria-hidden /> Tạo chi nhánh
+          </Link>
         </Button>
       </div>
       {/* Full-bleed vs p-4 md:p-6 của trang cha — chỉ separator kéo full ngang */}

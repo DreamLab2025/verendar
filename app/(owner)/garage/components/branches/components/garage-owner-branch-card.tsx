@@ -7,6 +7,7 @@ import {
   type GarageBranchDto,
 } from "@/lib/api/services/fetchGarage";
 import { cn } from "@/lib/utils";
+import { AwsBranchMiniMap } from "@/components/maps/aws-branch-mini-map";
 
 interface GarageOwnerBranchCardProps {
   branch: GarageBranchDto;
@@ -44,6 +45,15 @@ export function GarageOwnerBranchCard({ branch }: GarageOwnerBranchCardProps) {
           >
             {statusLabel}
           </span>
+        </div>
+        <div className="absolute inset-0 z-0">
+          <AwsBranchMiniMap
+            className="rounded-none"
+            latitude={branch.latitude}
+            longitude={branch.longitude}
+            name={branch.name?.trim() || "—"}
+            statusLabel={statusLabel}
+          />
         </div>
       </div>
 
