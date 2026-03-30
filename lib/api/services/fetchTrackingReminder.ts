@@ -45,6 +45,7 @@ export interface ApplyTrackingData {
 
 export interface VehicleRemindersResponse {
   isSuccess: boolean;
+  statusCode?: number;
   message: string;
   data: VehicleReminder[];
   metadata: unknown;
@@ -70,8 +71,8 @@ export interface VehicleReminder {
 export interface ReminderPartCategory {
   id: string;
   name: string;
-  code: string;
-  /** Một số API trả `slug` (vd. ENGINE-OIL) thay cho hoặc cùng với `code` */
+  /** Swagger có thể chỉ trả `slug`, không có `code` */
+  code?: string;
   slug?: string;
   description: string;
   iconUrl: string;

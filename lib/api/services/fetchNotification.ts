@@ -50,8 +50,20 @@ export interface ApiNotification {
   maintenanceItems?: unknown[] | null;
 }
 
+/** Chi tiết GET `/notifications/{id}` — có `maintenanceItems` khi loại xe/bảo dưỡng */
+export interface NotificationMaintenanceItem {
+  partCategoryName: string;
+  description: string | null;
+  currentOdometer: number;
+  targetOdometer: number;
+  percentageRemaining: number;
+  estimatedNextReplacementDate: string | null;
+  level: string;
+}
+
 export interface ApiNotificationDetail extends ApiNotification {
-  metadata: NotificationMetadata;
+  maintenanceItems?: NotificationMaintenanceItem[] | null;
+  metadata?: NotificationMetadata | null;
 }
 
 export interface MaintenanceReminderMetadata {
@@ -121,6 +133,9 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   actionUrl?: string;
+  /** Từ API list/detail — dùng điều hướng (OdometerReminder, UserVehicle, …) */
+  entityType?: string | null;
+  entityId?: string | null;
 }
 
 export interface NotificationDetailResponse {

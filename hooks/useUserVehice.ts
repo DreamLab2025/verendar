@@ -80,8 +80,22 @@ export function useUserVehicles(params: UserVehicleQueryParams, enabled: boolean
   };
 }
 
+export function useUserVehicle(id: string, enabled: boolean = true) {
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ["user-vehicles", "detail", id],
+    queryFn: () => UserVehicleService.getUserVehicleById(id),
+    enabled: enabled && !!id,
+  });
 
-
-
-
+  return {
+    refetch,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    vehicle: data?.data ?? null,
+    message: data?.message,
+    isSuccess: data?.isSuccess,
+  };
+}
 

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectIsAuthenticated } from "@/lib/redux/slices/authSlice";
-import { getHubConnection } from "@/lib/realtime/signalr";
+import { getHubConnection } from "@/hubs/notificationHub";
 
 export function useSignalRNotifications() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);

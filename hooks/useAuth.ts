@@ -305,9 +305,15 @@ export function useAuth() {
 
   
 
+  /** Token cho hub / API khi cookie còn nhưng state `useAuth` chưa hydrate (vd. sau reload). */
+  const resolvedAccessToken =
+    state.accessToken ??
+    ((getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined) ?? null);
+
   return {
     user: state.user,
     accessToken: state.accessToken,
+    resolvedAccessToken,
     loading: state.loading,
     error: state.error,
 
