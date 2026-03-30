@@ -45,16 +45,21 @@ export function useInvalidateNotificationStatus() {
   };
 }
 
-const INBOX_PAGE_SIZE = 7;
+export const NOTIFICATION_INBOX_POPOVER_PAGE_SIZE = 7;
+export const NOTIFICATION_HUB_PAGE_SIZE = 16;
 
-/** Hộp thông báo: query `isRead` (camelCase) khớp `notification.isRead` trên BE — tab chưa đọc = `false`, đã đọc = `true`. */
-export function useNotificationInboxInfinite(isRead: boolean, enabled: boolean) {
+/** Hộp thông báo / trang hub: query `isRead` khớp `notification.isRead` — tab chưa đọc = `false`, đã đọc = `true`. */
+export function useNotificationInboxInfinite(
+  isRead: boolean,
+  enabled: boolean,
+  pageSize: number = NOTIFICATION_INBOX_POPOVER_PAGE_SIZE,
+) {
   return useInfiniteQuery({
-    queryKey: ["notifications", "inbox", { isRead, pageSize: INBOX_PAGE_SIZE }],
+    queryKey: ["notifications", "inbox", { isRead, pageSize }],
     queryFn: async ({ pageParam }) => {
       const body = await NotificationService.getNotifications({
         PageNumber: pageParam,
-        PageSize: INBOX_PAGE_SIZE,
+        PageSize: pageSize,
         isRead,
         IsDescending: true,
       });
@@ -106,6 +111,8 @@ export function mapApiNotificationToNotification(apiNotif: ApiNotification): Not
     type = "reminder";
   } else if (apiNotif.entityType === "OdometerReminder") {
     type = "odometer_update";
+  } else if (apiNotif.entityType === "UserVehicle") {
+    type = "maintenance";
   }
   const level = type === "reminder" ? (apiNotif.priority as ReminderLevel) : undefined;
   const reminderId = type === "reminder" ? (apiNotif.entityId ?? undefined) : undefined;
@@ -113,7 +120,7 @@ export function mapApiNotificationToNotification(apiNotif: ApiNotification): Not
   const vehicleId = type === "odometer_update" ? (apiNotif.entityId ?? undefined) : undefined;
 
   return {
-    id: apiNotif.id ,
+    id: apiNotif.id,
     type,
     title: apiNotif.title,
     message: apiNotif.message,
@@ -124,6 +131,8 @@ export function mapApiNotificationToNotification(apiNotif: ApiNotification): Not
     isRead: apiNotif.isRead,
     createdAt: apiNotif.createdAt,
     actionUrl: apiNotif.actionUrl || undefined,
+    entityType: apiNotif.entityType,
+    entityId: apiNotif.entityId,
   };
 }
 
@@ -135,7 +144,8 @@ export function useNotificationById(id: string | undefined, enabled: boolean = t
     select: (data: NotificationDetailResponse) => ({
       notification: mapApiNotificationToNotification(data.data),
       detail: data.data,
-      metadata: data.data.metadata,
+      metadata: data.data.metadata ?? null,
+      maintenanceItems: data.data.maintenanceItems ?? null,
       message: data.message,
       isSuccess: data.isSuccess,
     }),
@@ -150,6 +160,7 @@ export function useNotificationById(id: string | undefined, enabled: boolean = t
     notification: data?.notification,
     detail: data?.detail,
     metadata: data?.metadata,
+    maintenanceItems: data?.maintenanceItems,
     message: data?.message,
     isSuccess: data?.isSuccess,
   };
@@ -157,7 +168,7 @@ export function useNotificationById(id: string | undefined, enabled: boolean = t
 
 export function useNotificationListener() {
   const queryClient = useQueryClient();
-  const { accessToken } = useAuth();
+  const { resolvedAccessToken: accessToken } = useAuth();
 
   useEffect(() => {
     if (!accessToken) {

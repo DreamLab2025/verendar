@@ -151,6 +151,25 @@ export const UserVehicleService = {
     } satisfies UserVehicleListResponse;
   },
 
+  getUserVehicleById: async (id: string) => {
+    const response = await api8080Service.get<{
+      isSuccess: boolean;
+      message: string;
+      data: UserVehicleApiData;
+      metadata: unknown;
+    }>(`/api/v1/user-vehicles/${id}`);
+    const body = response.data;
+    if (!body.isSuccess || !body.data) {
+      throw new Error(body.message || "Không tìm thấy xe");
+    }
+    return {
+      isSuccess: body.isSuccess,
+      message: body.message,
+      data: normalizeUserVehicle(body.data),
+      metadata: body.metadata,
+    };
+  },
+
   deleteUserVehicle: async (id: string) => {
     const response = await api8080Service.delete<DeleteUserVehicleResponse>(`/api/v1/user-vehicles/${id}`);
     return response.data;
