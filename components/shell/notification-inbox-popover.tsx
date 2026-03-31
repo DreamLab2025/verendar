@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
-import { toast } from "sonner";
 
 import { UpdateOdometerDialog } from "@/components/shared/UpdateOdometerDialog";
 import { NotificationInboxList } from "@/features/notifications/notification-inbox-list";
@@ -24,24 +23,13 @@ export function NotificationInboxPopover() {
   const [odoVehicleId, setOdoVehicleId] = useState<string | null>(null);
   const { unReadCount, refetch: refetchStatus } = useNotificationStatus(true);
   const { mutate: markAllAsRead, isPending: markingAll } = useMarkAllAsRead();
-  const { vehicle: odoVehicle, isError: odoVehicleError, error: odoVehicleErr } = useUserVehicle(
-    odoVehicleId ?? "",
-    !!odoVehicleId,
-  );
+  const { vehicle: odoVehicle } = useUserVehicle(odoVehicleId ?? "", !!odoVehicleId);
 
   useEffect(() => {
     if (open) {
       void refetchStatus();
     }
   }, [open, refetchStatus]);
-
-  useEffect(() => {
-    if (!odoVehicleId) return;
-    if (odoVehicleError) {
-      toast.error(odoVehicleErr instanceof Error ? odoVehicleErr.message : "Không tải được thông tin xe");
-      setOdoVehicleId(null);
-    }
-  }, [odoVehicleId, odoVehicleError, odoVehicleErr]);
 
   const showBadge = unReadCount > 0;
   const badgeLabel = unReadCount > 99 ? "99+" : String(unReadCount);
@@ -73,7 +61,6 @@ export function NotificationInboxPopover() {
           "shadow-[0_4px_24px_-4px_rgba(0,0,0,0.07),0_16px_56px_-16px_rgba(0,0,0,0.11)]",
           "dark:border-neutral-800 dark:bg-neutral-950 dark:shadow-black/35",
         )}
-        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <header className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3.5 dark:border-neutral-800">
           <h2 className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">Thông báo</h2>
