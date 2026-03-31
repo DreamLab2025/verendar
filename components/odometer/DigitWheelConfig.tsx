@@ -5,8 +5,9 @@ import { animate, motion, useMotionValue, useMotionValueEvent } from "framer-mot
 import { cn } from "@/lib/utils";
 
 export function DigitWheel({ value, onValue }: { value: number; onValue: (d: number) => void }) {
-  const digitH = 56;
-  const itemH = 38;
+  /** Cao hơn mặc định để vuốt/drag dễ trên mobile (touch target ~44px+) */
+  const digitH = 62;
+  const itemH = 43;
 
   const items = useMemo(() => {
     const base = Array.from({ length: 10 }, (_, i) => i);
@@ -125,7 +126,7 @@ export function DigitWheel({ value, onValue }: { value: number; onValue: (d: num
   };
 
   return (
-    <div className="w-[40px] shrink-0 select-none sm:w-[52px]">
+    <div className="w-[46px] shrink-0 select-none min-[480px]:w-[50px] sm:w-[54px]">
       <div
         ref={shellRef}
         draggable={false}
@@ -195,7 +196,7 @@ export function DigitWheel({ value, onValue }: { value: number; onValue: (d: num
                     : "font-semibold text-neutral-600 dark:text-neutral-400",
                 )}
                 style={{
-                  fontSize: n === localDigit ? 24 : 19,
+                  fontSize: n === localDigit ? 26 : 20,
                   lineHeight: 1,
                 }}
               >

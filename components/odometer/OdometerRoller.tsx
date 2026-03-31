@@ -42,15 +42,16 @@ export function OdometerRoller({
   return (
     <div
       className={cn(
-        "w-full select-none rounded-xl border-2 border-neutral-400 bg-linear-to-b from-neutral-200/90 to-neutral-300/80 px-3 py-3.5",
+        "w-full select-none rounded-xl border-2 border-neutral-400 bg-linear-to-b from-neutral-200/90 to-neutral-300/80 px-2 py-3",
         "shadow-[inset_0_2px_6px_rgba(0,0,0,0.08)]",
         "dark:border-neutral-600 dark:from-neutral-800 dark:to-neutral-900 dark:shadow-[inset_0_2px_8px_rgba(0,0,0,0.35)]",
+        "max-lg:py-4",
         "sm:px-4 sm:py-4",
       )}
       style={{ userSelect: "none", WebkitUserSelect: "none" }}
       onDragStart={(e) => e.preventDefault()}
     >
-      <div className="flex select-none items-center justify-center gap-1 sm:gap-1.5">
+      <div className="flex select-none items-center justify-center gap-1 max-lg:gap-2 sm:gap-1.5">
         {Array.from({ length: digits }).map((_, idx) => (
           <DigitWheel
             key={idx}
@@ -63,7 +64,10 @@ export function OdometerRoller({
           />
         ))}
       </div>
-      <p className="mt-3 text-center text-xs text-neutral-700 dark:text-neutral-300">Lăn chuột hoặc kéo từng ô số.</p>
+      <p className="mt-3 text-center text-sm leading-snug text-neutral-700 max-lg:mt-4 lg:text-xs dark:text-neutral-300">
+        <span className="max-lg:hidden">Lăn chuột hoặc kéo từng ô số.</span>
+        <span className="hidden max-lg:inline">Chạm và vuốt lên hoặc xuống từng cột để đổi số.</span>
+      </p>
     </div>
   );
 }
