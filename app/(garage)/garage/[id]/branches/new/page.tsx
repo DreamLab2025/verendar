@@ -57,7 +57,7 @@ export default function GarageNewBranchPage() {
 
     if (step === 1) {
       if (!isStep1AddressComplete(address)) {
-        toast.error("Vui lòng chọn tỉnh thành, phường xã và nhập số nhà, tên đường.");
+        toast.error("Vui lòng chọn tỉnh/thành phố, phường/xã và nhập street detail.");
         return;
       }
       setStep(2);

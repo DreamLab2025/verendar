@@ -5,6 +5,8 @@ import { LocationService } from "@/lib/api/services/fetchLocation";
 export const locationQueryKeys = {
   provinces: ["locations", "provinces"] as const,
   province: (code: string) => ["locations", "provinces", code] as const,
+  provinceBoundary: (code: string, id?: string | number) =>
+    ["locations", "provinces", code, "boundary", id ?? ""] as const,
   wards: (provinceCode: string) => ["locations", "provinces", provinceCode, "wards"] as const,
   ward: (code: string) => ["locations", "wards", code] as const,
   administrativeUnits: ["locations", "administrative-units"] as const,
@@ -60,6 +62,38 @@ export function useProvince(code: string | undefined, enabled = true) {
     error,
     refetch,
     province: data?.province ?? null,
+    message: data?.message,
+    isSuccess: data?.isSuccess,
+    statusCode: data?.statusCode,
+    metadata: data?.metadata,
+  };
+}
+
+export function useProvinceBoundary(
+  code: string | undefined,
+  id?: string | number,
+  enabled = true,
+) {
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: locationQueryKeys.provinceBoundary(code ?? "", id),
+    queryFn: () => LocationService.getProvinceBoundaryByCode(code as string, id),
+    enabled: !!code?.trim() && enabled,
+    select: (res) => ({
+      boundary: res.data,
+      message: res.message,
+      isSuccess: res.isSuccess,
+      statusCode: res.statusCode,
+      metadata: res.metadata,
+    }),
+  });
+
+  return {
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    boundary: data?.boundary ?? null,
     message: data?.message,
     isSuccess: data?.isSuccess,
     statusCode: data?.statusCode,

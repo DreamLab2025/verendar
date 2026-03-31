@@ -77,6 +77,20 @@ export interface AdministrativeRegionsListResponse {
   metadata: unknown;
 }
 
+export interface ProvinceBoundaryData {
+  code: string | null;
+  name: string | null;
+  boundaryUrl: string | null;
+}
+
+export interface ProvinceBoundaryResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: ProvinceBoundaryData;
+  metadata: unknown;
+}
+
 export const LocationService = {
   getProvinces: async () => {
     const response = await api8080Service.get<ProvincesListResponse>("/api/v1/locations/provinces");
@@ -117,6 +131,18 @@ export const LocationService = {
   getAdministrativeRegions: async () => {
     const response = await api8080Service.get<AdministrativeRegionsListResponse>(
       "/api/v1/locations/administrative-regions",
+    );
+    return response.data;
+  },
+
+  /**
+   * GET /api/v1/locations/provinces/{code}/boundary
+   * Có thể truyền thêm query param `Id` nếu BE yêu cầu.
+   */
+  getProvinceBoundaryByCode: async (code: string, id?: string | number) => {
+    const response = await api8080Service.get<ProvinceBoundaryResponse>(
+      `/api/v1/locations/provinces/${encodeURIComponent(code)}/boundary`,
+      id == null ? undefined : { Id: id },
     );
     return response.data;
   },
