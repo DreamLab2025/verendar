@@ -77,7 +77,6 @@ export interface GarageBranchAddressDto {
 export interface GarageBranchAddressPartsDto {
   provinceCode?: string;
   wardCode?: string;
-  houseNumber?: string;
   streetDetail?: string;
 }
 
@@ -98,7 +97,7 @@ export function formatGarageBranchAddress(address: GarageBranchDto["address"]): 
     const t = address.trim();
     return t.length > 0 ? t : "—";
   }
-  const parts = [address.houseNumber, address.streetDetail, address.wardCode, address.provinceCode].filter(
+  const parts = [address.streetDetail].filter(
     (x): x is string => typeof x === "string" && x.trim().length > 0,
   );
   return parts.length > 0 ? parts.join(", ") : "—";
@@ -132,7 +131,7 @@ export interface CreateGaragePayload {
   businessName: string;
   shortName: string;
   taxCode: string;
-  logoUrl: string;
+  logoUrl: string | null;
 }
 
 /** Body PUT /api/v1/garages/{id} */
@@ -270,7 +269,7 @@ export interface GarageBranchMapLinksDto {
 export interface CreateGarageBranchPayload {
   name: string;
   description: string;
-  coverImageUrl: string;
+  coverImageUrl: string | null;
   phoneNumber: string;
   taxCode: string;
   address: CreateGarageBranchAddressPayload;

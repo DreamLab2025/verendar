@@ -22,9 +22,19 @@ interface RootShellProps {
 
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 
+/** `(garage)` và `(owner)` có layout riêng (GarageOwnerShell, wizard tạo chi nhánh, …) — không bọc RootShell. */
+const ROUTES_WITHOUT_ROOT_SHELL_PREFIXES = ["/garage", "/garage-dashboard"];
+
+function isRouteWithoutRootShell(pathname: string): boolean {
+  return ROUTES_WITHOUT_ROOT_SHELL_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 export function RootShell({ children }: RootShellProps) {
   const pathname = usePathname();
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  const skipShell = isAuthRoute || isRouteWithoutRootShell(pathname);
 
   useEffect(() => {
     const token = (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
@@ -33,7 +43,7 @@ export function RootShell({ children }: RootShellProps) {
     api8080Service.setAuthToken(token);
   }, []);
 
-  if (isAuthRoute) {
+  if (skipShell) {
     return <>{children}</>;
   }
 

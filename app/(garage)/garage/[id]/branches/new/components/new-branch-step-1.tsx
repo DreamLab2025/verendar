@@ -1,23 +1,35 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 
 import { SearchCombobox, type SearchComboboxItem } from "@/components/ui/search-combobox";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { LocationProvince, LocationWard } from "@/lib/api/services/fetchLocation";
-import { useProvinceBoundary, useProvinces, useWards } from "@/hooks/useLocation";
+import { useProvinces, useReverseGeocodeMutation, useWardBoundary, useWards } from "@/hooks/useLocation";
 import { getAmazonLocationStyleDescriptorUrl } from "@/lib/maps/aws-location-style";
+import { attachMapLibreStyleImageMissingFallback } from "@/lib/maps/maplibre-style-image-fallback";
 
 export type NewBranchAddressDraft = {
   provinceCode: string;
   wardCode: string;
   streetDetail: string;
 };
+
+/** Địa chỉ chi tiết phải chứa ít nhất một chữ số (số nhà, kiệt, hẻm, tổ…). */
+export function hasStreetDetailHouseNumber(streetDetail: string): boolean {
+  return /[0-9]/.test(streetDetail.trim());
+}
+
+export function isStep1AddressComplete(a: NewBranchAddressDraft): boolean {
+  const t = a.streetDetail.trim();
+  return Boolean(a.provinceCode && a.wardCode && t && hasStreetDetailHouseNumber(a.streetDetail));
+}
 
 const COMBO_TRIGGER =
   "h-11 rounded-lg border-border/70 bg-background text-base font-normal text-foreground hover:bg-muted/50! hover:text-foreground!";
@@ -141,14 +153,70 @@ function extractGeoJsonCoordinates(data: unknown): [number, number][] {
   return acc;
 }
 
-function ProvinceBoundaryMap({
+function normalizeShardValue(v: unknown): string {
+  if (v == null) return "";
+  return String(v).trim();
+}
+
+function valuesMatchShard(expected: string, actual: unknown): boolean {
+  const lhs = normalizeShardValue(expected);
+  const rhs = normalizeShardValue(actual);
+  if (!lhs || !rhs) return false;
+  if (lhs === rhs) return true;
+
+  // Cho case mã dạng số nhưng khác format (vd "00025" vs "25")
+  const lhsDigits = lhs.replace(/\D/g, "");
+  const rhsDigits = rhs.replace(/\D/g, "");
+  if (lhsDigits && rhsDigits) {
+    const l = Number(lhsDigits);
+    const r = Number(rhsDigits);
+    if (Number.isFinite(l) && Number.isFinite(r) && l === r) return true;
+  }
+  return false;
+}
+
+function filterGeoJsonByShard(
+  data: unknown,
+  shardProp?: string | null,
+  shardValue?: string | null,
+): unknown {
+  const key = shardProp?.trim();
+  const expected = shardValue?.trim();
+  if (!key || !expected || !isRecord(data)) return data;
+
+  const type = typeof data.type === "string" ? data.type : "";
+  if (type !== "FeatureCollection") return data;
+
+  const features = Array.isArray(data.features) ? data.features : [];
+  const matched = features.filter((f) => {
+    if (!isRecord(f)) return false;
+    const props = isRecord(f.properties) ? f.properties : null;
+    if (!props) return false;
+    return valuesMatchShard(expected, props[key]);
+  });
+
+  if (matched.length === 0) return data;
+  return { ...data, features: matched };
+}
+
+function WardBoundaryMap({
   boundaryUrl,
+  shardMatchProperty,
+  shardMatchValue,
   show,
+  onGhimLocation,
+  geocodePending,
 }: {
   boundaryUrl: string;
+  shardMatchProperty?: string | null;
+  shardMatchValue?: string | null;
   show: boolean;
+  /** Lấy tọa độ tâm bản đồ (điểm ping giữa màn hình) khi user nhấn “Ghim vị trí”. */
+  onGhimLocation?: (lat: number, lng: number) => void;
+  geocodePending?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
   const apiKey = process.env.NEXT_PUBLIC_AWS_LOCATION_API_KEY ?? "";
   const mapName = process.env.NEXT_PUBLIC_AWS_LOCATION_MAP_NAME ?? "VerendarMap";
   const region =
@@ -169,19 +237,23 @@ function ProvinceBoundaryMap({
       scrollZoom: false,
     });
 
+    const detachStyleImageFallback = attachMapLibreStyleImageMissingFallback(map);
+    mapRef.current = map;
+
     const nav = new maplibregl.NavigationControl();
     map.addControl(nav, "top-left");
 
-    const sourceId = "province-boundary-src";
-    const fillId = "province-boundary-fill";
-    const lineId = "province-boundary-line";
+    const sourceId = "ward-boundary-src";
+    const fillId = "ward-boundary-fill";
+    const lineId = "ward-boundary-line";
 
     const drawBoundary = async () => {
       if (!boundaryUrl?.trim()) return;
       try {
         const res = await fetch(boundaryUrl);
         if (!res.ok) return;
-        const data = (await res.json()) as unknown;
+        const raw = (await res.json()) as unknown;
+        const data = filterGeoJsonByShard(raw, shardMatchProperty, shardMatchValue);
 
         if (!map.getSource(sourceId)) {
           map.addSource(sourceId, { type: "geojson", data: data as maplibregl.GeoJSONSourceSpecification["data"] });
@@ -248,13 +320,15 @@ function ProvinceBoundaryMap({
     ro.observe(containerRef.current);
 
     return () => {
+      mapRef.current = null;
+      detachStyleImageFallback();
       ro.disconnect();
       if (map.getLayer(fillId)) map.removeLayer(fillId);
       if (map.getLayer(lineId)) map.removeLayer(lineId);
       if (map.getSource(sourceId)) map.removeSource(sourceId);
       map.remove();
     };
-  }, [show, apiKey, region, mapName, boundaryUrl]);
+  }, [show, apiKey, region, mapName, boundaryUrl, shardMatchProperty, shardMatchValue]);
 
   if (!show) return null;
 
@@ -266,6 +340,13 @@ function ProvinceBoundaryMap({
     );
   }
 
+  const handleGhimClick = () => {
+    const m = mapRef.current;
+    if (!m || !onGhimLocation) return;
+    const c = m.getCenter();
+    onGhimLocation(c.lat, c.lng);
+  };
+
   return (
     <div className="relative h-128 w-full overflow-hidden rounded-xl border border-border/60">
       <div ref={containerRef} className="size-full" />
@@ -274,6 +355,19 @@ function ProvinceBoundaryMap({
           <div className="absolute left-1/2 top-[70%] size-7 -translate-x-1/2 rounded-full bg-red-400/35 blur-[1px]" />
           <MapPin className="size-12 fill-red-500 text-red-500 drop-shadow-sm" strokeWidth={1.5} />
         </div>
+      </div>
+      <div className="pointer-events-auto absolute bottom-3 left-1/2 z-10 flex w-[min(100%-1.5rem,20rem)] -translate-x-1/2 justify-center px-1">
+        <Button
+          type="button"
+          size="sm"
+          className="w-full gap-2 shadow-md sm:w-auto"
+          disabled={!onGhimLocation || geocodePending}
+          onClick={handleGhimClick}
+        >
+          {geocodePending ? <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden /> : null}
+          <MapPin className="size-4 shrink-0" aria-hidden />
+          Ghim vị trí &amp; lấy địa chỉ
+        </Button>
       </div>
     </div>
   );
@@ -285,10 +379,16 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
     address.provinceCode || undefined,
     Boolean(address.provinceCode),
   );
-  const { boundary, isLoading: boundaryLoading } = useProvinceBoundary(
-    address.provinceCode || undefined,
-    undefined,
-    Boolean(address.provinceCode),
+  const { boundary, isLoading: boundaryLoading } = useWardBoundary(
+    address.wardCode?.trim() || undefined,
+    Boolean(address.wardCode?.trim()),
+  );
+
+  const showWard = Boolean(address.provinceCode);
+  const showMap = Boolean(address.provinceCode && address.wardCode);
+
+  const { mutateGhim, isPending: geocodePending } = useReverseGeocodeMutation(
+    useCallback((streetDetail: string) => onAddressChange({ streetDetail }), [onAddressChange]),
   );
 
   const provinceItems: SearchComboboxItem[] = useMemo(() => {
@@ -315,12 +415,11 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
     return w ? wardValue(w) : "";
   }, [wards, address.wardCode]);
 
-  const showWard = Boolean(address.provinceCode);
-  const showMap = Boolean(address.provinceCode && address.wardCode);
   const showAddressInputs = showMap;
-  const selectedProvinceLabel = useMemo(() => {
-    return provinceItems.find((x) => x.value === selectedProvinceComboValue)?.label ?? "";
-  }, [provinceItems, selectedProvinceComboValue]);
+  const streetDetailMissingHouseNumber =
+    showAddressInputs &&
+    Boolean(address.streetDetail.trim()) &&
+    !hasStreetDetailHouseNumber(address.streetDetail);
 
   return (
     <section className="text-foreground" aria-labelledby="new-branch-step1-title">
@@ -340,11 +439,10 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
             onValueChange={(v) => {
               const p = provinces.find((x) => provinceValue(x) === v);
               const api = p ? provinceApiCode(p) : v;
-              const provinceText = p ? provinceLabel(p) : "";
               onAddressChange({
                 provinceCode: api,
                 wardCode: "",
-                streetDetail: provinceText,
+                streetDetail: "",
               });
             }}
             placeholder="Chọn tỉnh / thành phố"
@@ -366,10 +464,9 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
                   onValueChange={(v) => {
                     const w = wards.find((x) => wardValue(x) === v);
                     const api = w ? wardApiCode(w) : v;
-                    const wardText = w ? wardLabel(w) : "";
                     onAddressChange({
                       wardCode: api,
-                      streetDetail: wardText && selectedProvinceLabel ? `${selectedProvinceLabel}, ${wardText}` : wardText,
+                      streetDetail: "",
                     });
                   }}
                   placeholder="Chọn phường / xã"
@@ -396,17 +493,22 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-base font-semibold">Bản đồ ranh giới</p>
-                  {boundaryLoading ? (
-                    <span className="text-sm text-muted-foreground">Đang tải ranh giới…</span>
-                  ) : null}
+                  <p className="text-xl font-semibold">Bản đồ ranh giới phường/xã</p>
+                  <div className="flex shrink-0 flex-col items-end gap-0.5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-3">
+                    {boundaryLoading ? <span>Đang tải ranh giới…</span> : null}
+                    {geocodePending ? <span>Đang lấy địa chỉ…</span> : null}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Ping cố định ở giữa, bạn di chuyển bản đồ để chọn vị trí chính xác.
+                  Kéo bản đồ để đưa điểm ping tới đúng vị trí, rồi nhấn <span className="font-medium text-foreground">Ghim vị trí &amp; lấy địa chỉ</span>
                 </p>
-                <ProvinceBoundaryMap
+                <WardBoundaryMap
                   show={showMap}
                   boundaryUrl={boundary?.boundaryUrl?.trim() || ""}
+                  shardMatchProperty={boundary?.boundaryShardMatchProperty}
+                  shardMatchValue={boundary?.boundaryShardMatchValue}
+                  onGhimLocation={mutateGhim}
+                  geocodePending={geocodePending}
                 />
               </div>
             </motion.div>
@@ -424,15 +526,30 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
               className="space-y-4 pt-5"
             >
               <div className="space-y-1.5">
-                <label htmlFor="address-street-detail" className="text-sm font-medium text-muted-foreground">
-                  Địa chỉ
-                </label>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <label htmlFor="address-street-detail" className="text-sm font-medium text-muted-foreground">
+                    Địa chỉ chi tiết
+                  </label>
+                  {geocodePending ? (
+                    <span className="text-xs text-muted-foreground">Đang lấy địa chỉ theo ghim…</span>
+                  ) : null}
+                </div>
                 <Input
                   id="address-street-detail"
                   value={address.streetDetail}
                   onChange={(e) => onAddressChange({ streetDetail: e.target.value })}
-                  className="h-11 rounded-lg border-border/70 bg-muted/20"
-                />
+                  placeholder="Ví dụ: 12 Nguyễn Văn A, hoặc 45/2 đường…"
+                  aria-invalid={streetDetailMissingHouseNumber}
+                  className={cn(
+                    "h-11 rounded-lg border-border/70 bg-muted/20",
+                    streetDetailMissingHouseNumber && "border-destructive focus-visible:ring-destructive/40",
+                  )}
+                />           
+                {streetDetailMissingHouseNumber ? (
+                  <p className="text-xs text-destructive" role="alert">
+                    Vui lòng bổ sung số nhà.
+                  </p>
+                ) : null}
               </div>
             </motion.div>
           ) : null}
@@ -441,3 +558,5 @@ export function NewBranchStep1({ address, onAddressChange }: NewBranchStep1Props
     </section>
   );
 }
+
+

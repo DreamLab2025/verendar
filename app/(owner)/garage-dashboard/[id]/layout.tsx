@@ -32,7 +32,7 @@ export default function GarageDashboardIdLayout({ children }: { children: ReactN
     <SidebarProvider
       open={sidebarOpen}
       onOpenChange={setSidebarOpen}
-      className="min-h-dvh bg-background"
+      className="h-dvh max-h-dvh min-h-0 overflow-hidden bg-background"
     >
       <Suspense fallback={null}>
         <GarageSidebar garageId={garageId} businessName={businessName} />

@@ -1,10 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { CarFront, SquarePen } from "lucide-react";
-
+import { CarFront } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyGarageQuery } from "@/hooks/useGarage";
 import { cn } from "@/lib/utils";
@@ -52,7 +49,6 @@ export function GarageInfoHeader({ garageId }: GarageInfoHeaderProps) {
   const shortName = garage.shortName?.trim();
   const logoUrl = garage.logoUrl?.trim();
 
-  const settingsHref = `/garage-dashboard/${garageId}?tab=settings`;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
@@ -93,13 +89,6 @@ export function GarageInfoHeader({ garageId }: GarageInfoHeaderProps) {
             ) : null}
           </div>
         </div>
-
-        <Button variant="outline" className="shrink-0 shadow-sm" asChild>
-          <Link href={settingsHref}>
-            <SquarePen className="size-4" aria-hidden />
-            Chỉnh sửa garage
-          </Link>
-        </Button>
       </div>
     </div>
   );

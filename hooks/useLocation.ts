@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { toast } from "sonner";
 
 import { LocationService } from "@/lib/api/services/fetchLocation";
 
@@ -9,6 +11,8 @@ export const locationQueryKeys = {
     ["locations", "provinces", code, "boundary", id ?? ""] as const,
   wards: (provinceCode: string) => ["locations", "provinces", provinceCode, "wards"] as const,
   ward: (code: string) => ["locations", "wards", code] as const,
+  wardBoundary: (code: string) => ["locations", "wards", code, "boundary"] as const,
+  reverseGeocode: (lat: number, lng: number) => ["locations", "reverse-geocode", lat, lng] as const,
   administrativeUnits: ["locations", "administrative-units"] as const,
   administrativeRegions: ["locations", "administrative-regions"] as const,
 };
@@ -154,6 +158,115 @@ export function useWard(code: string | undefined, enabled = true) {
     isSuccess: data?.isSuccess,
     statusCode: data?.statusCode,
     metadata: data?.metadata,
+  };
+}
+
+export function useWardBoundary(code: string | undefined, enabled = true) {
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: locationQueryKeys.wardBoundary(code ?? ""),
+    queryFn: () => LocationService.getWardBoundaryByCode(code as string),
+    enabled: !!code?.trim() && enabled,
+    select: (res) => ({
+      boundary: res.data,
+      message: res.message,
+      isSuccess: res.isSuccess,
+      statusCode: res.statusCode,
+      metadata: res.metadata,
+    }),
+  });
+
+  return {
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    boundary: data?.boundary ?? null,
+    message: data?.message,
+    isSuccess: data?.isSuccess,
+    statusCode: data?.statusCode,
+    metadata: data?.metadata,
+  };
+}
+
+export const reverseGeocodeCoordsValid = (lat: number | undefined, lng: number | undefined) =>
+  lat != null &&
+  lng != null &&
+  Number.isFinite(lat) &&
+  Number.isFinite(lng) &&
+  Math.abs(lat) <= 90 &&
+  Math.abs(lng) <= 180;
+
+/**
+ * Reverse geocode theo tọa độ WGS84.
+ * Response body: `{ address: string | null }` (không bọc `isSuccess`/`data`).
+ */
+export function useReverseGeocode(
+  lat: number | undefined,
+  lng: number | undefined,
+  enabled = true,
+) {
+  const coordsOk = reverseGeocodeCoordsValid(lat, lng);
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey:
+      coordsOk && enabled
+        ? locationQueryKeys.reverseGeocode(lat as number, lng as number)
+        : (["locations", "reverse-geocode", "idle"] as const),
+    queryFn: () => LocationService.reverseGeocode(lat as number, lng as number),
+    enabled: coordsOk && enabled,
+    select: (body) => ({
+      address: body.data?.address ?? null,
+    }),
+  });
+
+  return {
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    address: data?.address ?? null,
+  };
+}
+
+/**
+ * Reverse geocode khi ghim vị trí trên map — `onSuccess` / `onError` xử lý trong hook (toast + gọi `onStreetDetailApplied` khi có chuỗi địa chỉ).
+ */
+export function useReverseGeocodeMutation(onStreetDetailApplied: (streetDetail: string) => void) {
+  const mutation = useMutation({
+    mutationFn: ({ lat, lng }: { lat: number; lng: number }) => LocationService.reverseGeocode(lat, lng),
+  });
+
+  const mutateGhim = useCallback(
+    (lat: number, lng: number) => {
+      if (!reverseGeocodeCoordsValid(lat, lng)) {
+        toast.error("Tọa độ không hợp lệ.");
+        return;
+      }
+      mutation.mutate(
+        { lat, lng },
+        {
+          onSuccess: (data) => {
+            const next = data.data?.address?.trim();
+            if (next) {
+              onStreetDetailApplied(next);
+            } else {
+              toast.message("Không có địa chỉ cho vị trí này.");
+            }
+            toast.success(data.message || "Lấy địa chỉ thành công!");
+          },
+          onError: () => {
+            toast.error("Không lấy được địa chỉ. Thử lại sau.");
+          },
+        },
+      );
+    },
+    [mutation, onStreetDetailApplied],
+  );
+
+  return {
+    mutateGhim,
+    isPending: mutation.isPending,
   };
 }
 

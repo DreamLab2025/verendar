@@ -83,11 +83,38 @@ export interface ProvinceBoundaryData {
   boundaryUrl: string | null;
 }
 
+export interface WardBoundaryData {
+  code: string | null;
+  name: string | null;
+  boundaryUrl: string | null;
+  boundaryShardMatchProperty: string | null;
+  boundaryShardMatchValue: string | null;
+}
 export interface ProvinceBoundaryResponse {
   isSuccess: boolean;
   statusCode?: number;
   message: string | null;
   data: ProvinceBoundaryData;
+  metadata: unknown;
+}
+
+/** GET /api/v1/locations/wards/{code}/boundary — cùng shape `data` với province boundary */
+export interface WardBoundaryResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: WardBoundaryData;
+  metadata: unknown;
+}
+
+/** Body JSON trực tiếp — GET /api/internal/locations/reverse-geocode?lat=&lng= */
+export interface ReverseGeocodeResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: {
+  address: string | null;
+  };
   metadata: unknown;
 }
 
@@ -121,6 +148,14 @@ export const LocationService = {
     return response.data;
   },
 
+  /** `code` — mã phường/xã (path segment, đã encode). */
+  getWardBoundaryByCode: async (code: string) => {
+    const response = await api8080Service.get<WardBoundaryResponse>(
+      `/api/v1/locations/wards/${encodeURIComponent(code)}/boundary`,
+    );
+    return response.data;
+  },
+
   getAdministrativeUnits: async () => {
     const response = await api8080Service.get<AdministrativeUnitsListResponse>(
       "/api/v1/locations/administrative-units",
@@ -144,6 +179,18 @@ export const LocationService = {
       `/api/v1/locations/provinces/${encodeURIComponent(code)}/boundary`,
       id == null ? undefined : { Id: id },
     );
+    return response.data;
+  },
+
+  /**
+   * GET /api/internal/locations/reverse-geocode
+   * Query: `lat`, `lng` (số — client gửi dạng string qua query).
+   */
+  reverseGeocode: async (lat: number, lng: number) => {
+    const response = await api8080Service.get<ReverseGeocodeResponse>("/api/v1/locations/reverse-geocode", {
+      lat,
+      lng,
+    });
     return response.data;
   },
 };
