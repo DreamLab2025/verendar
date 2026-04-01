@@ -6,6 +6,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { getAmazonLocationStyleDescriptorUrl } from "@/lib/maps/aws-location-style";
+import { attachMapLibreStyleImageMissingFallback } from "@/lib/maps/maplibre-style-image-fallback";
 import { cn } from "@/lib/utils";
 
 function BranchMapMarkerPill({ label }: { label: string }) {
@@ -75,6 +76,8 @@ export function AwsBranchMiniMap({
       attributionControl: false,
     });
 
+    const detachStyleImageFallback = attachMapLibreStyleImageMissingFallback(map);
+
     const pillHost = document.createElement("div");
     const pillRoot: Root = createRoot(pillHost);
     pillRoot.render(<BranchMapMarkerPill label={name.trim() || statusLabel || "Chi nhánh"} />);
@@ -95,6 +98,7 @@ export function AwsBranchMiniMap({
     return () => {
       ro.disconnect();
       marker.remove();
+      detachStyleImageFallback();
       map.remove();
       // Tránh unmount đồng bộ trong commit React (Strict Mode / list re-render) → race với renderer.
       queueMicrotask(() => {

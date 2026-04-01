@@ -5,6 +5,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { getAmazonLocationStyleDescriptorUrl } from "@/lib/maps/aws-location-style";
+import { attachMapLibreStyleImageMissingFallback } from "@/lib/maps/maplibre-style-image-fallback";
 import { cn } from "@/lib/utils";
 
 export interface AwsGrabMapProps {
@@ -53,6 +54,8 @@ export function AwsGrabMap({
       attributionControl: false,
     });
 
+    const detachStyleImageFallback = attachMapLibreStyleImageMissingFallback(map);
+
     map.addControl(new maplibregl.NavigationControl(), "top-left");
     map.once("load", () => {
       map.resize();
@@ -67,6 +70,7 @@ export function AwsGrabMap({
 
     return () => {
       ro.disconnect();
+      detachStyleImageFallback();
       map.remove();
       mapRef.current = null;
     };

@@ -29,7 +29,7 @@ export function GarageSidebar({ garageId, businessName }: GarageSidebarProps) {
       collapsible="icon"
       variant="sidebar"
       className={cn(
-        "h-dvh min-h-0 max-h-dvh self-stretch border-border/60 bg-muted/20 shadow-none",
+        "h-full max-h-full min-h-0 shrink-0 self-stretch border-border/60 bg-muted/20 shadow-none",
         "hidden lg:flex",
       )}
     >
@@ -46,7 +46,7 @@ export function GarageSidebar({ garageId, businessName }: GarageSidebarProps) {
           </span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="space-y-0">
+      <SidebarContent className="min-h-0 space-y-0">
         <nav className="flex flex-col gap-1" aria-label="Garage dashboard">
           {items.map(({ title: label, href, icon: Icon, tab }) => {
             const active = isGarageDashboardNavItemActive(pathname, garageId, searchParams, tab);

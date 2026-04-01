@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { CarFront } from "lucide-react";
 
+import { GarageDialog } from "@/components/dialog/garage/GarageDialog";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -17,8 +18,12 @@ import { cn } from "@/lib/utils";
 
 export function GarageOwnerShell({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider defaultOpen={false} collapsible="offcanvas">
-      <div className="flex h-dvh w-full overflow-hidden">
+    <SidebarProvider
+      defaultOpen={false}
+      collapsible="offcanvas"
+      className="h-dvh max-h-dvh min-h-0 overflow-hidden bg-background"
+    >
+      <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden">
         <Sidebar collapsible="offcanvas" variant="sidebar">
           <SidebarHeader>
             <div className="flex items-center gap-3 px-1">
@@ -32,9 +37,11 @@ export function GarageOwnerShell({ children }: { children: ReactNode }) {
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <Button type="button" className="w-full shadow-sm">
-              Tạo garage
-            </Button>
+            <GarageDialog>
+              <Button type="button" className="w-full shadow-sm">
+                Tạo garage
+              </Button>
+            </GarageDialog>
           </SidebarContent>
           <SidebarFooter className="mt-auto" />
         </Sidebar>
