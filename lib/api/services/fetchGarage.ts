@@ -339,6 +339,148 @@ export interface PatchGarageBranchStatusPayload {
 /** PATCH branch status — `data` là chi nhánh đầy đủ */
 export type GarageBranchStatusPatchResponse = GarageBranchDetailResponse;
 
+/** GET /api/v1/garage-catalog/{branchId} — public, lọc theo BE (Type: service/product/bundle, CategoryId). */
+export type GarageCatalogItemType = "Service" | "Product" | "Bundle";
+
+export interface GarageCatalogPriceDto {
+  amount: number;
+  currency: string;
+}
+
+export interface GarageCatalogItemDto {
+  id: string;
+  type: GarageCatalogItemType | string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  price: GarageCatalogPriceDto;
+  estimatedDurationMinutes: number | null;
+  status: string;
+  createdAt: string;
+  serviceCategoryId: string | null;
+  serviceCategoryName: string | null;
+  partCategoryId: string | null;
+  hasInstallationOption: boolean;
+  itemCount: number | null;
+  subTotal: number | null;
+  finalPrice: number | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
+  currency: string;
+}
+
+export interface GarageCatalogListResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageCatalogItemDto[];
+  metadata: PaginationMetadata | null;
+}
+
+export interface GarageCatalogQueryParams extends RequestParams {
+  PageNumber: number;
+  PageSize: number;
+  /** Lọc loại mục — BE thường dùng Service | Product | Bundle (PascalCase). */
+  Type?: string;
+  CategoryId?: string;
+}
+
+/** GET /api/v1/garage-products/{id} — chi tiết phụ tùng (có thể kèm dịch vụ lắp). */
+export interface GarageProductInstallationServiceDto {
+  id: string;
+  name: string;
+  laborPrice: GarageCatalogPriceDto;
+  estimatedDurationMinutes: number | null;
+}
+
+export interface GarageProductDetailDto {
+  id: string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  materialPrice: GarageCatalogPriceDto;
+  estimatedDurationMinutes: number | null;
+  imageUrl: string | null;
+  compatibleVehicleTypes: string | null;
+  manufacturerKmInterval: number | null;
+  manufacturerMonthInterval: number | null;
+  partCategoryId: string | null;
+  status: string;
+  installationService: GarageProductInstallationServiceDto | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface GarageProductDetailResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageProductDetailDto;
+  metadata: null;
+}
+
+/** GET /api/v1/garage-services/{id} — chi tiết dịch vụ (nhân công). */
+export interface GarageServiceDetailDto {
+  id: string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  laborPrice: GarageCatalogPriceDto;
+  serviceCategoryId: string | null;
+  serviceCategoryName: string | null;
+  estimatedDurationMinutes: number | null;
+  imageUrl: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface GarageServiceDetailResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageServiceDetailDto;
+  metadata: null;
+}
+
+/** GET /api/v1/garage-bundles/{id} — chi tiết combo kèm danh sách items. */
+export interface GarageBundleItemDto {
+  id: string;
+  productId: string | null;
+  serviceId: string | null;
+  includeInstallation: boolean;
+  sortOrder: number;
+  itemName: string;
+  materialPrice: GarageCatalogPriceDto | null;
+  laborPrice: GarageCatalogPriceDto | null;
+}
+
+export interface GarageBundleDetailDto {
+  id: string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
+  subTotal: number;
+  finalPrice: number;
+  currency: string;
+  status: string;
+  items: GarageBundleItemDto[];
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface GarageBundleDetailResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageBundleDetailDto;
+  metadata: null;
+}
+
 export const GarageService = {
   getGarages: async (params: GaragesQueryParams) => {
     const res = await api8080Service.get<GaragesListResponse>("/api/v1/garages", params);
@@ -445,6 +587,26 @@ export const GarageService = {
       `/api/v1/garages/${garageId}/branches/${branchId}/status`,
       payload,
     );
+    return res.data;
+  },
+
+  getGarageCatalog: async (branchId: string, params: GarageCatalogQueryParams) => {
+    const res = await api8080Service.get<GarageCatalogListResponse>(`/api/v1/garage-catalog/${branchId}`, params);
+    return res.data;
+  },
+
+  getGarageProductById: async (id: string) => {
+    const res = await api8080Service.get<GarageProductDetailResponse>(`/api/v1/garage-products/${id}`);
+    return res.data;
+  },
+
+  getGarageServiceById: async (id: string) => {
+    const res = await api8080Service.get<GarageServiceDetailResponse>(`/api/v1/garage-services/${id}`);
+    return res.data;
+  },
+
+  getGarageBundleById: async (id: string) => {
+    const res = await api8080Service.get<GarageBundleDetailResponse>(`/api/v1/garage-bundles/${id}`);
     return res.data;
   },
 };

@@ -37,13 +37,13 @@ type NavItem = {
 
 const MAIN_NAV: NavItem[] = [
   { title: "Phương tiện", href: "/", icon: CarFront },
-  { title: "Garage", href: "/user/dashboard", icon: HomeIcon },
+  { title: "Garage", href: "/user/garage", icon: HomeIcon },
   { title: "Thông báo", href: "/notifications", icon: CalendarClock },
   { title: "Lịch sử", href: "/logs", icon: ClipboardList },
 ];
 
 const HELP_NAV: NavItem[] = [
-  { title: "Kham pha garage", href: "/garage", icon: Compass },
+  { title: "Kham pha garage", href: "/user/garage", icon: Compass },
   { title: "Thong bao", href: "/notifications", icon: Bell },
   { title: "Tro giup", href: "/support", icon: LifeBuoy },
   { title: "Cai dat", href: "/settings", icon: Settings },
@@ -72,7 +72,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {MAIN_NAV.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
 
                 return (
