@@ -63,7 +63,12 @@ export default function SafeImage({
         alt={alt}
         width={width}
         height={height}
-        className={cn(fill ? 'absolute inset-0 w-full h-full object-cover' : '', className)}
+        className={cn(
+          fill
+            ? 'absolute inset-0 box-border max-h-full max-w-full min-h-0 min-w-0 h-full w-full object-cover'
+            : '',
+          className,
+        )}
         onError={handleImageError}
         loading={priority ? 'eager' : 'lazy'}
       />

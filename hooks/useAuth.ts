@@ -10,6 +10,21 @@ import apiService from "@/lib/api/apiService";
 import type { ApiError } from "@/lib/api/apiService";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
 
+export function isAccessTokenValid(token: string | null | undefined): boolean {
+  if (!token) return false;
+  try {
+    const part = token.split(".")[1];
+    if (!part) return false;
+    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = JSON.parse(atob(base64)) as { exp?: number };
+    const expMs = decoded.exp ? decoded.exp * 1000 : 0;
+    if (expMs && expMs < Date.now()) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: null, accessToken: null, loading: false, error: null });
 

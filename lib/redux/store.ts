@@ -1,7 +1,17 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 import authReducer from "@/lib/redux/slices/authSlice";
+
+/** Avoid redux-persist `getStorage` on the server (no localStorage) — removes sync-storage console error in Next.js. */
+const persistStorage =
+  typeof window !== "undefined"
+    ? createWebStorage("local")
+    : {
+        getItem: () => Promise.resolve(null),
+        setItem: () => Promise.resolve(),
+        removeItem: () => Promise.resolve(),
+      };
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -10,7 +20,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   version: 1,
-  storage,
+  storage: persistStorage,
   whitelist: ["auth"],
 };
 

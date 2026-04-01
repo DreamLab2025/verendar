@@ -19,6 +19,18 @@ function asPaginationMetadata(metadata: unknown): Partial<PaginationMetadata> | 
   return metadata as Partial<PaginationMetadata>;
 }
 
+/** Tránh hai object filter cùng nội dung nhưng khác reference → queryKey khác / refetch oan. */
+function stableFiltersKey(filters: RequestParams | undefined): string {
+  if (filters == null || Object.keys(filters).length === 0) return "{}";
+  const keys = Object.keys(filters).sort();
+  const sorted: Record<string, unknown> = {};
+  for (const k of keys) {
+    const v = filters[k];
+    if (v !== undefined && v !== null) sorted[k] = v;
+  }
+  return JSON.stringify(sorted);
+}
+
 interface UseInfinityScrollOptions<TItem, TFilters extends RequestParams = RequestParams> {
   queryKey: QueryKey;
   fetchPage: (params: TFilters & { pageNumber: number; pageSize: number }) => Promise<ApiResponse<TItem[]>>;
@@ -29,6 +41,9 @@ interface UseInfinityScrollOptions<TItem, TFilters extends RequestParams = Reque
   staleTime?: number;
   gcTime?: number;
   refetchOnWindowFocus?: boolean;
+  /** Mặc định true: infinite query refetch *mọi trang* khi mount lại → dễ bùng API. Catalog có thể tắt khi đã cache. */
+  refetchOnMount?: boolean;
+  refetchOnReconnect?: boolean;
   errorMessage?: string;
   mapItems?: (response: ApiResponse<TItem[]>) => TItem[];
 }
@@ -41,18 +56,23 @@ export function useInfinityScroll<TItem, TFilters extends RequestParams = Reques
   scrollOffset = 16,
   enabled = true,
   staleTime = 0,
-  gcTime = 0,
+  /** Giữ cache khi đổi filter/tab (observer = 0). Mặc định trước đây là 0 → mỗi lần đổi tab là mất cache và gọi API lại. */
+  gcTime = 1000 * 60 * 5,
   refetchOnWindowFocus = false,
+  refetchOnMount,
+  refetchOnReconnect,
   errorMessage = "Khong the tai du lieu",
   mapItems,
 }: UseInfinityScrollOptions<TItem, TFilters>) {
   const infiniteQuery = useInfiniteQuery({
-    queryKey: [...queryKey, filters ?? {}, pageSize],
+    queryKey: [...queryKey, stableFiltersKey(filters), pageSize],
     initialPageParam: 1,
     enabled,
     staleTime,
     gcTime,
     refetchOnWindowFocus,
+    refetchOnMount,
+    refetchOnReconnect,
     queryFn: async ({ pageParam }): Promise<InfinitePageResult<TItem>> => {
       const response = await fetchPage({
         ...(filters ?? ({} as TFilters)),

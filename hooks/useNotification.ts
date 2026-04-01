@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import NotificationService, { ApiNotification, InAppNotificationPayload, MarkAsReadResponse, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
 
 import notificationHubService from "@/hubs/notificationHub";
-import { useAuth } from "./useAuth";
+import { isAccessTokenValid, useAuth } from "./useAuth";
 import { toast } from "sonner";
 import { ReminderLevel } from "@/lib/api/services/fetchTrackingReminder";
 import { Notification } from "@/lib/api/services/fetchNotification";
@@ -171,7 +171,7 @@ export function useNotificationListener() {
   const { resolvedAccessToken: accessToken } = useAuth();
 
   useEffect(() => {
-    if (!accessToken) {
+    if (!accessToken || !isAccessTokenValid(accessToken)) {
       return;
     }
 

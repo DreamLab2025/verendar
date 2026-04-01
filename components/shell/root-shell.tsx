@@ -9,6 +9,7 @@ import { Globe } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
+import { BookingCartHeaderButton } from "@/components/shell/booking-cart-header";
 import { NotificationInboxPopover } from "@/components/shell/notification-inbox-popover";
 import { NotificationRealtimeBridge } from "@/components/shell/notification-realtime-bridge";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ export function RootShell({ children }: RootShellProps) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
+            <BookingCartHeaderButton />
             <NotificationInboxPopover />
             <Button variant="ghost" size="icon" className="size-10 rounded-full md:size-9" asChild>
               <Link href="/settings" aria-label="Ngôn ngữ và cài đặt">

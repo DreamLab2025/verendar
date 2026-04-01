@@ -8,6 +8,7 @@ import GarageService, {
   type CreateGaragePayload,
   type GarageBranchDto,
   type GarageBranchMapItemDto,
+  type GarageCatalogItemDto,
   type GarageDto,
   type GarageBranchesMapsQueryParams,
   type GarageBranchesQueryParams,
@@ -115,6 +116,107 @@ export function useGarageBranchByIdQuery(
     queryFn: () => GarageService.getGarageBranchById(garageId!, branchId!),
     enabled: Boolean(garageId) && Boolean(branchId) && enabled,
   });
+}
+
+export function useGarageProductByIdQuery(id: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ["garage-products", "detail", id],
+    queryFn: async () => {
+      const body = await GarageService.getGarageProductById(id!);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được chi tiết sản phẩm.");
+      }
+      return body.data;
+    },
+    enabled: Boolean(id) && enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useGarageServiceByIdQuery(id: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ["garage-services", "detail", id],
+    queryFn: async () => {
+      const body = await GarageService.getGarageServiceById(id!);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được chi tiết dịch vụ.");
+      }
+      return body.data;
+    },
+    enabled: Boolean(id) && enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useGarageBundleByIdQuery(id: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ["garage-bundles", "detail", id],
+    queryFn: async () => {
+      const body = await GarageService.getGarageBundleById(id!);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được chi tiết combo.");
+      }
+      return body.data;
+    },
+    enabled: Boolean(id) && enabled,
+    staleTime: 60_000,
+  });
+}
+
+export type GarageCatalogTypeFilter = "service" | "product" | "bundle";
+
+/** Giá trị query `Type` gửi lên API (BE Garage dùng PascalCase giống field `type` trong JSON). */
+const GARAGE_CATALOG_TYPE_API: Record<GarageCatalogTypeFilter, "Service" | "Product" | "Bundle"> = {
+  service: "Service",
+  product: "Product",
+  bundle: "Bundle",
+};
+
+export type GarageCatalogInfiniteFilters = {
+  Type?: GarageCatalogTypeFilter;
+};
+
+export function useGarageCatalogInfinite(
+  branchId: string | undefined,
+  filters: GarageCatalogInfiniteFilters = {},
+  options?: { pageSize?: number; enabled?: boolean },
+) {
+  const pageSize = options?.pageSize ?? 12;
+  const enabled = options?.enabled ?? true;
+
+  const infinite = useInfinityScroll<GarageCatalogItemDto, GarageCatalogInfiniteFilters>({
+    queryKey: ["garage-catalog", branchId],
+    fetchPage: async ({ pageNumber, pageSize: size, ...rest }) => {
+      const typeParam = rest.Type ? GARAGE_CATALOG_TYPE_API[rest.Type] : undefined;
+      const body = await GarageService.getGarageCatalog(branchId!, {
+        PageNumber: pageNumber,
+        PageSize: size,
+        ...(typeParam ? { Type: typeParam } : {}),
+      });
+      return {
+        isSuccess: body.isSuccess,
+        message: body.message ?? "",
+        data: body.data,
+        metadata: body.metadata ?? undefined,
+      };
+    },
+    filters,
+    pageSize,
+    enabled: Boolean(branchId) && enabled,
+    /** 1 phút vẫn “fresh” → quay lại tab cũ không refetch; cache giữ 30 phút để không gọi lại khi lưới qua các tab. */
+    staleTime: 60_000,
+    gcTime: 1000 * 60 * 30,
+    /** Đã có nhiều trang → remount/refetch mặc định gọi lại *từng trang* → bùng request. */
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  const items = useMemo(() => flattenInfinitePages(infinite.data?.pages), [infinite.data?.pages]);
+
+  return {
+    ...infinite,
+    items,
+  };
 }
 
 export type GaragesInfiniteFilters = Pick<GaragesQueryParams, "status" | "isDescending">;

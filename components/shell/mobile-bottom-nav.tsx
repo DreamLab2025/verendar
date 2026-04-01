@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const ITEMS: { href: string; label: string; icon: typeof CarFront; match: (p: string) => boolean }[] = [
   { href: "/", label: "Xe", icon: CarFront, match: (p) => p === "/" || p.startsWith("/vehicle/") },
-  { href: "/user/dashboard", label: "Garage", icon: HomeIcon, match: (p) => p.startsWith("/user/dashboard") },
+  { href: "/user/garage", label: "Garage", icon: HomeIcon, match: (p) => p.startsWith("/user/garage") },
   { href: "/notifications", label: "Nhắc", icon: CalendarClock, match: (p) => p.startsWith("/notifications") },
   { href: "/settings", label: "Cài đặt", icon: Settings, match: (p) => p.startsWith("/settings") },
 ];

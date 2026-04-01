@@ -3,7 +3,7 @@
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { useEffect, useMemo, useState } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
+import { isAccessTokenValid, useAuth } from "@/hooks/useAuth";
 import { store } from "@/lib/redux/store";
 
 // —— URL (env + mặc định `/hubs/notifications`) ——————————————————————
@@ -37,7 +37,7 @@ class NotificationHubService {
         accessTokenFactory: () => token,
       })
       .withAutomaticReconnect()
-      .configureLogging(process.env.NODE_ENV === "development" ? LogLevel.Information : LogLevel.Warning)
+      .configureLogging(LogLevel.Warning)
       .build();
 
     return this.connection;
@@ -115,7 +115,7 @@ export function useNotificationHubConnection() {
 
   return useMemo(() => {
     void tick;
-    if (!accessToken) {
+    if (!accessToken || !isAccessTokenValid(accessToken)) {
       return {
         status: "no_auth" as NotificationHubUiStatus,
         label: "Chưa đăng nhập",
@@ -172,7 +172,7 @@ export function getHubConnection() {
       accessTokenFactory: () => store.getState().auth.token || "",
     })
     .withAutomaticReconnect()
-    .configureLogging(process.env.NODE_ENV === "development" ? LogLevel.Information : LogLevel.Warning)
+    .configureLogging(LogLevel.Warning)
     .build();
   return reduxHubConnection;
 }
