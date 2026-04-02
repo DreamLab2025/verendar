@@ -43,12 +43,12 @@ class NotificationHubService {
     return this.connection;
   }
 
-  async startConnection(token: string, callback?: HubCallback): Promise<boolean> {
+  /** Chỉ bật kết nối — không đăng ký handler (tránh trùng handler khi async race / Strict Mode). Handler gọi `on("Notification", cb)` sau khi await. */
+  async startConnection(token: string): Promise<boolean> {
     if (!token) return false;
 
     const conn = this.ensureConnection(token);
     if (conn.state === HubConnectionState.Connected) {
-      if (callback) conn.on("Notification", callback);
       return true;
     }
 
@@ -57,13 +57,17 @@ class NotificationHubService {
     try {
       this.isConnecting = true;
       await conn.start();
-      if (callback) conn.on("Notification", callback);
       return true;
     } catch {
       return false;
     } finally {
       this.isConnecting = false;
     }
+  }
+
+  /** Gỡ mọi listener method `Notification` (một hub chỉ một subscriber UI). */
+  offAllNotifications() {
+    this.connection?.off("Notification");
   }
 
   async stopConnection(): Promise<void> {

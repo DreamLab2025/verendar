@@ -17,6 +17,7 @@ import { useBrands } from "@/hooks/useBrand";
 import { useModels } from "@/hooks/useModel";
 import { useVariantsByModelId } from "@/hooks/useVariants";
 import { useCreateUserVehicle } from "@/hooks/useUserVehice";
+import { PurchaseDateField } from "@/components/garage/purchase-date-field";
 import SafeImage from "@/components/ui/SafeImage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -634,10 +635,9 @@ export function CreateVehicleFlow({ onSuccess, onRequestExit }: CreateVehicleFlo
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-[12px] text-muted-foreground">Ngày mua *</Label>
-                      <Input
-                        type="date"
+                      <PurchaseDateField
                         value={form.purchaseDate}
-                        onChange={(e) => setForm((p) => ({ ...p, purchaseDate: e.target.value }))}
+                        onChange={(purchaseDate) => setForm((p) => ({ ...p, purchaseDate }))}
                       />
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
