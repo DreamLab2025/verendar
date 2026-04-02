@@ -3,15 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   CalendarClock,
   CarFront,
   ClipboardList,
-  Compass,
   HomeIcon,
-  LayoutDashboard,
-  LifeBuoy,
-  Settings,
+  PenLine,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -40,14 +36,15 @@ const MAIN_NAV: NavItem[] = [
   { title: "Garage", href: "/user/garage", icon: HomeIcon },
   { title: "Thông báo", href: "/notifications", icon: CalendarClock },
   { title: "Lịch sử", href: "/logs", icon: ClipboardList },
+  { title: "Phản hồi", href: "/feedback", icon: PenLine },
 ];
 
-const HELP_NAV: NavItem[] = [
-  { title: "Kham pha garage", href: "/user/garage", icon: Compass },
-  { title: "Thong bao", href: "/notifications", icon: Bell },
-  { title: "Tro giup", href: "/support", icon: LifeBuoy },
-  { title: "Cai dat", href: "/settings", icon: Settings },
-];
+// const HELP_NAV: NavItem[] = [
+//   { title: "Kham pha garage", href: "/user/garage", icon: Compass },
+//   { title: "Thong bao", href: "/notifications", icon: Bell },
+//   { title: "Tro giup", href: "/support", icon: LifeBuoy },
+//   { title: "Cai dat", href: "/settings", icon: Settings },
+// ];
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -100,7 +97,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="space-y-2.5">
+        {/* <SidebarGroup className="space-y-2.5">
           <SidebarGroupLabel>Tien ich</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -121,7 +118,7 @@ export function AppSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>
+        </SidebarGroup> */}
       </SidebarContent>
 
       <SidebarFooter />

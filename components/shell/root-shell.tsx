@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Globe } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { BookingCartHeaderButton } from "@/components/shell/booking-cart-header";
 import { NotificationInboxPopover } from "@/components/shell/notification-inbox-popover";
@@ -48,10 +49,12 @@ export function RootShell({ children }: RootShellProps) {
     return <>{children}</>;
   }
 
+  const isAdminRoute = pathname.startsWith("/admin");
+
   return (
     <SidebarProvider defaultOpen>
       <NotificationRealtimeBridge />
-      <AppSidebar />
+      {isAdminRoute ? <AdminSidebar /> : <AppSidebar />}
       <SidebarInset className="h-dvh overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-linear-to-b from-primary/10 via-primary/5 to-transparent" />
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border/50 bg-background/80 px-3 backdrop-blur-xl supports-backdrop-filter:bg-background/70 md:h-16 md:border-border/60 md:bg-background/65 md:px-6 md:supports-backdrop-filter:bg-background/65">

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtDecode } from "jwt-decode";
 
-const BYPASS_AUTH_FOR_UI_TEST = true;
+const BYPASS_AUTH_FOR_UI_TEST = false;
 
 const ADMIN_HOME = "/admin/dashboard";
 const USER_HOME = "/";
@@ -56,11 +56,19 @@ export function proxy(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith("/admin");
 
-  if (isAuthRoute || pathname === "/" || pathname === "") {
+  if (isAuthRoute) {
     if (primaryRole === "admin") {
       return NextResponse.redirect(new URL(ADMIN_HOME, request.url));
     }
     return NextResponse.redirect(new URL(USER_HOME, request.url));
+  }
+
+  if (pathname === "/" || pathname === "") {
+    if (primaryRole === "admin") {
+      return NextResponse.redirect(new URL(ADMIN_HOME, request.url));
+    }
+    // Allow users to access root route normally
+    return NextResponse.next();
   }
 
   if (primaryRole === "admin") {
