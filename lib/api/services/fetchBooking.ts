@@ -32,8 +32,8 @@ export interface BookingBundleDetailItemDto {
 export interface BookingBundleDetailsDto {
   id: string;
   name: string;
-  discountAmount: number;
-  discountPercent: number;
+  discountAmount: number | null;
+  discountPercent: number | null;
   items: BookingBundleDetailItemDto[];
 }
 
@@ -103,8 +103,9 @@ export interface BookingDetailDto {
   branch: BookingBranchSummaryDto;
   lineItems: BookingLineItemDto[];
   statusHistory: BookingStatusHistoryDto[];
-  customer: BookingCustomerDto;
-  vehicle: BookingVehicleDto;
+  /** API tạo đơn đôi khi trả null — UI có thể merge từ client (JWT + xe đã chọn). */
+  customer: BookingCustomerDto | null;
+  vehicle: BookingVehicleDto | null;
 }
 
 export interface CreateBookingResponse {

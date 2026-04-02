@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Bookmark,
   Building2,
+  ChevronRight,
   Heart,
   MapPin,
   MessageCircle,
@@ -39,6 +40,8 @@ export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCar
   const active = isGarageBranchStatusActive(branch.status);
   const statusShort = active ? "Hoạt động" : getGarageBranchStatusLabelVi(branch.status);
 
+  const reviewLabel = reviews === 0 ? "Chưa có đánh giá" : `${reviews} đánh giá`;
+
   return (
     <article
       role="button"
@@ -51,13 +54,23 @@ export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCar
         }
       }}
       className={cn(
-        "group flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-card text-left shadow-sm transition-all",
+        "group flex cursor-pointer overflow-hidden text-left transition-[background-color,box-shadow] duration-150",
+        "flex-row items-stretch gap-2 rounded-lg px-0 py-1.5 md:flex-col md:gap-0 md:rounded-2xl md:px-0 md:py-0",
+        "border-0 bg-transparent shadow-none md:border md:bg-card md:shadow-sm",
         selected
-          ? "border-primary ring-2 ring-primary/30 shadow-md"
-          : "border-border/60 hover:border-border hover:shadow-md",
+          ? "bg-muted/70 ring-1 ring-primary/25 md:border-primary md:bg-card md:ring-2 md:ring-primary/25 md:shadow-md"
+          : "hover:bg-muted/40 md:hover:border-border md:hover:shadow-md",
+        "md:border md:border-border/60",
+        "active:bg-muted/60 md:active:bg-transparent",
       )}
     >
-      <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
+      {/* Ảnh — mobile nhỏ, tối giản badge */}
+      <div
+        className={cn(
+          "relative shrink-0 overflow-hidden bg-muted",
+          "size-12 rounded-md md:size-auto md:rounded-none md:rounded-t-2xl md:aspect-4/3",
+        )}
+      >
         {branch.coverImageUrl ? (
           <SafeImage
             src={branch.coverImageUrl}
@@ -67,13 +80,23 @@ export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCar
           />
         ) : (
           <div className="grid size-full place-items-center bg-linear-to-br from-muted to-muted/60">
-            <Building2 className="size-12 text-muted-foreground/50" aria-hidden />
+            <Building2 className="size-5 text-muted-foreground/45 md:size-12" aria-hidden />
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/35 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/25 via-transparent to-transparent md:from-black/35" />
 
-        <div className="pointer-events-none absolute left-2 top-2 flex flex-wrap gap-1.5">
+        {/* Mobile: chấm trạng thái */}
+        <span
+          className={cn(
+            "absolute bottom-1 right-1 size-2 rounded-full border-2 border-background shadow-sm md:hidden",
+            active ? "bg-emerald-500" : "bg-muted-foreground/60",
+          )}
+          title={statusShort}
+          aria-hidden
+        />
+
+        <div className="pointer-events-none absolute left-1.5 top-1.5 hidden max-w-[calc(100%-0.75rem)] flex-wrap gap-1 md:flex md:left-2 md:top-2 md:gap-1.5">
           <span
             className={cn(
               "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide backdrop-blur-sm",
@@ -87,22 +110,22 @@ export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCar
           </span>
         </div>
 
-        <div className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-white backdrop-blur-sm">
+        <div className="pointer-events-none absolute bottom-2 right-2 hidden rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-white backdrop-blur-sm md:block">
           1/1
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 md:gap-2 md:p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground">
+            <p className="line-clamp-1 text-[13px] font-semibold leading-tight tracking-tight text-foreground md:line-clamp-2 md:text-[15px] md:font-bold">
               {headline}
             </p>
             {subline ? (
-              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{subline}</p>
+              <p className="mt-0 line-clamp-1 text-[11px] text-muted-foreground md:mt-0.5 md:text-xs">{subline}</p>
             ) : null}
           </div>
-          <div className="flex shrink-0 gap-0.5" onClick={(e) => e.stopPropagation()}>
+          <div className="hidden shrink-0 gap-0.5 md:flex" onClick={(e) => e.stopPropagation()}>
             <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground" aria-label="Lưu">
               <Bookmark className="size-4" />
             </Button>
@@ -115,30 +138,71 @@ export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCar
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <Star className="size-3.5 fill-amber-400 text-amber-500" aria-hidden />
-            <span className="font-semibold text-foreground">{rating != null ? rating.toFixed(1) : "—"}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <MessageCircle className="size-3.5 opacity-80" aria-hidden />
-            <span>{reviews} đánh giá</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Building2 className="size-3.5 opacity-80" aria-hidden />
-            <span className="truncate">Garage</span>
-          </span>
+        {/* Mobile: nội dung trái + Đặt lịch căn phải cùng hàng */}
+        <div className="flex min-h-0 min-w-0 items-center gap-2 md:contents">
+          <div className="min-w-0 flex-1 space-y-0.5 md:contents">
+            <p className="flex min-w-0 items-center gap-1 text-[10px] tabular-nums text-muted-foreground md:hidden">
+              <Star className="size-2.5 shrink-0 fill-amber-400 text-amber-500" aria-hidden />
+              <span className="shrink-0 font-medium text-foreground/90">{rating != null ? rating.toFixed(1) : "—"}</span>
+              <span className="shrink-0 text-muted-foreground/50" aria-hidden>
+                ·
+              </span>
+              <MessageCircle className="size-2.5 shrink-0 opacity-70" aria-hidden />
+              <span className="min-w-0 truncate">{reviewLabel}</span>
+            </p>
+            {address ? (
+              <p className="flex items-center gap-1 text-[10px] leading-snug text-muted-foreground md:hidden">
+                <MapPin className="size-2.5 shrink-0 text-primary/70" aria-hidden />
+                <span className="min-w-0 truncate">{address}</span>
+              </p>
+            ) : null}
+
+            <div className="hidden flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground md:flex">
+              <span className="inline-flex items-center gap-1">
+                <Star className="size-3.5 fill-amber-400 text-amber-500" aria-hidden />
+                <span className="font-semibold text-foreground">{rating != null ? rating.toFixed(1) : "—"}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <MessageCircle className="size-3.5 opacity-80" aria-hidden />
+                <span>{reviews} đánh giá</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Building2 className="size-3.5 opacity-80" aria-hidden />
+                <span className="truncate">Garage</span>
+              </span>
+            </div>
+
+            {address ? (
+              <p className="hidden items-start gap-1 text-[11px] leading-snug text-muted-foreground md:mt-auto md:flex md:border-t md:border-border/50 md:pt-2 md:text-[12px]">
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary/80" aria-hidden />
+                <span className="line-clamp-2">{address}</span>
+              </p>
+            ) : null}
+          </div>
+
+          {garageId ? (
+            <div className="flex shrink-0 flex-col items-end justify-center self-stretch border-l border-border/40 pl-2 md:hidden">
+              <Button variant="link" size="sm" className="h-auto p-0 text-[11px] font-semibold text-primary no-underline hover:text-primary/90" asChild>
+                <Link
+                  href={href}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-0.5 whitespace-nowrap"
+                >
+                  Đặt lịch
+                  <ChevronRight className="size-3 shrink-0 opacity-80" aria-hidden />
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
 
-        {address ? (
-          <p className="mt-auto flex items-start gap-1.5 border-t border-border/50 pt-2 text-[12px] leading-snug text-muted-foreground">
-            <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary/80" aria-hidden />
-            <span className="line-clamp-2">{address}</span>
-          </p>
-        ) : null}
-
         {garageId ? (
-          <Button variant="default" size="sm" className="mt-1 w-full rounded-xl font-semibold shadow-sm" asChild>
+          <Button
+            variant="default"
+            size="sm"
+            className="mt-1 hidden h-9 w-full rounded-xl text-sm font-semibold shadow-sm md:flex"
+            asChild
+          >
             <Link href={href} onClick={(e) => e.stopPropagation()}>
               Đặt lịch
             </Link>

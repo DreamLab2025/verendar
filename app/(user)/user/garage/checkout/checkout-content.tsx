@@ -21,6 +21,7 @@ import { useUserVehicles } from "@/hooks/useUserVehice";
 import type { ApiError } from "@/lib/api/apiService";
 import { mapCartLinesToBookingItems } from "@/lib/api/services/fetchBooking";
 import { GarageBookingDateField } from "@/components/garage/garage-booking-date-field";
+import { enrichCreatedBookingPayload } from "@/lib/booking/enrich-created-booking-payload";
 import { persistCreatedBookingResponse } from "@/lib/booking/booking-success-storage";
 import { bookingCartLineKey, useBookingCartStore } from "@/lib/stores/booking-cart-store";
 import { cn } from "@/lib/utils";
@@ -226,7 +227,8 @@ export function GarageCheckoutContent() {
         toast.error(res.message?.trim() || "Đặt lịch thất bại.");
         return;
       }
-      persistCreatedBookingResponse(res.data.id, res);
+      const payloadToStore = enrichCreatedBookingPayload(res, { vehicle: selectedVehicle ?? null });
+      persistCreatedBookingResponse(res.data.id, payloadToStore);
       for (const line of selectedInBranch) {
         removeLine(line.branchId, line.kind, line.catalogItemId);
       }
