@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Copy, MapPin, Phone, Share2, Trash2 } from "lucide-react";
+import { Copy, MapPin, Phone, Power, Share2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardTitle } from "@/components/ui/card";
@@ -257,6 +257,51 @@ export function BranchesCard({
                       <Button type="button" variant="ghost" size="icon" className="size-8 rounded-lg" aria-label="Sao chép">
                         <Copy className="size-4 stroke-[1.5]" />
                       </Button>
+                      <AlertDialog open={confirmOpen} onOpenChange={(open) => setConfirmBranchId(open ? branch.id : null)}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "size-8 rounded-lg",
+                              pending && "pointer-events-none opacity-40",
+                              !pending && isActive && "text-emerald-600 hover:bg-emerald-600/10 hover:text-emerald-700",
+                              !pending && !isActive && "text-amber-600 hover:bg-amber-600/10 hover:text-amber-700",
+                            )}
+                            aria-label={actionLabel}
+                            disabled={(patchBranchStatus.isPending && !confirmOpen) || pending}
+                          >
+                            <Power className="size-4 stroke-[1.5]" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+                            <AlertDialogDescription>{confirmDescription}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={actionBusy}>Hủy</AlertDialogCancel>
+                            <AlertDialogAction
+                              disabled={actionBusy}
+                              onClick={() =>
+                                patchBranchStatus.mutate(
+                                  {
+                                    garageId,
+                                    branchId: branch.id,
+                                    payload: { status: nextStatus },
+                                  },
+                                  {
+                                    onSuccess: () => setConfirmBranchId(null),
+                                  },
+                                )
+                              }
+                            >
+                              {actionBusy ? "Đang cập nhật..." : "Xác nhận"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
 
@@ -275,46 +320,13 @@ export function BranchesCard({
                   >
                     Sửa
                   </Button>
-                  <AlertDialog open={confirmOpen} onOpenChange={(open) => setConfirmBranchId(open ? branch.id : null)}>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        type="button"
-                        className={cn(
-                          "h-9 rounded-lg text-sm font-medium text-background",
-                          isActive ? "bg-amber-600 hover:bg-amber-700" : "bg-emerald-600 hover:bg-emerald-700",
-                        )}
-                        disabled={patchBranchStatus.isPending && !confirmOpen}
-                      >
-                        {actionLabel}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
-                        <AlertDialogDescription>{confirmDescription}</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel disabled={actionBusy}>Hủy</AlertDialogCancel>
-                        <AlertDialogAction
-                          disabled={actionBusy}
-                          onClick={() =>
-                            patchBranchStatus.mutate(
-                              {
-                                garageId,
-                                branchId: branch.id,
-                                payload: { status: nextStatus },
-                              },
-                              {
-                                onSuccess: () => setConfirmBranchId(null),
-                              },
-                            )
-                          }
-                        >
-                          {actionBusy ? "Đang cập nhật..." : "Xác nhận"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button
+                    type="button"
+                    className="h-9 rounded-lg text-sm font-medium"
+                    onClick={() => router.push(`/garage-dashboard/${garageId}/branch/${branch.id}`)}
+                  >
+                    Xem chi tiết
+                  </Button>
                 </CardFooter>
               </Card>
             </div>

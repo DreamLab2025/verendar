@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { CarFront } from "lucide-react";
 
 import { GarageDialog } from "@/components/dialog/garage/GarageDialog";
@@ -14,9 +15,30 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { getGaragePortalViewFromRoles } from "@/lib/auth/garage-portal-roles";
+import { readAuthRolesFromCookies } from "@/lib/auth/read-auth-cookie-user";
 import { cn } from "@/lib/utils";
 
 export function GarageOwnerShell({ children }: { children: ReactNode }) {
+  const branchStaffOnly = useMemo(() => {
+    const roles = readAuthRolesFromCookies();
+    return getGaragePortalViewFromRoles(roles) === "branchStaff";
+  }, []);
+
+  if (branchStaffOnly) {
+    return (
+      <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-background">
+        <div className="flex w-full min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-4 pb-12 pt-14 md:px-6 md:pt-6">
+          <header className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Chi nhánh</h1>
+            <p className="text-sm text-muted-foreground md:text-base">Thông tin chi nhánh bạn đang làm việc.</p>
+          </header>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider
       defaultOpen={false}

@@ -1,5 +1,10 @@
-import { MapPin, Phone } from "lucide-react";
+"use client";
 
+import { useRouter } from "next/navigation";
+import { ArrowRight, MapPin, Phone } from "lucide-react";
+
+import { branchDetailHref } from "@/app/(owner)/garage-dashboard/[id]/branch/components/branch-tab-config";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import {
   formatGarageBranchAddress,
@@ -11,13 +16,16 @@ import { AwsBranchMiniMap } from "@/components/maps/aws-branch-mini-map";
 
 interface GarageOwnerBranchCardProps {
   branch: GarageBranchDto;
+  /** Có thì hiển thị nút mở trang chi nhánh trên garage-dashboard. */
+  garageId?: string;
 }
 
 function isPendingBranch(status: string): boolean {
   return status === "Pending";
 }
 
-export function GarageOwnerBranchCard({ branch }: GarageOwnerBranchCardProps) {
+export function GarageOwnerBranchCard({ branch, garageId }: GarageOwnerBranchCardProps) {
+  const router = useRouter();
   const pending = isPendingBranch(branch.status);
   const statusLabel = pending ? "Đang chờ duyệt" : getGarageBranchStatusLabelVi(branch.status);
   const addressLine = formatGarageBranchAddress(branch.address);
@@ -74,6 +82,19 @@ export function GarageOwnerBranchCard({ branch }: GarageOwnerBranchCardProps) {
           <MapPin className="mt-0.5 size-4 shrink-0 stroke-[1.5]" aria-hidden />
           <span>{addressLine}</span>
         </p>
+
+        {garageId ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-1 w-full gap-2 font-medium sm:w-auto"
+            onClick={() => router.push(branchDetailHref(garageId, branch.id, "overview"))}
+          >
+            Xem chi tiết
+            <ArrowRight className="size-4 shrink-0" aria-hidden />
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

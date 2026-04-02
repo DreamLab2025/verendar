@@ -32,7 +32,8 @@ export default function GarageOwnerBranchesSectionPage() {
     );
   }
 
-  const branches = res?.isSuccess && res.data ? res.data.branches : [];
+  const garage = res?.isSuccess && res.data ? res.data : null;
+  const branches = garage?.branches ?? [];
 
   return (
     <Card className="border-border/80 bg-card/80 shadow-sm rounded-2xl">
@@ -46,7 +47,7 @@ export default function GarageOwnerBranchesSectionPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {branches.map((branch) => (
               <div key={branch.id} className="min-w-0">
-                <GarageOwnerBranchCard branch={branch} />
+                <GarageOwnerBranchCard branch={branch} garageId={garage?.id} />
               </div>
             ))}
           </div>

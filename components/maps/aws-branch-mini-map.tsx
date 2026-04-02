@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -50,6 +50,12 @@ export function AwsBranchMiniMap({
   statusLabel,
 }: AwsBranchMiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pillRootRef = useRef<Root | null>(null);
+
+  const markerLabel = useMemo(
+    () => name.trim() || statusLabel || "Chi nhánh",
+    [name, statusLabel],
+  );
 
   const apiKey = process.env.NEXT_PUBLIC_AWS_LOCATION_API_KEY ?? "";
   const mapName = process.env.NEXT_PUBLIC_AWS_LOCATION_MAP_NAME ?? "VerendarMap";
@@ -80,7 +86,8 @@ export function AwsBranchMiniMap({
 
     const pillHost = document.createElement("div");
     const pillRoot: Root = createRoot(pillHost);
-    pillRoot.render(<BranchMapMarkerPill label={name.trim() || statusLabel || "Chi nhánh"} />);
+    pillRootRef.current = pillRoot;
+    pillRoot.render(<BranchMapMarkerPill label={markerLabel} />);
 
     const marker = new maplibregl.Marker({ element: pillHost, anchor: "bottom" })
       .setLngLat([lng, lat])
@@ -100,12 +107,19 @@ export function AwsBranchMiniMap({
       marker.remove();
       detachStyleImageFallback();
       map.remove();
+      pillRootRef.current = null;
       // Tránh unmount đồng bộ trong commit React (Strict Mode / list re-render) → race với renderer.
       queueMicrotask(() => {
         pillRoot.unmount();
       });
     };
-  }, [apiKey, region, mapName, lng, lat, coordsOk, name, statusLabel]);
+  }, [apiKey, region, mapName, lng, lat, coordsOk]); // eslint-disable-line react-hooks/exhaustive-deps -- nhãn marker: effect riêng
+
+  useEffect(() => {
+    const root = pillRootRef.current;
+    if (!root) return;
+    root.render(<BranchMapMarkerPill label={markerLabel} />);
+  }, [markerLabel]);
 
   if (!coordsOk) {
     return (

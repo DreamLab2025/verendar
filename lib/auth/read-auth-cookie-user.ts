@@ -59,3 +59,28 @@ export function readAuthUserFromCookies(): AuthCookieUser | null {
     initials,
   };
 }
+
+function normalizeJwtRoles(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return [raw.trim()];
+  }
+  return [];
+}
+
+/** Đọc claim `role` từ JWT trong cookie (client) — chuẩn hóa thành mảng. */
+export function readAuthRolesFromCookies(): string[] {
+  const token =
+    (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
+  if (!token) return [];
+
+  const payload = decodeJwtPayload(token);
+  if (!payload) return [];
+
+  const fromRole = normalizeJwtRoles(payload.role);
+  if (fromRole.length > 0) return fromRole;
+
+  return normalizeJwtRoles(payload.roles);
+}

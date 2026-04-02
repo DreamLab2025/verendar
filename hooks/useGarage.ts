@@ -4,10 +4,12 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import GarageService, {
+  garageBranchDetailToGarageBranchMeDto,
   type CreateGarageBranchPayload,
   type CreateGaragePayload,
   type GarageBranchDto,
   type GarageBranchMapItemDto,
+  type GarageBranchMeDto,
   type GarageCatalogItemDto,
   type GarageDto,
   type GarageBranchesMapsQueryParams,
@@ -18,6 +20,8 @@ import GarageService, {
   type UpdateGarageBranchPayload,
   type UpdateGaragePayload,
 } from "@/lib/api/services/fetchGarage";
+import { readAuthRolesFromCookies } from "@/lib/auth/read-auth-cookie-user";
+import { GARAGE_PORTAL_ROLE_OWNER } from "@/lib/auth/garage-portal-roles";
 import type { ApiResponse } from "@/types/api";
 import { flattenInfinitePages, useInfinityScroll } from "@/hooks/useInfinityScroll";
 import { toast } from "sonner";
@@ -116,6 +120,72 @@ export function useGarageBranchByIdQuery(
     queryFn: () => GarageService.getGarageBranchById(garageId!, branchId!),
     enabled: Boolean(garageId) && Boolean(branchId) && enabled,
   });
+}
+
+/**
+ * GET /api/v1/garages/branches/me — chi nhánh của user hiện tại.
+ * Cần UI infinite scroll: dùng `useInfinityScroll` từ `@/hooks/useInfinityScroll` + `GarageService.getMyGarageBranch` (API trả một object, không phân trang).
+ */
+export function useMyGarageBranchQuery(enabled = true) {
+  return useQuery({
+    queryKey: ["garages", "branches", "me"],
+    queryFn: () => GarageService.getMyGarageBranch(),
+    enabled,
+  });
+}
+
+function pickBranchMeForProfile(
+  data: GarageBranchMeDto | undefined,
+  garageId: string,
+  branchId: string,
+): GarageBranchMeDto | null {
+  if (!data) return null;
+  if (data.id !== branchId || data.garageId !== garageId) return null;
+  return data;
+}
+
+/** Hồ sơ chi nhánh: GarageOwner → GET branch theo id; không thì /branches/me + khớp URL. */
+export function useBranchProfileBranch(garageId: string, branchId: string) {
+  const isGarageOwner = useMemo(() => readAuthRolesFromCookies().includes(GARAGE_PORTAL_ROLE_OWNER), []);
+  const enabled = Boolean(garageId && branchId);
+
+  const byIdQuery = useGarageBranchByIdQuery(garageId, branchId, enabled && isGarageOwner);
+  const meQuery = useMyGarageBranchQuery(enabled && !isGarageOwner);
+
+  return useMemo(() => {
+    if (isGarageOwner) {
+      const res = byIdQuery.data;
+      const branchMe: GarageBranchMeDto | null =
+        res?.isSuccess && res.data ? garageBranchDetailToGarageBranchMeDto(res.data) : null;
+      return {
+        isGarageOwner: true,
+        isPending: byIdQuery.isPending,
+        isError: byIdQuery.isError,
+        res,
+        branchMe,
+      };
+    }
+
+    const res = meQuery.data;
+    const branchMe = res?.isSuccess && res.data ? pickBranchMeForProfile(res.data, garageId, branchId) : null;
+    return {
+      isGarageOwner: false,
+      isPending: meQuery.isPending,
+      isError: meQuery.isError,
+      res,
+      branchMe,
+    };
+  }, [
+    isGarageOwner,
+    byIdQuery.data,
+    byIdQuery.isPending,
+    byIdQuery.isError,
+    meQuery.data,
+    meQuery.isPending,
+    meQuery.isError,
+    garageId,
+    branchId,
+  ]);
 }
 
 export function useGarageProductByIdQuery(id: string | undefined, enabled = true) {

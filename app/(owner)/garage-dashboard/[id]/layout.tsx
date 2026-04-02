@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Suspense, type ReactNode } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 import { getMockOwnerGarageById } from "@/lib/mocks/owner-garage-mock";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -14,7 +14,11 @@ import { NavGarageMenu } from "../components/nav-garage-menu";
 
 export default function GarageDashboardIdLayout({ children }: { children: ReactNode }) {
   const params = useParams();
+  const pathname = usePathname();
   const garageId = typeof params?.id === "string" ? params.id : "";
+
+  const isBranchRoute =
+    Boolean(garageId) && Boolean(pathname?.includes(`/garage-dashboard/${garageId}/branch`));
 
   const { data: meRes } = useMyGarageQuery(Boolean(garageId));
 
@@ -27,6 +31,14 @@ export default function GarageDashboardIdLayout({ children }: { children: ReactN
     return getMockOwnerGarageById(garageId)?.businessName ?? "Garage";
   }, [meRes, garageId]);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
+
+  if (isBranchRoute) {
+    return (
+      <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-background">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider
