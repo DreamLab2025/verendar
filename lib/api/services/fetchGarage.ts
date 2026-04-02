@@ -318,6 +318,76 @@ export interface GarageBranchDetailResponse {
   metadata: string | null;
 }
 
+/**
+ * GET /api/v1/garages/branches/me — chi nhánh gắn user hiện tại (BE có thể trả null cho tọa độ / địa chỉ).
+ */
+export interface GarageBranchMeDto {
+  id: string;
+  garageId: string;
+  name: string | null;
+  slug: string | null;
+  description: string | null;
+  coverImageUrl: string | null;
+  address: GarageBranchAddressDto | string | null;
+  latitude: number | null;
+  longitude: number | null;
+  mapLinks: GarageBranchMapLinksDto | null;
+  workingHours: GarageBranchWorkingHoursDto | null;
+  phoneNumber: string | null;
+  taxCode: string | null;
+  status: GarageBranchStatus | string;
+  averageRating: number | null;
+  reviewCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface GarageBranchMeResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageBranchMeDto;
+  metadata: unknown;
+}
+
+/** GET chi nhánh theo id — map sang cùng shape với /branches/me cho UI dùng chung. */
+export function garageBranchDetailToGarageBranchMeDto(d: GarageBranchDetailDto): GarageBranchMeDto {
+  return {
+    id: d.id,
+    garageId: d.garageId,
+    name: d.name,
+    slug: d.slug,
+    description: d.description,
+    coverImageUrl: d.coverImageUrl,
+    address: d.address,
+    latitude: d.latitude,
+    longitude: d.longitude,
+    mapLinks: d.mapLinks,
+    workingHours: d.workingHours,
+    phoneNumber: d.phoneNumber,
+    taxCode: d.taxCode,
+    status: d.status,
+    averageRating: d.averageRating,
+    reviewCount: d.reviewCount,
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
+  };
+}
+
+/** Map GET /branches/me → shape dùng chung với card danh sách chi nhánh. */
+export function garageBranchMeToGarageBranchDto(me: GarageBranchMeDto): GarageBranchDto {
+  return {
+    id: me.id,
+    name: me.name,
+    slug: me.slug,
+    address: me.address as GarageBranchDto["address"],
+    phoneNumber: me.phoneNumber,
+    latitude: me.latitude ?? 0,
+    longitude: me.longitude ?? 0,
+    status: me.status,
+  };
+}
+
 /** PUT branch — `data` là chi nhánh đầy đủ sau cập nhật */
 export type GarageBranchUpdateResponse = GarageBranchDetailResponse;
 
@@ -548,6 +618,12 @@ export const GarageService = {
       `/api/v1/garages/${garageId}/branches`,
       payload,
     );
+    return res.data;
+  },
+
+  /** Chi nhánh của user đăng nhập (garage staff / branch context). */
+  getMyGarageBranch: async () => {
+    const res = await api8080Service.get<GarageBranchMeResponse>("/api/v1/garages/branches/me");
     return res.data;
   },
 
