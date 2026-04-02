@@ -115,7 +115,7 @@ export function GarageExploreView() {
           </div>
 
           <div
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 md:px-4"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-2 md:px-4 md:py-3"
             onScroll={onScrollToLoadMore}
           >
             {isLoading && branches.length === 0 ? (
@@ -135,9 +135,9 @@ export function GarageExploreView() {
               <p className="py-10 text-center text-sm text-muted-foreground">Không có chi nhánh trong vùng này.</p>
             ) : null}
 
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="flex flex-col divide-y divide-border/50 md:grid md:grid-cols-2 md:gap-4 md:divide-none xl:grid-cols-3">
               {branches.map((b) => (
-                <li key={b.id} className="min-w-0">
+                <li key={b.id} className="min-w-0 py-0 first:pt-0 md:py-0">
                   <GarageBranchCard
                     branch={b}
                     selected={selectedId === b.id}

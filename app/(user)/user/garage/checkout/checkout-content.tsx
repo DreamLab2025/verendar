@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarDays, Car, ChevronRight, Package, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Car, Check, ChevronRight, Package, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import SafeImage from "@/components/ui/SafeImage";
@@ -14,19 +14,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateBooking } from "@/hooks/useCreateBooking";
 import { useUserVehicles } from "@/hooks/useUserVehice";
 import type { ApiError } from "@/lib/api/apiService";
 import { mapCartLinesToBookingItems } from "@/lib/api/services/fetchBooking";
+import { GarageBookingDateField } from "@/components/garage/garage-booking-date-field";
+import { enrichCreatedBookingPayload } from "@/lib/booking/enrich-created-booking-payload";
 import { persistCreatedBookingResponse } from "@/lib/booking/booking-success-storage";
 import { bookingCartLineKey, useBookingCartStore } from "@/lib/stores/booking-cart-store";
 import { cn } from "@/lib/utils";
@@ -98,11 +93,6 @@ function kindBadgeClass(kind: string) {
     return "border-sky-500/25 bg-sky-500/10 text-sky-900 dark:text-sky-100";
   }
   return "border-violet-500/25 bg-violet-500/10 text-violet-900 dark:text-violet-100";
-}
-
-function vehicleSelectLabel(licensePlate: string, brandName: string, modelName: string) {
-  const tail = [brandName, modelName].filter(Boolean).join(" ").trim();
-  return tail ? `${licensePlate} · ${tail}` : licensePlate;
 }
 
 const CHECKOUT_STEPS = [
@@ -182,9 +172,21 @@ export function GarageCheckoutContent() {
 
   const minDate = dayjs().format("YYYY-MM-DD");
 
-  const slotLabel = useMemo(() => {
-    if (!bookingDate || !bookingTime) return null;
-    return dayjs(`${bookingDate}T${bookingTime}`).format("dddd, D MMMM YYYY · HH:mm");
+  /** Preview cột phải: có ngày nhưng chưa giờ vẫn hiện ngày + gợi ý. */
+  const schedulePreview = useMemo(() => {
+    if (!bookingDate || !dayjs(bookingDate).isValid()) {
+      return { title: "Chưa chọn ngày giờ", hint: null as string | null, tone: "empty" as const };
+    }
+    const d = dayjs(bookingDate);
+    const dateStr = d.format("dddd, D MMMM YYYY");
+    if (!bookingTime) {
+      return { title: dateStr, hint: "Chọn khung giờ bên trái", tone: "partial" as const };
+    }
+    return {
+      title: dayjs(`${bookingDate}T${bookingTime}`).format("dddd, D MMMM YYYY · HH:mm"),
+      hint: null,
+      tone: "full" as const,
+    };
   }, [bookingDate, bookingTime]);
 
   const hasVehicleChoice = Boolean(userVehicleId);
@@ -225,13 +227,11 @@ export function GarageCheckoutContent() {
         toast.error(res.message?.trim() || "Đặt lịch thất bại.");
         return;
       }
-      persistCreatedBookingResponse(res.data.id, res);
+      const payloadToStore = enrichCreatedBookingPayload(res, { vehicle: selectedVehicle ?? null });
+      persistCreatedBookingResponse(res.data.id, payloadToStore);
       for (const line of selectedInBranch) {
         removeLine(line.branchId, line.kind, line.catalogItemId);
       }
-      toast.success("Đã gửi yêu cầu đặt lịch. Garage sẽ xác nhận sớm nhất có thể.", {
-        description: slotLabel ?? undefined,
-      });
       router.push(`/user/garage/booking/success?bookingId=${encodeURIComponent(res.data.id)}`);
     } catch (e) {
       const msg = (e as ApiError)?.message ?? "Đặt lịch thất bại.";
@@ -333,9 +333,9 @@ export function GarageCheckoutContent() {
         : "Chọn ngày, khung giờ và ghi chú. Bấm «Đặt lịch» để gửi yêu cầu.";
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain pb-8 [scrollbar-width:thin]">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain pb-4 pt-0 [scrollbar-width:thin] lg:gap-4 lg:pb-5">
       <motion.header
-        className="shrink-0 flex flex-wrap items-end justify-between gap-3 border-b border-border/80 pb-3 dark:border-border/60"
+        className="shrink-0 flex flex-wrap items-end justify-between gap-2 border-b border-border/80 pb-2 dark:border-border/60 lg:gap-3 lg:pb-2.5"
         initial="hidden"
         animate="visible"
         variants={fadeUp}
@@ -347,24 +347,24 @@ export function GarageCheckoutContent() {
               Garage
             </Link>
           </Button>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Đặt lịch</h1>
-          <p className="mt-0.5 max-w-xl text-sm text-muted-foreground">{stepSubtitle}</p>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl lg:text-2xl">Đặt lịch</h1>
+          <p className="mt-0.5 max-w-xl text-xs text-muted-foreground sm:text-sm">{stepSubtitle}</p>
         </div>
         <Button variant="outline" size="sm" className="h-9 rounded-lg text-xs shadow-sm" asChild>
           <Link href="/user/garage/cart">Sửa giỏ</Link>
         </Button>
       </motion.header>
 
-      <div className="grid min-h-0 flex-1 items-start gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(300px,1fr)] lg:gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(320px,380px)]">
+      <div className="grid min-h-0 flex-1 items-start gap-4 lg:grid-cols-[minmax(0,1.9fr)_minmax(280px,1fr)] lg:gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,360px)]">
         <motion.div
-          className="order-1 flex min-w-0 flex-col gap-4"
+          className="order-1 flex min-w-0 flex-col gap-3"
           initial="hidden"
           animate="visible"
           variants={fadeUp}
         >
           <nav
             aria-label="Tiến trình đặt lịch"
-            className="flex flex-wrap items-center gap-0.5 rounded-xl border border-border/60 bg-muted/25 px-2.5 py-2 text-[11px] sm:px-3 sm:text-xs dark:bg-muted/15"
+            className="flex flex-wrap items-center gap-0.5 rounded-lg border border-border/60 bg-muted/25 px-2 py-1.5 text-[10px] sm:px-2.5 sm:text-[11px] dark:bg-muted/15"
           >
             {CHECKOUT_STEPS.map((s, i) => (
               <span key={s.id} className="flex items-center">
@@ -495,26 +495,72 @@ export function GarageCheckoutContent() {
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      <Label htmlFor="checkout-vehicle" className="text-sm font-medium text-foreground">
-                        Xe của bạn
-                      </Label>
-                      <Select value={userVehicleId || undefined} onValueChange={setUserVehicleId}>
-                        <SelectTrigger id="checkout-vehicle" className="h-11 rounded-xl text-sm">
-                          <Car className="mr-2 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                          <SelectValue placeholder="Chọn biển số / dòng xe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {vehicles.map((v) => (
-                            <SelectItem key={v.id} value={v.id} className="text-sm">
-                              {vehicleSelectLabel(
-                                v.licensePlate,
-                                v.variant.model.brandName,
-                                v.variant.model.name,
-                              )}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-sm font-medium text-foreground">Xe của bạn</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Chọn một xe; tóm tắt bên phải cập nhật ngay. Trên màn hình rộng, danh sách xếp 2 cột.
+                      </p>
+
+                      <ul
+                        className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5"
+                        role="radiogroup"
+                        aria-label="Chọn xe"
+                      >
+                        {vehicles.map((v) => {
+                          const selected = userVehicleId === v.id;
+                          const img = v.variant?.imageUrl;
+                          return (
+                            <li key={v.id} className="min-w-0">
+                              <button
+                                type="button"
+                                role="radio"
+                                aria-checked={selected}
+                                onClick={() => setUserVehicleId(v.id)}
+                                className={cn(
+                                  "flex h-full min-h-18 w-full flex-col gap-0 overflow-hidden rounded-xl border text-left transition-all sm:min-h-29",
+                                  "active:scale-[0.99] sm:flex-row sm:items-center sm:gap-3 sm:p-3.5 sm:pt-3.5",
+                                  selected
+                                    ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/25"
+                                    : "border-border/80 bg-background hover:border-primary/35 hover:bg-muted/25 dark:bg-background/60",
+                                )}
+                              >
+                                <div className="relative aspect-5/2 w-full shrink-0 bg-muted ring-1 ring-border/40 sm:aspect-auto sm:size-14 sm:rounded-lg">
+                                  {img ? (
+                                    <SafeImage src={img} alt="" fill className="object-cover sm:rounded-lg" />
+                                  ) : (
+                                    <div className="grid size-full place-items-center text-muted-foreground">
+                                      <Car className="size-8 sm:size-6" aria-hidden />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex min-w-0 flex-1 items-center gap-3 p-3 pt-2 sm:p-0 sm:pt-0">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold tabular-nums tracking-tight text-foreground">
+                                      {v.licensePlate}
+                                    </p>
+                                    <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground sm:truncate sm:line-clamp-none">
+                                      {v.variant.model.brandName} {v.variant.model.name}
+                                    </p>
+                                    {v.nickname ? (
+                                      <p className="mt-0.5 truncate text-xs text-muted-foreground/90">{v.nickname}</p>
+                                    ) : null}
+                                  </div>
+                                  <span
+                                    className={cn(
+                                      "flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                                      selected
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : "border-muted-foreground/25 bg-transparent",
+                                    )}
+                                    aria-hidden
+                                  >
+                                    {selected ? <Check className="size-4 stroke-3" /> : null}
+                                  </span>
+                                </div>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -523,33 +569,25 @@ export function GarageCheckoutContent() {
 
             {step === 3 ? (
               <>
-                <div className="border-b border-border/60 bg-muted/30 px-4 py-3.5 dark:bg-muted/20">
-                  <h2 className="text-base font-semibold tracking-tight text-foreground">Lịch & ghi chú</h2>
-                  <p className="text-xs text-muted-foreground">Thời điểm đến garage và yêu cầu thêm (tuỳ chọn).</p>
+                <div className="border-b border-border/60 bg-muted/30 px-3 py-2.5 dark:bg-muted/20 sm:px-4 sm:py-3">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">Lịch & ghi chú</h2>
+                  <p className="text-[11px] text-muted-foreground sm:text-xs">Thời điểm đến garage và ghi chú (tuỳ chọn).</p>
                 </div>
-                <div className="space-y-5 p-4 sm:p-5">
-                  <div className="space-y-2">
-                    <label htmlFor="booking-date" className="text-sm font-medium text-foreground">
-                      Ngày
+                <div className="min-w-0 space-y-3 p-3 sm:space-y-4 sm:p-4">
+                  <div className="min-w-0 space-y-1.5">
+                    <label id="booking-date-label" className="text-xs font-medium text-foreground sm:text-sm">
+                      Ngày đến
                     </label>
-                    <div className="relative max-w-xs">
-                      <CalendarDays
-                        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                        aria-hidden
-                      />
-                      <input
-                        id="booking-date"
-                        type="date"
-                        min={minDate}
-                        value={bookingDate}
-                        onChange={(e) => setBookingDate(e.target.value)}
-                        className="h-11 w-full rounded-xl border border-input bg-background py-2 pl-10 pr-3 text-sm shadow-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 dark:bg-background/80"
-                      />
-                    </div>
+                    <GarageBookingDateField
+                      labelId="booking-date-label"
+                      minDate={minDate}
+                      value={bookingDate}
+                      onChange={setBookingDate}
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">Khung giờ</p>
-                    <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-foreground sm:text-sm">Khung giờ</p>
+                    <div className="grid grid-cols-4 gap-1 sm:grid-cols-6 lg:grid-cols-6">
                       {TIME_SLOTS.map((t) => {
                         const active = bookingTime === t;
                         return (
@@ -561,7 +599,7 @@ export function GarageCheckoutContent() {
                             whileTap={{ scale: 0.98 }}
                             transition={{ type: "spring", stiffness: 420, damping: 28 }}
                             className={cn(
-                              "h-9 rounded-lg border text-center font-mono text-[11px] font-semibold tabular-nums",
+                              "h-8 rounded-md border text-center font-mono text-[10px] font-semibold tabular-nums sm:h-8 sm:text-[11px]",
                               active
                                 ? "border-primary bg-primary text-primary-foreground shadow-sm"
                                 : "border-border/80 bg-background text-foreground hover:border-primary/35 hover:bg-muted/50 dark:bg-background/60",
@@ -573,17 +611,18 @@ export function GarageCheckoutContent() {
                       })}
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="booking-note" className="text-sm font-medium text-foreground">
-                      Ghi chú cho garage (tuỳ chọn)
+                  <div className="space-y-1.5">
+                    <Label htmlFor="booking-note" className="text-xs font-medium text-foreground sm:text-sm">
+                      Ghi chú (tuỳ chọn)
                     </Label>
                     <Textarea
                       id="booking-note"
                       value={bookingNote}
                       onChange={(e) => setBookingNote(e.target.value)}
                       placeholder="Mô tả thêm nhu cầu, tình trạng xe…"
-                      className="min-h-[100px] resize-y rounded-xl text-sm"
+                      className="min-h-18 resize-y rounded-xl text-xs sm:min-h-22 sm:text-sm"
                       maxLength={2000}
+                      rows={3}
                     />
                   </div>
                 </div>
@@ -591,7 +630,7 @@ export function GarageCheckoutContent() {
             ) : null}
 
             {step > 1 ? (
-              <div className="flex border-t border-border/60 bg-muted/15 px-4 py-3 dark:bg-muted/10">
+              <div className="flex border-t border-border/60 bg-muted/15 px-3 py-2 dark:bg-muted/10 sm:px-4 sm:py-2.5">
                 <Button
                   type="button"
                   variant="ghost"
@@ -610,40 +649,77 @@ export function GarageCheckoutContent() {
         <motion.aside
           className={cn(
             "order-2 flex min-w-0 w-full flex-col",
-            "lg:sticky lg:top-3 lg:max-h-[calc(100dvh-6.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:self-start lg:pr-0.5 [scrollbar-width:thin]",
+            "lg:sticky lg:top-2 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:overscroll-contain lg:self-start lg:pr-0.5 [scrollbar-width:thin]",
           )}
           initial="hidden"
           animate="visible"
           variants={asideIn}
         >
           <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-md ring-1 ring-black/5 dark:border-border/50 dark:bg-card/90 dark:ring-white/10">
-            <div className="border-b border-border/60 bg-muted/30 px-4 py-3 dark:bg-muted/20">
-              <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">Tóm tắt đặt lịch</h2>
+            <div className="border-b border-border/60 bg-muted/30 px-3 py-2.5 dark:bg-muted/20 sm:px-4">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">Tóm tắt đặt lịch</h2>
               {branchId ? (
                 <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground" title={branchId}>
                   Chi nhánh · {branchId.slice(0, 10)}…
                 </p>
               ) : null}
             </div>
-            <div className="space-y-4 p-4">
+            <div className="space-y-3 p-3 sm:p-3.5">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Xe</p>
                 {vehiclesLoading ? (
                   <p className="mt-1 text-xs text-muted-foreground">Đang tải…</p>
                 ) : selectedVehicle ? (
-                  <div className="mt-2 flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-2.5 dark:bg-muted/10">
-                    <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-background ring-1 ring-border/60 dark:bg-background/80">
-                      <Car className="size-5 text-muted-foreground" aria-hidden />
+                  <div className="mt-1.5 flex gap-2.5 sm:mt-2 sm:gap-3">
+                    <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted sm:size-14">
+                      {selectedVehicle.variant?.imageUrl ? (
+                        <SafeImage
+                          src={selectedVehicle.variant.imageUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="grid size-full place-items-center text-muted-foreground">
+                          <Car className="size-6" aria-hidden />
+                        </div>
+                      )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{selectedVehicle.licensePlate}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <p className="text-sm font-semibold tabular-nums text-foreground">
+                        {selectedVehicle.licensePlate}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
                         {selectedVehicle.variant.model.brandName} {selectedVehicle.variant.model.name}
                       </p>
+                      {selectedVehicle.nickname ? (
+                        <p className="mt-1 text-[11px] text-muted-foreground/90">{selectedVehicle.nickname}</p>
+                      ) : null}
                     </div>
+                    {step === 2 ? (
+                      <div className="flex shrink-0 items-start justify-center pt-1">
+                        <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <Check className="size-3.5 stroke-3" aria-hidden />
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
-                  <p className="mt-1 text-xs italic text-muted-foreground">Chưa chọn xe</p>
+                  <div
+                    className={cn(
+                      "mt-2 rounded-lg border border-dashed px-3 py-3 text-xs",
+                      step === 2
+                        ? "border-primary/30 bg-primary/4 text-muted-foreground dark:bg-primary/10"
+                        : "border-border/60 bg-muted/10 text-muted-foreground",
+                    )}
+                  >
+                    <p className="italic">Chưa chọn xe</p>
+                    {step === 2 ? (
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-foreground/80">
+                        Chọn thẻ xe ở cột trái — tóm tắt cập nhật ngay tại đây.
+                      </p>
+                    ) : null}
+                  </div>
                 )}
               </div>
 
@@ -651,7 +727,7 @@ export function GarageCheckoutContent() {
 
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Dịch vụ & sản phẩm</p>
-                <ul className="mt-2 max-h-[min(42vh,340px)] space-y-3 overflow-y-auto pr-0.5 [scrollbar-width:thin]">
+                <ul className="mt-1.5 max-h-[min(30vh,220px)] space-y-2 overflow-y-auto pr-0.5 [scrollbar-width:thin] lg:max-h-[min(28vh,200px)]">
                   {selectedInBranch.length === 0 ? (
                     <li className="rounded-lg border border-dashed border-border/60 bg-muted/15 px-3 py-4 text-center text-xs text-muted-foreground dark:bg-muted/10">
                       Chưa chọn mục nào trong giỏ.
@@ -688,16 +764,21 @@ export function GarageCheckoutContent() {
 
               <div
                 className={cn(
-                  "rounded-lg border px-3 py-2.5 text-sm transition-colors",
-                  slotLabel
-                    ? "border-primary/25 bg-primary/5 dark:border-primary/30 dark:bg-primary/10"
-                    : "border-dashed border-border/70 bg-muted/15 text-muted-foreground dark:bg-muted/10",
+                  "rounded-lg border px-2.5 py-2 text-xs transition-colors sm:text-sm",
+                  schedulePreview.tone === "full" &&
+                    "border-primary/25 bg-primary/5 dark:border-primary/30 dark:bg-primary/10",
+                  schedulePreview.tone === "partial" && "border-border/55 bg-muted/20 dark:border-border/50 dark:bg-muted/15",
+                  schedulePreview.tone === "empty" &&
+                    "border-dashed border-border/70 bg-muted/10 text-muted-foreground dark:bg-muted/10",
                 )}
               >
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Lịch hẹn</p>
-                <p className="mt-1 font-medium capitalize leading-snug text-foreground">
-                  {slotLabel ?? "Chưa chọn ngày giờ"}
-                </p>
+                <p className="mt-0.5 font-medium capitalize leading-snug text-foreground">{schedulePreview.title}</p>
+                {schedulePreview.hint ? (
+                  <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
+                    {schedulePreview.hint}
+                  </p>
+                ) : null}
               </div>
 
               {bookingNote.trim() ? (
@@ -718,7 +799,7 @@ export function GarageCheckoutContent() {
                     </p>
                   ) : null}
                 </div>
-                <span className="text-lg font-bold tabular-nums text-foreground">{formatVnd(subtotal.sum)}</span>
+                <span className="text-base font-bold tabular-nums text-foreground sm:text-lg">{formatVnd(subtotal.sum)}</span>
               </div>
 
               <motion.div
@@ -729,7 +810,7 @@ export function GarageCheckoutContent() {
                 <Button
                   type="button"
                   size="lg"
-                  className="h-11 w-full rounded-xl text-sm font-semibold shadow-md"
+                  className="h-10 w-full rounded-xl text-sm font-semibold shadow-md sm:h-11"
                   disabled={previewPrimaryDisabled}
                   onClick={() => void handlePreviewPrimary()}
                 >

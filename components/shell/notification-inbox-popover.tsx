@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 
 import { UpdateOdometerDialog } from "@/components/shared/UpdateOdometerDialog";
+import { HeaderIconCountBadge } from "@/components/shell/header-icon-count-badge";
 import { NotificationInboxList } from "@/features/notifications/notification-inbox-list";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -31,9 +32,6 @@ export function NotificationInboxPopover() {
     }
   }, [open, refetchStatus]);
 
-  const showBadge = unReadCount > 0;
-  const badgeLabel = unReadCount > 99 ? "99+" : String(unReadCount);
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -45,15 +43,11 @@ export function NotificationInboxPopover() {
           aria-haspopup="dialog"
         >
           <Bell className="size-[1.35rem] stroke-[1.75] md:size-5" aria-hidden />
-          {showBadge ? (
-            <span className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-white bg-neutral-900 px-1 text-[10px] font-bold tabular-nums leading-none text-white shadow-sm dark:border-neutral-950 dark:bg-neutral-100 dark:text-neutral-900">
-              {badgeLabel}
-            </span>
-          ) : null}
+          <HeaderIconCountBadge count={unReadCount} tone="notifications" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        align="end"
+        align="center"
         sideOffset={12}
         className={cn(
           "w-[min(100vw-1.25rem,392px)] overflow-hidden p-0",

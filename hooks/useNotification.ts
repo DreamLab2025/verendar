@@ -8,7 +8,9 @@ import { toast } from "sonner";
 import { ReminderLevel } from "@/lib/api/services/fetchTrackingReminder";
 import { Notification } from "@/lib/api/services/fetchNotification";
 
-
+/** Tránh 2 toast giống hệt trong cửa sổ ngắn (push trùng hoặc edge case hub). */
+let lastInAppToastSig = "";
+let lastInAppToastAt = 0;
 
 export function useNotificationStatus(enabled: boolean = true) {
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
@@ -175,63 +177,46 @@ export function useNotificationListener() {
       return;
     }
 
-    // Handler for incoming notifications
-    const handleNotification = (...args: unknown[]) => {
-      const payload = args[0] as InAppNotificationPayload;
-      console.log("📬 Received notification:", payload);
+    let alive = true;
 
-      // Show toast notification
+    const handleNotification = (...args: unknown[]) => {
+      if (!alive) return;
+      const payload = args[0] as InAppNotificationPayload;
+
       if (payload?.title && payload?.message) {
-        toast.info(payload.title, {
-          description: payload.message,
-        });
+        const sig = `${payload.title}\0${payload.message}`;
+        const now = Date.now();
+        const isDup = sig === lastInAppToastSig && now - lastInAppToastAt < 5000;
+        if (!isDup) {
+          lastInAppToastSig = sig;
+          lastInAppToastAt = now;
+          toast.info(payload.title, {
+            description: payload.message,
+          });
+        }
       }
 
-      // Invalidate notification status and list to refresh
       queryClient.invalidateQueries({ queryKey: ["notifications", "status"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "inbox"] });
     };
 
-    // Get current connection state
-    const connectionState = notificationHubService.getConnectionState();
-
-    if (connectionState.isConnected && connectionState.connection) {
-      // Already connected, just subscribe
+    const subscribe = async () => {
+      for (let attempt = 0; attempt < 40; attempt++) {
+        if (!alive) return;
+        const ok = await notificationHubService.startConnection(accessToken);
+        if (ok) break;
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      if (!alive) return;
+      notificationHubService.offAllNotifications();
       notificationHubService.on("Notification", handleNotification);
-      console.log("📥 Subscribed to 'Notification' method (already connected)");
-    } else if (connectionState.isConnecting) {
-      // Connection in progress, wait a bit and try again
-      const timeout = setTimeout(() => {
-        const newState = notificationHubService.getConnectionState();
-        if (newState.isConnected) {
-          notificationHubService.on("Notification", handleNotification);
-          console.log("📥 Subscribed to 'Notification' method (after connection)");
-        } else {
-          // Start connection with callback if still not connected
-          notificationHubService.startConnection(accessToken, handleNotification).then((connected) => {
-            if (connected) {
-              console.log("✅ Notification hub connected and subscribed!");
-            }
-          });
-        }
-      }, 1000);
+    };
 
-      return () => {
-        clearTimeout(timeout);
-        notificationHubService.off("Notification", handleNotification);
-      };
-    } else {
-      // Not connected yet, start connection with callback
-      notificationHubService.startConnection(accessToken, handleNotification).then((connected) => {
-        if (connected) {
-          console.log("✅ Notification hub connected and subscribed!");
-        }
-      });
-    }
+    void subscribe();
 
-    // Cleanup: unsubscribe on unmount
     return () => {
+      alive = false;
       notificationHubService.off("Notification", handleNotification);
     };
   }, [accessToken, queryClient]);

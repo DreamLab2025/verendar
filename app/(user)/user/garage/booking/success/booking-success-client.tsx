@@ -39,19 +39,24 @@ function LineRow({ line, compact }: { line: BookingLineItemDto; compact?: boolea
   return (
     <li
       className={cn(
-        "flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b border-border/40 py-3.5 last:border-b-0",
-        compact && "py-3",
+        "flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1 border-b border-border/40 py-3 last:border-b-0 sm:gap-x-4 sm:py-3.5",
+        compact && "py-2.5 sm:py-3",
       )}
     >
-      <div className="min-w-0 flex-1">
-        <p className={cn("font-medium leading-snug text-foreground", compact ? "text-sm" : "text-[15px]")}>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <p
+          className={cn(
+            "wrap-break-word font-medium leading-snug text-foreground",
+            compact ? "text-[13px] sm:text-sm" : "text-[15px]",
+          )}
+        >
           {line.itemName}
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{lineKindLabel(line)}</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">{lineKindLabel(line)}</p>
         {line.bundleDetails?.items?.length ? (
-          <ul className="mt-2 space-y-0.5 border-l-2 border-primary/20 pl-3 text-[11px] text-muted-foreground">
+          <ul className="mt-2 max-w-full space-y-0.5 border-l-2 border-primary/20 pl-3 text-[11px] text-muted-foreground">
             {line.bundleDetails.items.map((bi, i) => (
-              <li key={`${bi.itemName}-${i}`}>
+              <li key={`${bi.itemName}-${i}`} className="wrap-break-word">
                 {bi.itemName}
                 {bi.includeInstallation ? " · lắp đặt" : ""}
               </li>
@@ -59,26 +64,22 @@ function LineRow({ line, compact }: { line: BookingLineItemDto; compact?: boolea
           </ul>
         ) : null}
       </div>
-      <span className="shrink-0 tabular-nums text-sm font-semibold text-foreground">
+      <span className="shrink-0 tabular-nums text-[13px] font-semibold text-foreground sm:text-sm">
         {formatVnd(line.bookedItemAmount, line.bookedItemCurrency)}
       </span>
     </li>
   );
 }
 
-function FieldBlock({
-  kicker,
-  children,
-  className,
-}: {
-  kicker: string;
-  children: ReactNode;
-  className?: string;
-}) {
+function FieldBlock({ kicker, children, className }: { kicker: string; children: ReactNode; className?: string }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{kicker}</p>
-      <div className="mt-2 text-sm leading-relaxed text-foreground">{children}</div>
+      <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] sm:tracking-[0.12em]">
+        {kicker}
+      </p>
+      <div className="mt-1.5 text-[13px] leading-snug text-foreground sm:mt-2 sm:text-sm sm:leading-relaxed">
+        {children}
+      </div>
     </div>
   );
 }
@@ -111,7 +112,6 @@ export function BookingSuccessClient() {
         <p className="text-sm leading-relaxed text-muted-foreground">
           Không tải được chi tiết (tab mới hoặc dữ liệu phiên đã hết hạn). Mã tham chiếu:
         </p>
-        <p className="mt-3 break-all font-mono text-xs text-foreground/80">{bookingId}</p>
         <Button asChild className="mt-8 h-11 w-full max-w-xs rounded-xl" variant="default">
           <Link href="/user/garage">Về garage</Link>
         </Button>
@@ -130,47 +130,48 @@ export function BookingSuccessClient() {
       : null;
 
   return (
-    <div className="min-h-0 w-full bg-linear-to-b from-muted/45 to-background pb-12 pt-5 dark:from-muted/20 sm:pb-16 sm:pt-6">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div className="min-h-0 w-full min-w-0 max-w-[100vw] overflow-x-hidden bg-linear-to-b from-muted/45 to-background pb-[max(3rem,env(safe-area-inset-bottom))] pt-3 dark:from-muted/20 sm:pb-16 sm:pt-6">
+      <div className="mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-6 lg:px-8">
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-2 mb-5 h-9 gap-1.5 px-2 text-muted-foreground hover:text-foreground sm:mb-6"
+          className="-ml-1 mb-3 h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground sm:-ml-2 sm:mb-5 sm:h-9 sm:text-sm"
           asChild
         >
           <Link href="/user/garage">
-            <ArrowLeft className="size-4" aria-hidden />
+            <ArrowLeft className="size-3.5 sm:size-4" aria-hidden />
             Garage
           </Link>
         </Button>
 
-        <article className="overflow-hidden rounded-2xl border border-border/70 bg-card text-card-foreground shadow-[0_1px_0_rgba(0,0,0,0.04),0_16px_40px_-18px_rgba(0,0,0,0.14)] dark:border-border/50 dark:shadow-[0_1px_0_rgba(255,255,255,0.04),0_20px_50px_-20px_rgba(0,0,0,0.5)]">
+        <article className="max-w-full min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card text-card-foreground shadow-sm sm:rounded-2xl sm:shadow-[0_1px_0_rgba(0,0,0,0.04),0_16px_40px_-18px_rgba(0,0,0,0.14)] dark:border-border/50 dark:sm:shadow-[0_1px_0_rgba(255,255,255,0.04),0_20px_50px_-20px_rgba(0,0,0,0.5)]">
           {/* Header ngang: icon + copy | mã + trạng thái */}
           <div className="relative border-b border-emerald-600/10 bg-emerald-500/[0.07] dark:border-emerald-500/15 dark:bg-emerald-500/9">
-            <div className="absolute inset-y-0 left-0 w-1 bg-emerald-600/70 dark:bg-emerald-500/80" aria-hidden />
-            <div className="flex flex-col gap-5 p-5 pl-6 sm:p-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-7">
-              <div className="flex min-w-0 gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-emerald-600/12 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
-                  <CheckCircle2 className="size-6 stroke-[1.75]" aria-hidden />
+            <div
+              className="absolute inset-y-0 left-0 w-0.5 bg-emerald-600/70 sm:w-1 dark:bg-emerald-500/80"
+              aria-hidden
+            />
+            <div className="flex min-w-0 flex-col gap-3 p-4 pl-4.5 sm:gap-5 sm:p-6 sm:pl-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8 lg:p-7">
+              <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-600/12 text-emerald-700 sm:size-12 dark:bg-emerald-400/15 dark:text-emerald-300">
+                  <CheckCircle2 className="size-5 stroke-[1.75] sm:size-6" aria-hidden />
                 </div>
                 <div className="min-w-0 pt-0.5">
-                  <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">Đã gửi yêu cầu đặt lịch</h1>
-                  <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                  <h1 className="text-base font-semibold tracking-tight text-foreground sm:text-lg md:text-xl">
+                    Đã gửi yêu cầu đặt lịch
+                  </h1>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground sm:mt-1.5 sm:text-sm">
                     Garage sẽ xem xét và phản hồi sớm. Bạn không cần thanh toán trước ở bước này.
                   </p>
                   {successFootnote ? (
-                    <p className="mt-2.5 text-xs font-medium text-emerald-800/90 dark:text-emerald-200/90">{successFootnote}</p>
+                    <p className="mt-2 text-[11px] font-medium text-emerald-800/90 dark:text-emerald-200/90 sm:mt-2.5 sm:text-xs">
+                      {successFootnote}
+                    </p>
                   ) : null}
                 </div>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-col lg:items-end lg:gap-2">
-                <span
-                  className="inline-flex max-w-full items-center rounded-md bg-primary/10 px-2.5 py-1 font-mono text-[11px] font-medium text-primary tabular-nums"
-                  title={data.id}
-                >
-                  # {data.id}
-                </span>
-                <span className="rounded-full border border-border/80 bg-background/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-background/40">
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-2 pl-13 sm:w-auto sm:pl-0 lg:flex-col lg:items-end lg:gap-2">
+                <span className="rounded-full border border-emerald-800/15 bg-white/60 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-900/80 dark:border-emerald-400/25 dark:bg-emerald-950/40 dark:text-emerald-100">
                   {statusLabel}
                 </span>
               </div>
@@ -178,27 +179,31 @@ export function BookingSuccessClient() {
           </div>
 
           {/* Thân: trái thông tin | phải biên lai */}
-          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:items-start xl:grid-cols-[minmax(0,1fr)_400px]">
-            <div className="space-y-8 border-border/60 p-5 sm:p-6 lg:border-r lg:p-8">
-              <div className="grid gap-8 sm:grid-cols-2 sm:gap-x-10 lg:gap-x-12">
+          <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:items-start xl:grid-cols-[minmax(0,1fr)_400px]">
+            <div className="min-w-0 space-y-5 overflow-hidden border-border/60 p-4 sm:space-y-8 sm:p-6 lg:border-r lg:p-8">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8 lg:gap-x-12">
                 <FieldBlock kicker="Lịch hẹn">
-                  <div className="flex gap-2.5">
-                    <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <p className="font-medium capitalize">
+                  <div className="flex min-w-0 gap-2 sm:gap-2.5">
+                    <Clock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground sm:size-4" aria-hidden />
+                    <p className="min-w-0 wrap-break-word font-medium capitalize">
                       {scheduled.isValid() ? scheduled.format("dddd, D MMMM YYYY · HH:mm") : data.scheduledAt}
                     </p>
                   </div>
                 </FieldBlock>
                 <FieldBlock kicker="Chi nhánh">
-                  <div className="flex gap-2.5">
-                    <Building2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <div>
-                      <p className="font-medium">{data.branch?.name ?? "—"}</p>
+                  <div className="flex min-w-0 gap-2 sm:gap-2.5">
+                    <Building2 className="mt-0.5 size-3.5 shrink-0 text-muted-foreground sm:size-4" aria-hidden />
+                    <div className="min-w-0">
+                      <p className="wrap-break-word font-medium">{data.branch?.name ?? "—"}</p>
                       {data.branch?.addressLine ? (
-                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{data.branch.addressLine}</p>
+                        <p className="mt-1 wrap-break-word text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+                          {data.branch.addressLine}
+                        </p>
                       ) : null}
                       {data.branch?.garageBusinessName ? (
-                        <p className="mt-1.5 text-xs text-muted-foreground/90">{data.branch.garageBusinessName}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground/90 sm:mt-1.5 sm:text-xs">
+                          {data.branch.garageBusinessName}
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -206,31 +211,41 @@ export function BookingSuccessClient() {
               </div>
 
               {data.note ? (
-                <div className="rounded-xl border border-dashed border-border/60 bg-muted/15 px-4 py-3.5 dark:bg-muted/10 sm:px-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Ghi chú</p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">{data.note}</p>
+                <div className="rounded-lg border border-dashed border-border/60 bg-muted/15 px-3 py-3 dark:bg-muted/10 sm:rounded-xl sm:px-5 sm:py-3.5">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] sm:tracking-[0.12em]">
+                    Ghi chú
+                  </p>
+                  <p className="mt-1.5 max-w-full whitespace-pre-wrap wrap-break-word text-[13px] leading-relaxed text-foreground sm:mt-2 sm:text-sm">
+                    {data.note}
+                  </p>
                 </div>
               ) : null}
 
               <Separator className="bg-border/55" />
 
-              <div className="grid gap-8 sm:grid-cols-2 sm:gap-x-10 lg:gap-x-12">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8 lg:gap-x-12">
                 <FieldBlock kicker="Khách">
-                  <p className="font-medium">{data.customer?.fullName ?? "—"}</p>
+                  <p className="wrap-break-word font-medium">{data.customer?.fullName ?? "—"}</p>
                   {data.customer?.phoneNumber ? (
-                    <p className="mt-1.5 text-sm text-muted-foreground">{data.customer.phoneNumber}</p>
+                    <p className="mt-1 break-all text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">
+                      {data.customer.phoneNumber}
+                    </p>
                   ) : null}
                   {data.customer?.email ? (
-                    <p className="mt-1.5 truncate text-sm text-muted-foreground">{data.customer.email}</p>
+                    <p className="mt-1 break-all text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">
+                      {data.customer.email}
+                    </p>
                   ) : null}
                 </FieldBlock>
                 <FieldBlock kicker="Xe">
-                  <p className="font-medium tabular-nums">{data.vehicle?.licensePlate ?? "—"}</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">
+                  <p className="wrap-break-word font-medium tabular-nums">{data.vehicle?.licensePlate ?? "—"}</p>
+                  <p className="mt-1 wrap-break-word text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">
                     {[data.vehicle?.brandName, data.vehicle?.modelName].filter(Boolean).join(" ") || "—"}
                   </p>
                   {data.vehicle?.variantColor ? (
-                    <p className="mt-1.5 text-sm text-muted-foreground">Màu {data.vehicle.variantColor}</p>
+                    <p className="mt-1 text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">
+                      Màu {data.vehicle.variantColor}
+                    </p>
                   ) : null}
                 </FieldBlock>
               </div>
@@ -239,20 +254,27 @@ export function BookingSuccessClient() {
                 <>
                   <Separator className="bg-border/55" />
                   <div>
-                    <h2 className="text-sm font-semibold tracking-tight text-foreground">Lịch sử trạng thái</h2>
-                    <ul className="mt-3 divide-y divide-border/45 border-t border-border/45">
+                    <h2 className="text-[13px] font-semibold tracking-tight text-foreground sm:text-sm">
+                      Lịch sử trạng thái
+                    </h2>
+                    <ul className="mt-2 divide-y divide-border/45 border-t border-border/45 sm:mt-3">
                       {data.statusHistory.map((h) => (
-                        <li key={h.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3 first:pt-3">
-                          <span className="text-sm font-medium text-foreground">
+                        <li
+                          key={h.id}
+                          className="flex min-w-0 flex-wrap items-baseline justify-between gap-2 py-2.5 first:pt-2.5 sm:py-3 sm:first:pt-3"
+                        >
+                          <span className="min-w-0 wrap-break-word text-[13px] font-medium text-foreground sm:text-sm">
                             {h.fromStatus} → {h.toStatus}
                           </span>
                           <time
-                            className="shrink-0 text-xs tabular-nums text-muted-foreground"
+                            className="shrink-0 break-all text-[11px] tabular-nums text-muted-foreground sm:text-xs"
                             dateTime={h.changedAt}
                           >
                             {dayjs(h.changedAt).isValid() ? dayjs(h.changedAt).format("D/M/YYYY HH:mm") : h.changedAt}
                           </time>
-                          {h.note ? <p className="w-full text-xs text-muted-foreground">{h.note}</p> : null}
+                          {h.note ? (
+                            <p className="w-full text-[11px] text-muted-foreground sm:text-xs">{h.note}</p>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -262,14 +284,16 @@ export function BookingSuccessClient() {
             </div>
 
             {/* Cột phải: tóm tắt đơn — sticky trên desktop */}
-            <aside className="border-t border-border/60 bg-muted/20 p-5 sm:p-6 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:border-t-0 lg:p-8 dark:bg-muted/10 [scrollbar-width:thin]">
-              <div className="flex items-end justify-between gap-3 border-b border-border/50 pb-4">
-                <h2 className="text-base font-semibold tracking-tight text-foreground">Dịch vụ đã đặt</h2>
-                <p className="text-lg font-bold tabular-nums text-foreground">
+            <aside className="min-w-0 overflow-hidden border-t border-border/60 bg-muted/20 p-4 sm:p-6 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:border-t-0 lg:p-8 dark:bg-muted/10 [scrollbar-width:thin]">
+              <div className="flex min-w-0 items-end justify-between gap-2 border-b border-border/50 pb-3 sm:gap-3 sm:pb-4">
+                <h2 className="min-w-0 flex-1 wrap-break-word text-[15px] font-semibold tracking-tight text-foreground sm:text-base">
+                  Dịch vụ đã đặt
+                </h2>
+                <p className="shrink-0 text-right text-base font-bold tabular-nums text-foreground sm:text-lg">
                   {formatVnd(data.bookedTotalAmount, data.bookedCurrency)}
                 </p>
               </div>
-              <ul className="mt-1">
+              <ul className="mt-0.5 min-w-0 sm:mt-1">
                 {sortedLines.map((line) => (
                   <LineRow key={line.id} line={line} compact />
                 ))}
@@ -283,8 +307,12 @@ export function BookingSuccessClient() {
             </aside>
           </div>
 
-          <div className="border-t border-border/60 bg-muted/25 px-5 py-4 dark:bg-muted/15 lg:hidden sm:px-6">
-            <Button asChild className="h-12 w-full rounded-xl text-base font-semibold shadow-sm" size="lg">
+          <div className="border-t border-border/60 bg-muted/25 px-4 py-3 dark:bg-muted/15 sm:px-6 sm:py-4 lg:hidden">
+            <Button
+              asChild
+              className="h-11 w-full rounded-xl text-sm font-semibold shadow-sm sm:h-12 sm:text-base"
+              size="lg"
+            >
               <Link href="/user/garage">Về trang garage</Link>
             </Button>
           </div>
