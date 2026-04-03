@@ -1,7 +1,6 @@
 // src/lib/api/services/fetchUsers.ts
 import { PaginationMetadata, RequestParams } from "../apiService";
 import api8080Service from "../api8080Service";
-import { UserVehicleVariant } from "./fetchVariants";
 
 export interface UserDto {
   id: string;
@@ -12,6 +11,8 @@ export interface UserDto {
   phoneNumberVerified: boolean;
   roles: string[];
   createdAt: string; // ISO
+  dateOfBirth?: string; // ISO
+  gender?: string;
 }
 
 export type UseUsersSelected = {

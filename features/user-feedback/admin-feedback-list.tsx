@@ -108,10 +108,9 @@ export function AdminFeedbackList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-4 sm:flex-row sm:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Quản lý phản hồi</h2>
-          <p className="text-sm text-muted-foreground mt-1">Theo dõi và xử lý các ý kiến đóng góp từ người dùng.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -317,9 +316,9 @@ export function AdminFeedbackList() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="bg-muted/30 p-4 border-t flex flex-col items-start gap-2" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-xs font-medium text-muted-foreground">Trạng thái xử lý:</span>
-                  <div className="w-full relative z-10">
+                <CardFooter className="bg-muted/30 p-4 border-t flex flex-row items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-xs font-semibold text-muted-foreground shrink-0 uppercase tracking-wider">Trạng thái:</span>
+                  <div className="relative z-10 shrink-0">
                     <StatusSelect
                       value={fb.status.toString()}
                       onChange={(v) => handleStatusChange(fb.id, v)}
@@ -383,7 +382,10 @@ export function StatusSelect({
 
   return (
     <Select value={parsedStatus.toString()} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className={`inline-flex h-8 w-fit items-center rounded-full border-0 px-3 py-1 shadow-sm transition-all focus:ring-2 focus:ring-primary/20 ${currentInfo.colorClass}`}>
+      <SelectTrigger
+        onPointerDown={(e) => e.preventDefault()}
+        className={`inline-flex h-8 w-fit items-center rounded-full border-0 px-3 py-1 shadow-sm transition-all focus:ring-2 focus:ring-primary/20 ${currentInfo.colorClass}`}
+      >
         <SelectValue>
           <span className="text-[13px] font-medium tracking-wide mr-1.5 drop-shadow-sm">
             {currentInfo.label}
