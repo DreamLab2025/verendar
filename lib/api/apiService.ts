@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { deleteCookie } from "cookies-next";
+import { deleteCookie, setCookie } from "cookies-next";
+import { getAuthCookieConfig } from "@/utils/cookieConfig";
 
 /* =========================
    Types
@@ -86,6 +87,7 @@ export class ApiService {
   private client: AxiosInstance;
   private authToken: string | null = null;
   private static isRedirecting = false; // Flag để tránh redirect nhiều lần
+  private refreshPromise: Promise<string | null> | null = null;
 
   constructor(baseURL: string, timeout = 10000) {
     this.client = axios.create({
@@ -105,6 +107,108 @@ export class ApiService {
     this.authToken = token;
   }
 
+  private readPersistedRefreshToken(): string | null {
+    if (typeof window === "undefined") return null;
+    try {
+      const rawPersist = window.localStorage.getItem("persist:root");
+      if (!rawPersist) return null;
+      const root = JSON.parse(rawPersist) as { auth?: string };
+      if (!root.auth) return null;
+      const auth = JSON.parse(root.auth) as { refreshToken?: string | null };
+      return auth.refreshToken ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private writePersistedTokens(accessToken: string, refreshToken?: string | null) {
+    if (typeof window === "undefined") return;
+    try {
+      const rawPersist = window.localStorage.getItem("persist:root");
+      if (!rawPersist) return;
+      const root = JSON.parse(rawPersist) as Record<string, unknown>;
+      const authRaw = typeof root.auth === "string" ? root.auth : undefined;
+      if (!authRaw) return;
+      const auth = JSON.parse(authRaw) as Record<string, unknown>;
+
+      auth.token = accessToken;
+      auth.isAuthenticated = true;
+      auth.isLoading = false;
+      if (typeof refreshToken !== "undefined") {
+        auth.refreshToken = refreshToken;
+      }
+
+      root.auth = JSON.stringify(auth);
+      window.localStorage.setItem("persist:root", JSON.stringify(root));
+    } catch {
+      // Ignore persist update errors to avoid breaking request flow.
+    }
+  }
+
+  private clearPersistedAuth() {
+    if (typeof window === "undefined") return;
+    try {
+      const rawPersist = window.localStorage.getItem("persist:root");
+      if (!rawPersist) return;
+      const root = JSON.parse(rawPersist) as Record<string, unknown>;
+      const authRaw = typeof root.auth === "string" ? root.auth : undefined;
+      if (!authRaw) return;
+      const auth = JSON.parse(authRaw) as Record<string, unknown>;
+
+      auth.token = null;
+      auth.refreshToken = null;
+      auth.user = null;
+      auth.isAuthenticated = false;
+      auth.isLoading = false;
+
+      root.auth = JSON.stringify(auth);
+      window.localStorage.setItem("persist:root", JSON.stringify(root));
+    } catch {
+      // Ignore persist cleanup errors.
+    }
+  }
+
+  private async refreshAccessToken(): Promise<string | null> {
+    if (this.refreshPromise) return this.refreshPromise;
+
+    this.refreshPromise = (async () => {
+      const refreshToken = this.readPersistedRefreshToken();
+      if (!refreshToken) return null;
+
+      const gatewayBase = process.env.NEXT_PUBLIC_API_URL_API_GATEWAY || this.client.defaults.baseURL || "";
+      if (!gatewayBase) return null;
+
+      try {
+        const response = await axios.post<{
+          isSuccess: boolean;
+          data?: { accessToken?: string; refreshToken?: string | null };
+        }>(
+          "/api/v1/auth/refresh-token",
+          { refreshToken },
+          { baseURL: gatewayBase, timeout: 10000 },
+        );
+
+        const nextAccessToken = response.data?.data?.accessToken;
+        if (!nextAccessToken) return null;
+
+        const nextRefreshToken = response.data?.data?.refreshToken;
+        this.setAuthToken(nextAccessToken);
+        setCookie("authToken", nextAccessToken, getAuthCookieConfig());
+        this.writePersistedTokens(nextAccessToken, nextRefreshToken ?? null);
+
+        return nextAccessToken;
+      } catch {
+        return null;
+      }
+    })();
+
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
   /* ---------- Interceptors ---------- */
 
   private parseErrorMessage(errorData: ApiErrorData | undefined): string {
@@ -120,7 +224,7 @@ export class ApiService {
       const errorMessages: string[] = [];
 
       // Lấy tất cả các message từ errors object
-      Object.entries(errorData.errors).forEach(([field, messages]) => {
+      Object.entries(errorData.errors).forEach(([, messages]) => {
         if (Array.isArray(messages)) {
           messages.forEach((msg) => {
             if (typeof msg === "string") {
@@ -155,25 +259,33 @@ export class ApiService {
 
     this.client.interceptors.response.use(
       (res) => res,
-      (error: AxiosError<ApiErrorData>) => {
+      async (error: AxiosError<ApiErrorData>) => {
         if (error.response?.status === 401) {
-          // Xử lý lỗi 401 (Unauthorized) - Xóa token và redirect đến login
-          // Chỉ xử lý nếu đang ở client side và chưa redirect
+          const originalRequest = error.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined;
+
+          if (originalRequest && !originalRequest._retry) {
+            originalRequest._retry = true;
+            const nextAccessToken = await this.refreshAccessToken();
+
+            if (nextAccessToken) {
+              originalRequest.headers = {
+                ...(originalRequest.headers ?? {}),
+                Authorization: `Bearer ${nextAccessToken}`,
+              };
+              return this.client.request(originalRequest);
+            }
+          }
+
+          // Refresh fail -> clear auth and force login.
           if (typeof window !== "undefined" && !ApiService.isRedirecting) {
             ApiService.isRedirecting = true;
-
-            // Xóa token cookie
-            deleteCookie("auth-token", { path: "/" });
-
-            // Clear token trong service
             this.setAuthToken(null);
-
-            // Redirect đến login
+            deleteCookie("authToken", { path: "/" });
+            this.clearPersistedAuth();
             window.location.href = "/login";
-
-            // Return early để không throw error
-            return Promise.reject(new Error("Unauthorized"));
           }
+
+          return Promise.reject(new Error("Unauthorized"));
         }
 
         // Parse message từ error data (bao gồm cả errors object)

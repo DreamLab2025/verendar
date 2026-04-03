@@ -11,20 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { resolveHomeRouteFromRoles } from "@/lib/auth/role-routing";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, accessToken, loading, error, clearError } = useAuth();
+  const { login, user, accessToken, loading, error, clearError } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (accessToken) {
-      router.replace("/");
+    if (accessToken && user?.role) {
+      router.replace(resolveHomeRouteFromRoles([user.role]));
     }
-  }, [accessToken, router]);
+  }, [accessToken, router, user?.role]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,7 +33,7 @@ export default function LoginPage() {
 
     const result = await login(email.trim(), password);
     if (result.success) {
-      router.replace("/");
+      router.replace(resolveHomeRouteFromRoles(result.user?.role ? [result.user.role] : []));
     }
   };
 

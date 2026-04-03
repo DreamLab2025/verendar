@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { AuthService, JwtPayload, AuthState, AuthResult, User } from "@/lib/api/services/fetchAuth";
-import { setCookie, getCookie, deleteCookie } from "cookies-next";
+import { setCookie, getCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import api8080Service from "@/lib/api/api8080Service";
 import apiService from "@/lib/api/apiService";
 import type { ApiError } from "@/lib/api/apiService";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
+import { getPrimaryRoleFromRoles, normalizeJwtRolesClaim } from "@/lib/auth/role-routing";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { logout as logoutAction, setAuthSession } from "@/lib/redux/slices/authSlice";
 
 export function isAccessTokenValid(token: string | null | undefined): boolean {
   if (!token) return false;
@@ -30,6 +33,7 @@ export function useAuth() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
 
   /* ---------- JWT HELPERS ---------- */
 
@@ -46,13 +50,16 @@ export function useAuth() {
 
   const buildUserFromToken = (token: string): User => {
     const payload = decodeJwt(token);
+    const roles = normalizeJwtRolesClaim(payload.role);
+    const primaryRole = getPrimaryRoleFromRoles(roles);
+    const userName = payload.userName || payload.unique_name || payload.email?.split("@")[0] || "";
 
     return {
       userId: payload.userId || payload.sub || "",
-      userName: payload.userName || payload.unique_name || payload.email?.split("@")[0] || "",
+      userName,
       email: payload.email || "",
-      role: Array.isArray(payload.role) ? payload.role[0] : payload.role || "User",
-      avatarUrl: `https://ui-avatars.com/api/?name=${payload.userName}&background=0D8ABC&color=fff`,
+      role: primaryRole || "User",
+      avatarUrl: `https://ui-avatars.com/api/?name=${userName}&background=0D8ABC&color=fff`,
     };
   };
 
@@ -65,15 +72,16 @@ export function useAuth() {
       const response = await AuthService.login(email, password);
 
       const token = response.data.data.accessToken;
+      const refreshToken = response.data.data.refreshToken ?? null;
       const user = buildUserFromToken(token);
 
       // ✅ LƯU COOKIE
       setCookie("authToken", token, getAuthCookieConfig());
-      setCookie("auth-token", token, getAuthCookieConfig()); // Backward compatibility
 
       // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
       api8080Service.setAuthToken(token);
       apiService.setAuthToken(token);
+      dispatch(setAuthSession({ accessToken: token, refreshToken }));
       setState({
         user,
         accessToken: token,
@@ -215,16 +223,7 @@ export function useAuth() {
   /* ===================== LOGOUT ===================== */
 
   const logout = () => {
-    // ✅ XÓA COOKIE (với tất cả các options để đảm bảo xóa hoàn toàn)
-    deleteCookie("auth-token", {
-      path: "/",
-      domain: undefined, // Xóa trên tất cả domains
-    });
-    deleteCookie("authToken", { path: "/" });
-
-    // ✅ CLEAR TOKEN Ở TẤT CẢ API SERVICES
-    api8080Service.setAuthToken(null);
-    apiService.setAuthToken(null);
+    dispatch(logoutAction());
 
     // ✅ CLEAR REACT QUERY CACHE (xóa toàn bộ cache)
     queryClient.clear();
@@ -252,8 +251,9 @@ export function useAuth() {
   const initAuthFromStorage = async () => {
     setState((s) => ({ ...s, loading: true }));
 
-    const token = (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
+    const token = getCookie("authToken") as string | undefined;
     if (!token) {
+      dispatch(logoutAction());
       setState((s) => ({ ...s, loading: false }));
       return;
     }
@@ -270,13 +270,14 @@ export function useAuth() {
     // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
     api8080Service.setAuthToken(token);
     apiService.setAuthToken(token);
+    dispatch(setAuthSession({ accessToken: token }));
 
     setState((s) => ({ ...s, accessToken: token }));
 
     await fetchCurrentUser();
 
     // TEMP: disable SignalR during UI/auth testing
-    // const currentState = getCookie("auth-token") as string | undefined;
+    // const currentState = getCookie("authToken") as string | undefined;
     // if (currentState) {
     //   console.log("🔌 Attempting to connect to notification hub on init...");
     //   notificationHubService.startConnection(currentState).then((connected) => {
@@ -323,7 +324,7 @@ export function useAuth() {
   /** Token cho hub / API khi cookie còn nhưng state `useAuth` chưa hydrate (vd. sau reload). */
   const resolvedAccessToken =
     state.accessToken ??
-    ((getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined) ?? null);
+    ((getCookie("authToken") as string | undefined) ?? null);
 
   return {
     user: state.user,

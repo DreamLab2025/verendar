@@ -16,7 +16,6 @@ export function useOwnerSessionLogout() {
   const queryClient = useQueryClient();
 
   return useCallback(() => {
-    deleteCookie("auth-token", { path: "/", domain: undefined });
     deleteCookie("authToken", { path: "/" });
     api8080Service.setAuthToken(null);
     apiService.setAuthToken(null);

@@ -98,6 +98,9 @@ export const AuthService = {
 
   resetPassword: (payload: { email: string; otpCode: string; newPassword: string; confirmNewPassword: string }) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/reset-password", payload),
+
+  refreshToken: (refreshToken: string) =>
+    api8080Service.post<ApiSuccessResponse<LoginResponseData>>("/api/v1/auth/refresh-token", { refreshToken }),
 };
 
 export default AuthService;

@@ -77,7 +77,7 @@ export function UserDetailDialog({ open, onOpenChange, userId }: UserDetailDialo
                   "fixed z-50 grid w-full gap-0 border bg-background shadow-lg overflow-y-auto",
                   isMobile
                     ? "inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl rounded-b-none p-0"
-                    : "left-[50%] top-[50%] max-h-[90vh] sm:rounded-lg sm:max-w-lg p-0"
+                    : "left-[50%] top-[50%] max-h-[90vh] sm:rounded-lg sm:max-w-3xl p-0"
                 )}
               >
                 <div className="flex flex-col w-full">

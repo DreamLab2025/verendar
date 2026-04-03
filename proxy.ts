@@ -1,11 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtDecode } from "jwt-decode";
+import {
+  GARAGE_HOME_ROUTE,
+  USER_HOME_ROUTE,
+  hasAdminRole,
+  hasGarageRole,
+  normalizeJwtRolesClaim,
+  resolveHomeRouteFromRoles,
+} from "@/lib/auth/role-routing";
 
 const BYPASS_AUTH_FOR_UI_TEST = false;
 
-const ADMIN_HOME = "/admin/dashboard";
-const USER_HOME = "/";
+const KNOWN_APP_ROUTE_PATTERNS = [
+  "/",
+  "/admin/dashboard",
+  "/admin/feedback",
+  "/admin/users",
+  "/garage",
+  "/garage-dashboard",
+  "/notifications",
+  "/settings",
+  "/feedback",
+  "/user",
+  "/vehicle",
+];
+
+const routeMatches = (pathname: string, route: string) =>
+  route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
+
+const isKnownAppRoute = (pathname: string) =>
+  KNOWN_APP_ROUTE_PATTERNS.some((route) => routeMatches(pathname, route));
 
 const getUserRoles = (token: string | undefined): string[] => {
   if (!token) return [];
@@ -15,18 +40,12 @@ const getUserRoles = (token: string | undefined): string[] => {
       exp?: number;
     } | null;
 
-    if (!decoded?.role) return [];
-    return Array.isArray(decoded.role) ? decoded.role : [decoded.role];
+    if (!decoded) return [];
+    return normalizeJwtRolesClaim(decoded.role);
   } catch {
     return [];
   }
 };
-
-const isAdminRole = (roles: string[]) =>
-  roles.some((r) => String(r).toLowerCase() === "admin");
-
-const getPrimaryRole = (roles: string[]): "admin" | "user" =>
-  isAdminRole(roles) ? "admin" : "user";
 
 export function proxy(request: NextRequest) {
   if (BYPASS_AUTH_FOR_UI_TEST) {
@@ -39,13 +58,13 @@ export function proxy(request: NextRequest) {
 
   const token = request.cookies.get("authToken")?.value;
   const userRoles = getUserRoles(token);
-  const primaryRole = getPrimaryRole(userRoles);
+  const homeRoute = resolveHomeRouteFromRoles(userRoles);
 
   const publicRoutes: string[] = [];
   const authRoutes = ["/login", "/register", "/forgot-password"];
 
-  const isPublicRoute = publicRoutes.some((r) => pathname === r || pathname.startsWith(`${r}/`));
-  const isAuthRoute = authRoutes.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  const isPublicRoute = publicRoutes.some((r) => routeMatches(pathname, r));
+  const isAuthRoute = authRoutes.some((r) => routeMatches(pathname, r));
 
   if (!token || userRoles.length === 0) {
     if (isPublicRoute || isAuthRoute) return NextResponse.next();
@@ -55,28 +74,38 @@ export function proxy(request: NextRequest) {
   }
 
   const isAdminRoute = pathname.startsWith("/admin");
+  const isGarageRoute = pathname === GARAGE_HOME_ROUTE || pathname.startsWith(`${GARAGE_HOME_ROUTE}/`);
+  const isAdmin = hasAdminRole(userRoles);
+  const isGarageMember = hasGarageRole(userRoles);
 
   if (isAuthRoute) {
-    if (primaryRole === "admin") {
-      return NextResponse.redirect(new URL(ADMIN_HOME, request.url));
-    }
-    return NextResponse.redirect(new URL(USER_HOME, request.url));
+    return NextResponse.redirect(new URL(homeRoute, request.url));
   }
 
   if (pathname === "/" || pathname === "") {
-    if (primaryRole === "admin") {
-      return NextResponse.redirect(new URL(ADMIN_HOME, request.url));
+    if (homeRoute !== USER_HOME_ROUTE) {
+      return NextResponse.redirect(new URL(homeRoute, request.url));
     }
-    // Allow users to access root route normally
     return NextResponse.next();
   }
 
-  if (primaryRole === "admin") {
+  if (!isKnownAppRoute(pathname)) {
+    return NextResponse.redirect(new URL(homeRoute, request.url));
+  }
+
+  if (isAdmin) {
+    if (isGarageRoute) {
+      return NextResponse.redirect(new URL(homeRoute, request.url));
+    }
     return NextResponse.next();
   }
 
   if (isAdminRoute) {
-    return NextResponse.redirect(new URL(USER_HOME, request.url));
+    return NextResponse.redirect(new URL(homeRoute, request.url));
+  }
+
+  if (isGarageRoute && !isGarageMember) {
+    return NextResponse.redirect(new URL(USER_HOME_ROUTE, request.url));
   }
 
   return NextResponse.next();

@@ -18,8 +18,7 @@ function decodeJwtPayload(raw: string): Record<string, unknown> | null {
 /** Khách hàng từ JWT (cookie) khi POST booking không embed customer. */
 export function getCustomerSnapshotFromAuthCookie(): BookingCustomerDto | null {
   if (typeof window === "undefined") return null;
-  const token =
-    (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
+  const token = getCookie("authToken") as string | undefined;
   if (!token) return null;
   const payload = decodeJwtPayload(token);
   if (!payload) return null;

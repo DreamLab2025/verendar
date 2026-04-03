@@ -39,7 +39,7 @@ export function RootShell({ children }: RootShellProps) {
   const skipShell = isAuthRoute || isRouteWithoutRootShell(pathname);
 
   useEffect(() => {
-    const token = (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
+    const token = getCookie("authToken") as string | undefined;
     if (!token) return;
     apiService.setAuthToken(token);
     api8080Service.setAuthToken(token);
