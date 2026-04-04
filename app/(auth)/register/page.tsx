@@ -7,7 +7,6 @@ import { CarFront, Eye, EyeOff, Loader2, Mail, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/hooks/useAuth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ import { OtpDialog } from "@/components/dialog/auth/OtpDialog";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, verifyOtp, resendOtp, loading, error, clearError } = useAuth();
+  const { register, verifyOtp, resendOtp, loading, clearError } = useAuth();
 
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
