@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CarFront, Eye, EyeOff, Loader2, Phone } from "lucide-react";
+import { CarFront, Eye, EyeOff, Loader2, Mail, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -101,15 +101,18 @@ export default function RegisterPage() {
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={cn(fieldErrors.email && "border-destructive")}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={cn("pl-10", fieldErrors.email && "border-destructive")}
+                  required
+                />
+                <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
               {fieldErrors.email && <p className="text-xs font-medium text-destructive">{fieldErrors.email}</p>}
             </div>
 

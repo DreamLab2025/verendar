@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import UserService, {
+  UpdateUserRequest,
   UserDetailResponse,
   UsersListResponse,
   UsersQueryParams,
@@ -53,4 +54,36 @@ export function useUserById(id: string, enabled = true) {
     message: query.data?.message,
     isSuccess: query.data?.isSuccess,
   };
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: UserService.createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
+      UserService.updateUser(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "detail", variables.id] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: UserService.deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+    },
+  });
 }

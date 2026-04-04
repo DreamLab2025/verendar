@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useUsers } from "@/hooks/useUsers";
@@ -12,7 +12,12 @@ import {
   Users as UsersIcon,
   CheckCircle2,
   XCircle,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+import { UserFormDialog } from "@/components/dialog/users/UserFormDialog";
+import { DeleteUserDialog } from "@/components/dialog/users/DeleteUserDialog";
 import {
   Table,
   TableBody,
@@ -27,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ROLE_MAP: Record<string, string> = {
-  AdminUsersList: "Quản trị viên",
+  Admin: "Quản trị viên",
   User: "Người dùng",
   GarageOwner: "Chủ gara",
   Mechanic: "Thợ sửa chữa",
@@ -44,10 +49,41 @@ export const getInitials = (name: string) => {
 };
 
 export function AdminUsersList() {
+  const [mounted, setMounted] = useState(false);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 9;
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  // Dialog states
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
+  const [targetUserName, setTargetUserName] = useState<string>("");
+
+  const handleCreate = () => {
+    setFormMode("create");
+    setTargetUserId(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setFormMode("edit");
+    setTargetUserId(id);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    setTargetUserId(id);
+    setTargetUserName(name);
+    setIsDeleteOpen(true);
+  };
 
   const { users, isLoading, isError, metadata, refetch, isFetching } = useUsers({
     PageNumber: page,
@@ -84,13 +120,20 @@ export function AdminUsersList() {
         </div>
         <div className="flex items-center gap-2">
           <Button
+            onClick={handleCreate}
+            className="h-9 px-4 gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Thêm người dùng</span>
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            disabled={isFetching}
+            disabled={mounted && isFetching}
             className="h-9 px-3 gap-2 rounded-xl border-border/60 hover:bg-muted"
           >
-            <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCcw className={`h-4 w-4 ${mounted && isFetching ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Làm mới</span>
           </Button>
         </div>
@@ -202,14 +245,35 @@ export function AdminUsersList() {
                       {dayjs(user.createdAt).format("DD/MM/YYYY")}
                     </TableCell>
                     <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-muted rounded-xl transition-colors group-hover:text-primary"
-                        onClick={() => setSelectedUserId(user.id)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-primary/10 hover:text-primary rounded-xl transition-colors"
+                          onClick={() => setSelectedUserId(user.id)}
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-amber-500/10 hover:text-amber-600 rounded-xl transition-colors"
+                          onClick={() => handleEdit(user.id)}
+                          title="Chỉnh sửa"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive rounded-xl transition-colors"
+                          onClick={() => handleDelete(user.id, user.userName)}
+                          title="Xóa"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -236,9 +300,32 @@ export function AdminUsersList() {
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full shrink-0">
-                      <Eye className="size-4" />
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                        onClick={() => setSelectedUserId(user.id)}
+                      >
+                        <Eye className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-amber-500/10 hover:text-amber-600 transition-colors"
+                        onClick={() => handleEdit(user.id)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        onClick={() => handleDelete(user.id, user.userName)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 pb-3 space-y-3">
@@ -306,6 +393,20 @@ export function AdminUsersList() {
         open={!!selectedUserId}
         onOpenChange={(open) => !open && setSelectedUserId(null)}
         userId={selectedUserId}
+      />
+
+      <UserFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        mode={formMode}
+        userId={targetUserId}
+      />
+
+      <DeleteUserDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        userId={targetUserId}
+        userName={targetUserName}
       />
     </div>
   );
