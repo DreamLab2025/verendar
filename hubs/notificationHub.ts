@@ -4,7 +4,7 @@ import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } fro
 import { useEffect, useMemo, useState } from "react";
 
 import { isAccessTokenValid, useAuth } from "@/hooks/useAuth";
-import { store } from "@/lib/redux/store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 // —— URL (env + mặc định `/hubs/notifications`) ——————————————————————
 
@@ -29,25 +29,27 @@ class NotificationHubService {
   private connection: HubConnection | null = null;
   private isConnecting = false;
 
-  private ensureConnection(token: string) {
+  private ensureConnection() {
     if (this.connection) return this.connection;
 
     this.connection = new HubConnectionBuilder()
       .withUrl(getNotificationHubUrl(), {
-        accessTokenFactory: () => token,
+        // Always resolve latest token to avoid stale token closure after refresh.
+        accessTokenFactory: () => useAuthStore.getState().token || "",
       })
       .withAutomaticReconnect()
-      .configureLogging(LogLevel.Warning)
+      .configureLogging(LogLevel.None)
       .build();
 
     return this.connection;
   }
 
   /** Chỉ bật kết nối — không đăng ký handler (tránh trùng handler khi async race / Strict Mode). Handler gọi `on("Notification", cb)` sau khi await. */
-  async startConnection(token: string): Promise<boolean> {
-    if (!token) return false;
+  async startConnection(token?: string | null): Promise<boolean> {
+    const effectiveToken = token ?? useAuthStore.getState().token;
+    if (!effectiveToken) return false;
 
-    const conn = this.ensureConnection(token);
+    const conn = this.ensureConnection();
     if (conn.state === HubConnectionState.Connected) {
       return true;
     }
@@ -173,10 +175,10 @@ export function getHubConnection() {
   if (reduxHubConnection) return reduxHubConnection;
   reduxHubConnection = new HubConnectionBuilder()
     .withUrl(getNotificationHubUrl(), {
-      accessTokenFactory: () => store.getState().auth.token || "",
+      accessTokenFactory: () => useAuthStore.getState().token || "",
     })
     .withAutomaticReconnect()
-    .configureLogging(LogLevel.Warning)
+    .configureLogging(LogLevel.None)
     .build();
   return reduxHubConnection;
 }

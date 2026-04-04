@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { QueryProvider } from "@/lib/providers/queryProvider";
-import { ReduxProvider } from "@/lib/providers/reduxProvider";
 // import { SignalRProvider } from "@/lib/providers/signalRProvider";
 import { useAuthSyncAcrossTabs } from "@/hooks/useAuthSyncAcrossTabs";
 
@@ -13,15 +12,13 @@ function AuthSyncProvider({ children }: { children: ReactNode }) {
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ReduxProvider>
-      <QueryProvider>
-        {/* Temporarily avoid next-themes script injection in Next 16 client render */}
-        {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange> */}
-        {/* <SignalRProvider> */}
-        <AuthSyncProvider>{children}</AuthSyncProvider>
-        {/* </SignalRProvider> */}
-        {/* </ThemeProvider> */}
-      </QueryProvider>
-    </ReduxProvider>
+    <QueryProvider>
+      {/* Temporarily avoid next-themes script injection in Next 16 client render */}
+      {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange> */}
+      {/* <SignalRProvider> */}
+      <AuthSyncProvider>{children}</AuthSyncProvider>
+      {/* </SignalRProvider> */}
+      {/* </ThemeProvider> */}
+    </QueryProvider>
   );
 }

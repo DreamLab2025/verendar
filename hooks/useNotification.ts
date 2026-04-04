@@ -1,12 +1,12 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import NotificationService, { ApiNotification, InAppNotificationPayload, MarkAsReadResponse, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
-
 import notificationHubService from "@/hubs/notificationHub";
-import { isAccessTokenValid, useAuth } from "./useAuth";
+import { isAccessTokenValid } from "./useAuth";
 import { toast } from "sonner";
 import { ReminderLevel } from "@/lib/api/services/fetchTrackingReminder";
 import { Notification } from "@/lib/api/services/fetchNotification";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 /** Tránh 2 toast giống hệt trong cửa sổ ngắn (push trùng hoặc edge case hub). */
 let lastInAppToastSig = "";
@@ -170,10 +170,14 @@ export function useNotificationById(id: string | undefined, enabled: boolean = t
 
 export function useNotificationListener() {
   const queryClient = useQueryClient();
-  const { resolvedAccessToken: accessToken } = useAuth();
+  const accessToken = useAuthStore((state) => state.token);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+  const setAuthSession = useAuthStore((state) => state.setAuthSession);
+  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
-    if (!accessToken || !isAccessTokenValid(accessToken)) {
+    if (!accessToken && !refreshToken) {
+      void notificationHubService.stopConnection();
       return;
     }
 
@@ -202,9 +206,16 @@ export function useNotificationListener() {
     };
 
     const subscribe = async () => {
+      const tokenForConnect = accessToken;
+
+      if (!tokenForConnect || !isAccessTokenValid(tokenForConnect)) {
+        console.debug("[SignalR] No valid token, skipping subscribe.");
+        return;
+      }
+
       for (let attempt = 0; attempt < 40; attempt++) {
         if (!alive) return;
-        const ok = await notificationHubService.startConnection(accessToken);
+        const ok = await notificationHubService.startConnection(tokenForConnect);
         if (ok) break;
         await new Promise((r) => setTimeout(r, 150));
       }
@@ -219,7 +230,7 @@ export function useNotificationListener() {
       alive = false;
       notificationHubService.off("Notification", handleNotification);
     };
-  }, [accessToken, queryClient]);
+  }, [accessToken, logout, queryClient, refreshToken, setAuthSession]);
 }
 
 export function useMarkAllAsRead() {

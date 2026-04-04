@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { deleteCookie, setCookie } from "cookies-next";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
+import { AUTH_STORAGE_KEY, useAuthStore } from "@/lib/stores/auth-store";
 
 /* =========================
    Types
@@ -87,7 +88,8 @@ export class ApiService {
   private client: AxiosInstance;
   private authToken: string | null = null;
   private static isRedirecting = false; // Flag để tránh redirect nhiều lần
-  private refreshPromise: Promise<string | null> | null = null;
+  /** Shared across ALL instances để tránh concurrent refresh calls */
+  private static sharedRefreshPromise: Promise<string | null> | null = null;
 
   constructor(baseURL: string, timeout = 10000) {
     this.client = axios.create({
@@ -105,17 +107,26 @@ export class ApiService {
 
   setAuthToken(token: string | null) {
     this.authToken = token;
+    if (token) {
+      ApiService.isRedirecting = false;
+    }
   }
 
   private readPersistedRefreshToken(): string | null {
+    // ✅ Ưu tiên Zustand store (in-memory, luôn up-to-date ngay sau login)
+    // localStorage persist có thể bị trễ vài ms → đây là root cause redirect sớm
+    const storeRefreshToken = useAuthStore.getState().refreshToken;
+    if (storeRefreshToken) return storeRefreshToken;
+
+    // Fallback: đọc từ localStorage (dùng khi store chưa được hydrate)
     if (typeof window === "undefined") return null;
     try {
-      const rawPersist = window.localStorage.getItem("persist:root");
+      const rawPersist = window.localStorage.getItem(AUTH_STORAGE_KEY);
       if (!rawPersist) return null;
-      const root = JSON.parse(rawPersist) as { auth?: string };
-      if (!root.auth) return null;
-      const auth = JSON.parse(root.auth) as { refreshToken?: string | null };
-      return auth.refreshToken ?? null;
+      const parsed = JSON.parse(rawPersist) as {
+        state?: { refreshToken?: string | null };
+      };
+      return parsed.state?.refreshToken ?? null;
     } catch {
       return null;
     }
@@ -124,22 +135,31 @@ export class ApiService {
   private writePersistedTokens(accessToken: string, refreshToken?: string | null) {
     if (typeof window === "undefined") return;
     try {
-      const rawPersist = window.localStorage.getItem("persist:root");
-      if (!rawPersist) return;
-      const root = JSON.parse(rawPersist) as Record<string, unknown>;
-      const authRaw = typeof root.auth === "string" ? root.auth : undefined;
-      if (!authRaw) return;
-      const auth = JSON.parse(authRaw) as Record<string, unknown>;
+      const rawPersist = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      const parsed = rawPersist
+        ? (JSON.parse(rawPersist) as {
+            state?: Record<string, unknown>;
+            version?: number;
+          })
+        : { state: {}, version: 0 };
 
-      auth.token = accessToken;
-      auth.isAuthenticated = true;
-      auth.isLoading = false;
+      const nextState: Record<string, unknown> = {
+        ...(parsed.state ?? {}),
+        token: accessToken,
+        isAuthenticated: true,
+      };
+
       if (typeof refreshToken !== "undefined") {
-        auth.refreshToken = refreshToken;
+        nextState.refreshToken = refreshToken;
       }
 
-      root.auth = JSON.stringify(auth);
-      window.localStorage.setItem("persist:root", JSON.stringify(root));
+      window.localStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify({
+          state: nextState,
+          version: parsed.version ?? 0,
+        }),
+      );
     } catch {
       // Ignore persist update errors to avoid breaking request flow.
     }
@@ -148,64 +168,97 @@ export class ApiService {
   private clearPersistedAuth() {
     if (typeof window === "undefined") return;
     try {
-      const rawPersist = window.localStorage.getItem("persist:root");
-      if (!rawPersist) return;
-      const root = JSON.parse(rawPersist) as Record<string, unknown>;
-      const authRaw = typeof root.auth === "string" ? root.auth : undefined;
-      if (!authRaw) return;
-      const auth = JSON.parse(authRaw) as Record<string, unknown>;
+      const rawPersist = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      const parsed = rawPersist
+        ? (JSON.parse(rawPersist) as {
+            state?: Record<string, unknown>;
+            version?: number;
+          })
+        : { state: {}, version: 0 };
 
-      auth.token = null;
-      auth.refreshToken = null;
-      auth.user = null;
-      auth.isAuthenticated = false;
-      auth.isLoading = false;
-
-      root.auth = JSON.stringify(auth);
-      window.localStorage.setItem("persist:root", JSON.stringify(root));
+      window.localStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify({
+          state: {
+            ...(parsed.state ?? {}),
+            token: null,
+            refreshToken: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          },
+          version: parsed.version ?? 0,
+        }),
+      );
     } catch {
       // Ignore persist cleanup errors.
     }
   }
 
   private async refreshAccessToken(): Promise<string | null> {
-    if (this.refreshPromise) return this.refreshPromise;
+    // Dùng STATIC promise để share giữa mọi instances của ApiService
+    // → tránh 2 instances (api8080Service + apiService) cùng gọi refresh song song
+    if (ApiService.sharedRefreshPromise) {
+      console.debug("[Auth] 🔄 Waiting for existing refresh promise...");
+      return ApiService.sharedRefreshPromise;
+    }
 
-    this.refreshPromise = (async () => {
-      const refreshToken = this.readPersistedRefreshToken();
-      if (!refreshToken) return null;
-
-      const gatewayBase = process.env.NEXT_PUBLIC_API_URL_API_GATEWAY || this.client.defaults.baseURL || "";
-      if (!gatewayBase) return null;
-
+    ApiService.sharedRefreshPromise = (async () => {
       try {
+        const refreshToken = this.readPersistedRefreshToken();
+        if (!refreshToken) {
+          console.debug("[Auth] ❌ No refresh token found, cannot refresh");
+          return null;
+        }
+
+        const gatewayBase = process.env.NEXT_PUBLIC_API_URL_API_GATEWAY || this.client.defaults.baseURL || "";
+        if (!gatewayBase) {
+          console.debug("[Auth] ❌ Gateway base URL missing");
+          return null;
+        }
+
+        console.debug("[Auth] 🛫 Calling refresh-token API...");
         const response = await axios.post<{
           isSuccess: boolean;
           data?: { accessToken?: string; refreshToken?: string | null };
         }>(
           "/api/v1/auth/refresh-token",
           { refreshToken },
-          { baseURL: gatewayBase, timeout: 10000 },
+          { baseURL: gatewayBase, timeout: 15000 },
         );
 
         const nextAccessToken = response.data?.data?.accessToken;
-        if (!nextAccessToken) return null;
+        if (!nextAccessToken) {
+          console.debug("[Auth] refresh-token ❌ response missing accessToken", response.data);
+          return null;
+        }
 
         const nextRefreshToken = response.data?.data?.refreshToken;
+        
+        // Cập nhật mọi thứ đồng bộ
         this.setAuthToken(nextAccessToken);
         setCookie("authToken", nextAccessToken, getAuthCookieConfig());
         this.writePersistedTokens(nextAccessToken, nextRefreshToken ?? null);
+        
+        // Cập nhật Zustand store
+        useAuthStore.getState().setAuthSession({ 
+          accessToken: nextAccessToken, 
+          refreshToken: nextRefreshToken ?? null 
+        });
 
+        console.debug("[Auth] refresh-token ✅ success");
         return nextAccessToken;
-      } catch {
+      } catch (err) {
+        console.debug("[Auth] refresh-token ❌ failed", err);
         return null;
       }
     })();
 
     try {
-      return await this.refreshPromise;
+      return await ApiService.sharedRefreshPromise;
     } finally {
-      this.refreshPromise = null;
+      ApiService.sharedRefreshPromise = null;
     }
   }
 
@@ -245,8 +298,13 @@ export class ApiService {
 
   private setupInterceptors() {
     this.client.interceptors.request.use((config) => {
-      if (this.authToken) {
-        config.headers.Authorization = `Bearer ${this.authToken}`;
+      // Ưu tiên token trong memory; fallback sang Zustand store
+      // (đảm bảo instance khác đã refresh sẽ được pickup)
+      const token = this.authToken ?? useAuthStore.getState().token ?? null;
+      if (token) {
+        // Đồng bộ lại instance nếu store có token mới hơn
+        if (!this.authToken && token) this.authToken = token;
+        config.headers.Authorization = `Bearer ${token}`;
       }
 
       // Let browser set multipart boundary
@@ -265,23 +323,49 @@ export class ApiService {
 
           if (originalRequest && !originalRequest._retry) {
             originalRequest._retry = true;
+            console.debug("[Auth] 401 intercepted, attempting refresh...", originalRequest.url);
+            
             const nextAccessToken = await this.refreshAccessToken();
 
             if (nextAccessToken) {
+              console.debug("[Auth] refresh ✅, retrying original request:", originalRequest.url);
               originalRequest.headers = {
                 ...(originalRequest.headers ?? {}),
                 Authorization: `Bearer ${nextAccessToken}`,
               };
               return this.client.request(originalRequest);
             }
+            
+            // Nếu refreshAccessToken trả về null, nó sẽ rơi xuống block redirect bên dưới
+            console.debug("[Auth] refresh returned null — will force logout");
+          } else if (originalRequest?._retry) {
+            // Đã retry rồi nhưng vẫn 401 — check xem store có token mới hơn cái request này vừa dùng không
+            const currentStoreToken = useAuthStore.getState().token;
+            const requestToken = (originalRequest.headers?.Authorization as string)?.replace("Bearer ", "");
+
+            if (currentStoreToken && currentStoreToken !== requestToken) {
+              console.debug("[Auth] retry 401, but newer token found in store. Retrying again...");
+              this.setAuthToken(currentStoreToken);
+              originalRequest.headers = {
+                ...(originalRequest.headers ?? {}),
+                Authorization: `Bearer ${currentStoreToken}`,
+              };
+              return this.client.request(originalRequest);
+            }
           }
 
-          // Refresh fail -> clear auth and force login.
+          // CHỈ REDIRECT KHI:
+          // 1. Không tìm thấy refreshToken hoặc API refresh trả về lỗi (nextAccessToken === null)
+          // 2. Hoặc đã retry với token mới nhất mà vẫn bị 401
           if (typeof window !== "undefined" && !ApiService.isRedirecting) {
+            console.debug("[Auth] ❌ Terminal 401, redirecting to /login");
             ApiService.isRedirecting = true;
+            
             this.setAuthToken(null);
             deleteCookie("authToken", { path: "/" });
             this.clearPersistedAuth();
+            useAuthStore.getState().logout();
+
             window.location.href = "/login";
           }
 

@@ -10,8 +10,8 @@ import apiService from "@/lib/api/apiService";
 import type { ApiError } from "@/lib/api/apiService";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
 import { getPrimaryRoleFromRoles, normalizeJwtRolesClaim } from "@/lib/auth/role-routing";
-import { useAppDispatch } from "@/lib/redux/hooks";
-import { logout as logoutAction, setAuthSession } from "@/lib/redux/slices/authSlice";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { toast } from "sonner";
 
 export function isAccessTokenValid(token: string | null | undefined): boolean {
   if (!token) return false;
@@ -33,7 +33,9 @@ export function useAuth() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
-  const dispatch = useAppDispatch();
+  const setAuthSession = useAuthStore((s) => s.setAuthSession);
+  const clearAuthSession = useAuthStore((s) => s.logout);
+  const storedRefreshToken = useAuthStore((s) => s.refreshToken);
 
   /* ---------- JWT HELPERS ---------- */
 
@@ -81,7 +83,7 @@ export function useAuth() {
       // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
       api8080Service.setAuthToken(token);
       apiService.setAuthToken(token);
-      dispatch(setAuthSession({ accessToken: token, refreshToken }));
+      setAuthSession({ accessToken: token, refreshToken });
       setState({
         user,
         accessToken: token,
@@ -99,6 +101,7 @@ export function useAuth() {
       //   }
       // });
 
+      toast.success("Đăng nhập thành công!");
       return { success: true, user };
     } catch (err) {
       // Lấy message từ BE response nếu có
@@ -111,6 +114,7 @@ export function useAuth() {
         message = err.message || message;
       }
 
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -140,6 +144,7 @@ export function useAuth() {
         error: null,
       });
 
+      toast.success("Đăng ký thành công!");
       return { success: true, user };
     } catch (err) {
       // Lấy message từ BE response nếu có
@@ -152,6 +157,7 @@ export function useAuth() {
         message = err.message || message;
       }
 
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -166,10 +172,12 @@ export function useAuth() {
       await AuthService.verifyOtp(email, otpCode);
 
       setState((s) => ({ ...s, loading: false }));
+      toast.success("Xác thực mã OTP thành công!");
       return { success: true };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Mã OTP không đúng hoặc đã hết hạn";
 
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -184,9 +192,11 @@ export function useAuth() {
       const msg = response.data.message;
 
       setState((s) => ({ ...s, loading: false }));
+      toast.info(msg || "Vui lòng kiểm tra email để lấy mã OTP");
       return { success: true, message: msg };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Gửi OTP thất bại";
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -212,9 +222,11 @@ export function useAuth() {
 
       const msg = response.data.message;
       setState((s) => ({ ...s, loading: false }));
+      toast.success(msg || "Đặt lại mật khẩu thành công!");
       return { success: true, message: msg };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại";
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -223,7 +235,9 @@ export function useAuth() {
   /* ===================== LOGOUT ===================== */
 
   const logout = () => {
-    dispatch(logoutAction());
+    clearAuthSession();
+    api8080Service.setAuthToken(null);
+    apiService.setAuthToken(null);
 
     // ✅ CLEAR REACT QUERY CACHE (xóa toàn bộ cache)
     queryClient.clear();
@@ -243,6 +257,7 @@ export function useAuth() {
     });
 
     // ✅ REDIRECT TO LOGIN
+    toast.info("Đã đăng xuất");
     router.push("/login");
   };
 
@@ -253,7 +268,7 @@ export function useAuth() {
 
     const token = getCookie("authToken") as string | undefined;
     if (!token) {
-      dispatch(logoutAction());
+      clearAuthSession();
       setState((s) => ({ ...s, loading: false }));
       return;
     }
@@ -261,8 +276,31 @@ export function useAuth() {
     const payload = decodeJwt(token);
     const exp = payload.exp ? payload.exp * 1000 : 0;
 
-    const now = new Date().getTime(); // ✅ Tách ra biến
+    const now = new Date().getTime();
     if (exp && exp < now) {
+      // Access token hết hạn — thử refresh trước khi logout
+      const persistedRefresh = storedRefreshToken;
+      if (persistedRefresh) {
+        try {
+          const res = await AuthService.refreshToken(persistedRefresh);
+          const nextAccess = res.data.data.accessToken;
+          const nextRefresh = res.data.data.refreshToken ?? null;
+
+          setCookie("authToken", nextAccess, getAuthCookieConfig());
+          api8080Service.setAuthToken(nextAccess);
+          apiService.setAuthToken(nextAccess);
+          setAuthSession({ accessToken: nextAccess, refreshToken: nextRefresh });
+          setState((s) => ({ ...s, accessToken: nextAccess }));
+
+          await fetchCurrentUser();
+          setState((s) => ({ ...s, loading: false }));
+          return;
+        } catch {
+          // Refresh thất bại → logout
+          logout();
+          return;
+        }
+      }
       logout();
       return;
     }
@@ -270,7 +308,7 @@ export function useAuth() {
     // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
     api8080Service.setAuthToken(token);
     apiService.setAuthToken(token);
-    dispatch(setAuthSession({ accessToken: token }));
+    setAuthSession({ accessToken: token, refreshToken: storedRefreshToken });
 
     setState((s) => ({ ...s, accessToken: token }));
 
@@ -313,13 +351,14 @@ export function useAuth() {
 
       return user;
     } catch (err) {
+      // Lỗi 401: interceptor của api8080Service đã tự động thử refresh và redirect nếu thất bại.
+      // Không gọi logout() ở đây để tránh double-redirect.
       console.error("Lấy thông tin user thất bại:", err);
-      logout(); // 401 / token hết hạn
       return null;
     }
   };
 
-  
+
 
   /** Token cho hub / API khi cookie còn nhưng state `useAuth` chưa hydrate (vd. sau reload). */
   const resolvedAccessToken =

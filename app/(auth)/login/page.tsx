@@ -47,8 +47,8 @@ export default function LoginPage() {
             <CarFront className="size-6" />
           </div>
           <div className="space-y-1 text-center">
-            <CardTitle className="text-2xl">Dang nhap Verendar</CardTitle>
-            <CardDescription>Dang nhap de tiep tuc quan ly phuong tien cua ban.</CardDescription>
+            <CardTitle className="text-2xl">Đăng nhập Verendar</CardTitle>
+            <CardDescription>Đăng nhập để tiếp tục quản lý phương tiện của bạn.</CardDescription>
           </div>
         </CardHeader>
 
@@ -69,9 +69,9 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mat khau</Label>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
-                  Quen mat khau?
+                  Quên mật khẩu?
                 </Link>
               </div>
 
@@ -80,7 +80,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  placeholder="Nhap mat khau"
+                  placeholder="Nhập mật khẩu"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="pr-10"
@@ -107,18 +107,18 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Dang dang nhap...
+                  Đang đăng nhập...
                 </>
               ) : (
-                "Dang nhap"
+                "Đăng nhập"
               )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            Chua co tai khoan?{" "}
+            Chưa có tài khoản?{" "}
             <Link href="/register" className="font-medium text-primary hover:underline">
-              Dang ky ngay
+              Đăng ký ngay
             </Link>
           </p>
         </CardContent>
