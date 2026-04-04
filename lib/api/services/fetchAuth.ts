@@ -30,6 +30,15 @@ export interface RegisterResponseData {
   roles: string[];
   createdAt: string;
 }
+ 
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+}
 
 export interface UserMeData {
   id: string;
@@ -86,12 +95,15 @@ export const AuthService = {
   login: (email: string, password: string) =>
     api8080Service.post<ApiSuccessResponse<LoginResponseData>>("/api/v1/auth/login", { email, password }),
 
-  register: (email: string, password: string) =>
-    api8080Service.post<ApiSuccessResponse<RegisterResponseData>>("/api/v1/auth/register", { email, password }),
+  register: (payload: RegisterRequest) =>
+    api8080Service.post<ApiSuccessResponse<RegisterResponseData>>("/api/v1/auth/register", payload),
 
   verifyOtp: (email: string, otpCode: string) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/verify-otp", { email, otpCode }),
-
+ 
+  resendOtp: (email: string) =>
+    api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/resend-otp", { email }),
+ 
   me: () => api8080Service.get<ApiSuccessResponse<UserMeData>>("/api/v1/users/me"),
   forgotPassword: (email: string) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/forgot-password", { email }),

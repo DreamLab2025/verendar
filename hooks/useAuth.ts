@@ -122,11 +122,16 @@ export function useAuth() {
 
   /* ===================== REGISTER ===================== */
 
-  const register = async (email: string, password: string): Promise<AuthResult> => {
+  const register = async (email: string, password: string, phoneNumber: string): Promise<AuthResult> => {
     setState((s) => ({ ...s, loading: true, error: null }));
-
+ 
     try {
-      const response = await AuthService.register(email, password);
+      const response = await AuthService.register({
+        email,
+        password,
+        phoneNumber,
+        fullName: email.split("@")[0],
+      });
       const userData = response.data.data;
 
       const user: User = {
@@ -167,21 +172,48 @@ export function useAuth() {
 
   const verifyOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
     setState((s) => ({ ...s, loading: true, error: null }));
-
+ 
     try {
       await AuthService.verifyOtp(email, otpCode);
-
+ 
       setState((s) => ({ ...s, loading: false }));
       toast.success("Xác thực mã OTP thành công!");
       return { success: true };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Mã OTP không đúng hoặc đã hết hạn";
-
+      let message = "Mã OTP không đúng hoặc đã hết hạn";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+ 
       toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
   };
+ 
+  const resendOtp = async (email: string): Promise<AuthResult> => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+ 
+    try {
+      await AuthService.resendOtp(email);
+      setState((s) => ({ ...s, loading: false }));
+      toast.success("Mã OTP đã được gửi lại!");
+      return { success: true };
+    } catch (err) {
+      let message = "Gửi lại mã OTP thất bại";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+      toast.error(message);
+      setState((s) => ({ ...s, loading: false, error: message }));
+      return { success: false, error: message };
+    }
+  };
+ 
   /* ===================== FORGOT PASSWORD ===================== */
 
   const forgotPassword = async (email: string): Promise<AuthResult> => {
@@ -195,7 +227,12 @@ export function useAuth() {
       toast.info(msg || "Vui lòng kiểm tra email để lấy mã OTP");
       return { success: true, message: msg };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Gửi OTP thất bại";
+      let message = "Gửi OTP thất bại";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
       toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
@@ -225,7 +262,12 @@ export function useAuth() {
       toast.success(msg || "Đặt lại mật khẩu thành công!");
       return { success: true, message: msg };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại";
+      let message = "Đặt lại mật khẩu thất bại";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
       toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
@@ -375,6 +417,7 @@ export function useAuth() {
     login,
     register,
     verifyOtp,
+    resendOtp,
     forgotPassword,
     resetPassword,
     logout,

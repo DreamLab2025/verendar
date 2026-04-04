@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import NotificationService, { ApiNotification, InAppNotificationPayload, MarkAsReadResponse, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
+import NotificationService, { ApiNotification, InAppNotificationPayload, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
 import notificationHubService from "@/hubs/notificationHub";
 import { isAccessTokenValid } from "./useAuth";
 import { toast } from "sonner";
@@ -261,7 +261,7 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: (id: string) => NotificationService.markAsRead(id),
-    onSuccess: (data: MarkAsReadResponse) => {
+    onSuccess: () => {
       // Invalidate notification status, list, and detail to refresh
       queryClient.invalidateQueries({ queryKey: ["notifications", "status"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
