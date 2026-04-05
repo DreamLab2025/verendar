@@ -1,5 +1,6 @@
 import { parseBranchTab } from "../components/branch-tab-config";
 import BranchBookingsPage from "./components/bookings/page";
+import BranchRequiresPage from "./components/requires/page";
 
 import BranchOverviewPage from "./components/overview/page";
 import BranchProfilePage from "./components/profile/page";
@@ -27,6 +28,7 @@ export default async function GarageDashboardBranchDetailPage({
       {tab === "staff" ? <BranchStaffPage /> : null}
       {tab === "services" ? <BranchServicesPage /> : null}
       {tab === "bookings" ? <BranchBookingsPage key={branchId} /> : null}
+      {tab === "requires" ? <BranchRequiresPage /> : null}
     </div>
   );
 }

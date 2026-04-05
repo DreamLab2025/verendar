@@ -12,6 +12,7 @@ type BranchMapCardProps = {
   branchMe: GarageBranchMeDto;
   statusLabel: string;
   pending: boolean;
+  isMobile: boolean;
 };
 
 function addressLines(me: GarageBranchMeDto) {
@@ -27,26 +28,33 @@ function addressLines(me: GarageBranchMeDto) {
   return { line: full, province: "—", ward: "—" };
 }
 
-export function BranchMapCard({ branch, branchMe, statusLabel, pending }: BranchMapCardProps) {
+export function BranchMapCard({ branch, branchMe, statusLabel, pending, isMobile }: BranchMapCardProps) {
   const { line } = addressLines(branchMe);
+  const pad = isMobile ? "p-4" : "p-5 sm:p-7";
+  const bodyPad = isMobile ? "px-4 pb-5 pt-4" : "px-5 pb-6 pt-5 sm:px-7 sm:pb-7";
 
   return (
     <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
-      <div className="border-b border-border/60 p-5 sm:p-7">
-        <div className="flex min-w-0 gap-4">
-          <MapPin className="mt-0.5 size-6 shrink-0 text-muted-foreground" aria-hidden />
+      <div className={cn("border-b border-border/60", pad)}>
+        <div className="flex min-w-0 gap-3 sm:gap-4">
+          <MapPin className="mt-0.5 size-5 shrink-0 text-muted-foreground sm:size-6" aria-hidden />
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold tracking-tight text-foreground">Địa chỉ</h3>
+            <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">Địa chỉ</h3>
           </div>
         </div>
       </div>
-      <div className="px-5 pb-6 pt-5 sm:px-7 sm:pb-7">
+      <div className={bodyPad}>
         <div className="mb-3">
-          <p className="text-base font-medium leading-snug text-foreground">{line}</p>
+          <p className="text-sm font-medium leading-snug text-foreground sm:text-base">{line}</p>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-border/60">
-          <div className="relative aspect-4/3 w-full min-h-56 bg-muted">
+          <div
+            className={cn(
+              "relative w-full bg-muted",
+              isMobile ? "aspect-video min-h-44" : "aspect-4/3 min-h-56",
+            )}
+          >
             <AwsBranchMiniMap
               className="rounded-none"
               latitude={branch.latitude}

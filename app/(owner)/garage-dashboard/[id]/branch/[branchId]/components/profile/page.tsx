@@ -9,7 +9,7 @@ export default async function BranchProfilePage({
   const { id, branchId } = await params;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <BranchProfileHeader garageId={id} branchId={branchId} />
       <BranchProfileCard garageId={id} branchId={branchId} />
     </div>
