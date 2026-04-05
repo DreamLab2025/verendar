@@ -7,6 +7,13 @@ import GarageService, {
   garageBranchDetailToGarageBranchMeDto,
   type CreateGarageBranchPayload,
   type CreateGaragePayload,
+  type CreateGarageBundlePayload,
+  type CreateGarageProductPayload,
+  type CreateGarageServicePayload,
+  type GarageProductListResponse,
+  type GarageBundleListResponse,
+  type GarageServiceListResponse,
+  type UpdateGarageBundlePayload,
   type GarageBranchDto,
   type GarageBranchMapItemDto,
   type GarageBranchMeDto,
@@ -188,7 +195,12 @@ export function useBranchProfileBranch(garageId: string, branchId: string) {
   ]);
 }
 
-export function useGarageProductByIdQuery(id: string | undefined, enabled = true) {
+export function useGarageProductByIdQuery(
+  id: string | undefined,
+  enabled = true,
+  /** Mặc định 60s; dialog sửa có thể truyền `0` để luôn coi stale và refetch khi mở. */
+  staleTime: number = 60_000,
+) {
   return useQuery({
     queryKey: ["garage-products", "detail", id],
     queryFn: async () => {
@@ -199,11 +211,16 @@ export function useGarageProductByIdQuery(id: string | undefined, enabled = true
       return body.data;
     },
     enabled: Boolean(id) && enabled,
-    staleTime: 60_000,
+    staleTime,
   });
 }
 
-export function useGarageServiceByIdQuery(id: string | undefined, enabled = true) {
+export function useGarageServiceByIdQuery(
+  id: string | undefined,
+  enabled = true,
+  /** Mặc định 60s; dialog sửa có thể truyền `0` để luôn coi stale và refetch khi mở. */
+  staleTime: number = 60_000,
+) {
   return useQuery({
     queryKey: ["garage-services", "detail", id],
     queryFn: async () => {
@@ -214,11 +231,15 @@ export function useGarageServiceByIdQuery(id: string | undefined, enabled = true
       return body.data;
     },
     enabled: Boolean(id) && enabled,
-    staleTime: 60_000,
+    staleTime,
   });
 }
 
-export function useGarageBundleByIdQuery(id: string | undefined, enabled = true) {
+export function useGarageBundleByIdQuery(
+  id: string | undefined,
+  enabled = true,
+  staleTime: number = 60_000,
+) {
   return useQuery({
     queryKey: ["garage-bundles", "detail", id],
     queryFn: async () => {
@@ -229,7 +250,433 @@ export function useGarageBundleByIdQuery(id: string | undefined, enabled = true)
       return body.data;
     },
     enabled: Boolean(id) && enabled,
+    staleTime,
+  });
+}
+
+const GARAGE_BRANCH_CATALOG_LIST_PAGE_SIZE = 100;
+
+export type GarageBranchCatalogListOptions = {
+  pageSize?: number;
+  activeOnly?: boolean;
+  enabled?: boolean;
+  /** Lọc theo danh mục dịch vụ — gửi `ServiceCategoryId` lên API khi có. */
+  serviceCategoryId?: string | null;
+};
+
+function branchCatalogListParams(
+  branchId: string,
+  pageSize: number,
+  activeOnly: boolean,
+  serviceCategoryId: string | null | undefined,
+) {
+  return {
+    branchId,
+    activeOnly,
+    PageNumber: 1,
+    PageSize: pageSize,
+    ...(serviceCategoryId ? { ServiceCategoryId: serviceCategoryId } : {}),
+  };
+}
+
+export function useServiceCategoriesQuery(enabled = true) {
+  return useQuery({
+    queryKey: ["service-categories", "list"],
+    queryFn: async () => {
+      const body = await GarageService.getServiceCategories();
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được danh mục dịch vụ.");
+      }
+      return body;
+    },
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useGarageBundlesByBranchQuery(
+  branchId: string | undefined,
+  options?: GarageBranchCatalogListOptions,
+) {
+  const pageSize = options?.pageSize ?? GARAGE_BRANCH_CATALOG_LIST_PAGE_SIZE;
+  const activeOnly = options?.activeOnly ?? true;
+  const enabled = options?.enabled ?? true;
+  const serviceCategoryId = options?.serviceCategoryId ?? null;
+
+  return useQuery({
+    queryKey: ["garage-bundles", "branch", branchId, pageSize, activeOnly, serviceCategoryId],
+    queryFn: async () => {
+      const body = await GarageService.getGarageBundlesByBranch(
+        branchCatalogListParams(branchId!, pageSize, activeOnly, serviceCategoryId),
+      );
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được danh sách combo.");
+      }
+      return body;
+    },
+    enabled: Boolean(branchId) && enabled,
     staleTime: 60_000,
+  });
+}
+
+export function useGarageProductsByBranchQuery(
+  branchId: string | undefined,
+  options?: GarageBranchCatalogListOptions,
+) {
+  const pageSize = options?.pageSize ?? GARAGE_BRANCH_CATALOG_LIST_PAGE_SIZE;
+  const activeOnly = options?.activeOnly ?? true;
+  const enabled = options?.enabled ?? true;
+  const serviceCategoryId = options?.serviceCategoryId ?? null;
+
+  return useQuery({
+    queryKey: ["garage-products", "branch", branchId, pageSize, activeOnly, serviceCategoryId],
+    queryFn: async () => {
+      const body = await GarageService.getGarageProductsByBranch(
+        branchCatalogListParams(branchId!, pageSize, activeOnly, serviceCategoryId),
+      );
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được danh sách phụ tùng.");
+      }
+      return body;
+    },
+    enabled: Boolean(branchId) && enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useGarageServicesByBranchQuery(
+  branchId: string | undefined,
+  options?: GarageBranchCatalogListOptions,
+) {
+  const pageSize = options?.pageSize ?? GARAGE_BRANCH_CATALOG_LIST_PAGE_SIZE;
+  const activeOnly = options?.activeOnly ?? true;
+  const enabled = options?.enabled ?? true;
+  const serviceCategoryId = options?.serviceCategoryId ?? null;
+
+  return useQuery({
+    queryKey: ["garage-services", "branch", branchId, pageSize, activeOnly, serviceCategoryId],
+    queryFn: async () => {
+      const body = await GarageService.getGarageServicesByBranch(
+        branchCatalogListParams(branchId!, pageSize, activeOnly, serviceCategoryId),
+      );
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được danh sách dịch vụ.");
+      }
+      return body;
+    },
+    enabled: Boolean(branchId) && enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useCreateGarageService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ branchId, payload }: { branchId: string; payload: CreateGarageServicePayload }) => {
+      const body = await GarageService.createGarageService(branchId, payload);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tạo được dịch vụ.");
+      }
+      return body;
+    },
+    onSuccess: (data, { branchId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["garage-services", "branch", branchId] });
+      toast.success(data.message || "Đã tạo dịch vụ.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Tạo dịch vụ thất bại");
+    },
+  });
+}
+
+export function useCreateGarageProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ branchId, payload }: { branchId: string; payload: CreateGarageProductPayload }) => {
+      const body = await GarageService.createGarageProduct(branchId, payload);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tạo được phụ tùng.");
+      }
+      return body;
+    },
+    onSuccess: (data, { branchId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["garage-products", "branch", branchId] });
+      toast.success(data.message || "Đã tạo phụ tùng.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Tạo phụ tùng thất bại");
+    },
+  });
+}
+
+export function useUpdateGarageProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      branchId: string;
+      payload: CreateGarageProductPayload;
+    }) => {
+      const body = await GarageService.updateGarageProduct(id, payload);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không cập nhật được phụ tùng.");
+      }
+      return body;
+    },
+    onSuccess: (data, { id, branchId }) => {
+      const updated = data.data;
+      queryClient.setQueriesData<GarageProductListResponse>(
+        {
+          predicate: (q) =>
+            Array.isArray(q.queryKey) &&
+            q.queryKey[0] === "garage-products" &&
+            q.queryKey[1] === "branch" &&
+            q.queryKey[2] === branchId,
+        },
+        (old) => {
+          if (!old?.data || !Array.isArray(old.data)) return old;
+          return {
+            ...old,
+            data: old.data.map((row) =>
+              row.id === id
+                ? {
+                    ...row,
+                    name: updated.name,
+                    description: updated.description,
+                    materialPrice: updated.materialPrice,
+                    estimatedDurationMinutes: updated.estimatedDurationMinutes,
+                    imageUrl: updated.imageUrl,
+                    partCategoryId: updated.partCategoryId,
+                    hasInstallationOption: updated.installationService != null,
+                    status: updated.status,
+                  }
+                : row,
+            ),
+          };
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: ["garage-products", "detail", id] });
+      void queryClient.invalidateQueries({ queryKey: ["garage-products", "branch", branchId] });
+      toast.success(data.message || "Đã cập nhật phụ tùng.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Cập nhật phụ tùng thất bại");
+    },
+  });
+}
+
+export function useUpdateGarageService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      branchId: string;
+      payload: CreateGarageServicePayload;
+    }) => {
+      const body = await GarageService.updateGarageService(id, payload);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không cập nhật được dịch vụ.");
+      }
+      return body;
+    },
+    onSuccess: (data, { id, branchId }) => {
+      const updated = data.data;
+      queryClient.setQueriesData<GarageServiceListResponse>(
+        {
+          predicate: (q) =>
+            Array.isArray(q.queryKey) &&
+            q.queryKey[0] === "garage-services" &&
+            q.queryKey[1] === "branch" &&
+            q.queryKey[2] === branchId,
+        },
+        (old) => {
+          if (!old?.data || !Array.isArray(old.data)) return old;
+          return {
+            ...old,
+            data: old.data.map((row) =>
+              row.id === id
+                ? {
+                    ...row,
+                    name: updated.name,
+                    description: updated.description,
+                    laborPrice: updated.laborPrice,
+                    serviceCategoryId: updated.serviceCategoryId,
+                    serviceCategoryName: updated.serviceCategoryName,
+                    estimatedDurationMinutes: updated.estimatedDurationMinutes,
+                    imageUrl: updated.imageUrl,
+                    status: updated.status,
+                  }
+                : row,
+            ),
+          };
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: ["garage-services", "detail", id] });
+      void queryClient.invalidateQueries({ queryKey: ["garage-services", "branch", branchId] });
+      toast.success(data.message || "Đã cập nhật dịch vụ.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Cập nhật dịch vụ thất bại");
+    },
+  });
+}
+
+export function useDeleteGarageService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; branchId: string }) => {
+      const body = await GarageService.deleteGarageService(id);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không xóa được dịch vụ.");
+      }
+      return body;
+    },
+    onSuccess: (data, { id, branchId }) => {
+      void queryClient.removeQueries({ queryKey: ["garage-services", "detail", id] });
+      void queryClient.invalidateQueries({ queryKey: ["garage-services", "branch", branchId] });
+      toast.success(data.message || "Đã xóa dịch vụ.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Xóa dịch vụ thất bại");
+    },
+  });
+}
+
+export function useDeleteGarageProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; branchId: string }) => {
+      const body = await GarageService.deleteGarageProduct(id);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không xóa được phụ tùng.");
+      }
+      return body;
+    },
+    onSuccess: (data, { id, branchId }) => {
+      void queryClient.removeQueries({ queryKey: ["garage-products", "detail", id] });
+      void queryClient.invalidateQueries({ queryKey: ["garage-products", "branch", branchId] });
+      toast.success(data.message || "Đã xóa phụ tùng.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Xóa phụ tùng thất bại");
+    },
+  });
+}
+
+export function useUpdateGarageBundle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      branchId: string;
+      payload: UpdateGarageBundlePayload;
+    }) => {
+      const body = await GarageService.updateGarageBundle(id, payload);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không cập nhật được combo.");
+      }
+      return body;
+    },
+    onSuccess: (data, { id, branchId }) => {
+      const updated = data.data;
+      queryClient.setQueriesData<GarageBundleListResponse>(
+        {
+          predicate: (q) =>
+            Array.isArray(q.queryKey) &&
+            q.queryKey[0] === "garage-bundles" &&
+            q.queryKey[1] === "branch" &&
+            q.queryKey[2] === branchId,
+        },
+        (old) => {
+          if (!old?.data || !Array.isArray(old.data)) return old;
+          return {
+            ...old,
+            data: old.data.map((row) =>
+              row.id === id
+                ? {
+                    ...row,
+                    name: updated.name,
+                    description: updated.description,
+                    imageUrl: updated.imageUrl,
+                    discountAmount: updated.discountAmount,
+                    discountPercent: updated.discountPercent,
+                    subTotal: updated.subTotal,
+                    finalPrice: updated.finalPrice,
+                    currency: updated.currency,
+                    status: updated.status,
+                    itemCount: updated.items?.length ?? row.itemCount,
+                  }
+                : row,
+            ),
+          };
+        },
+      );
+      void queryClient.invalidateQueries({ queryKey: ["garage-bundles", "detail", id] });
+      void queryClient.invalidateQueries({ queryKey: ["garage-bundles", "branch", branchId] });
+      toast.success(data.message || "Đã cập nhật combo.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Cập nhật combo thất bại");
+    },
+  });
+}
+
+export function useDeleteGarageBundle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; branchId: string }) => {
+      const body = await GarageService.deleteGarageBundle(id);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không xóa được combo.");
+      }
+      return body;
+    },
+    onSuccess: (data, { id, branchId }) => {
+      void queryClient.removeQueries({ queryKey: ["garage-bundles", "detail", id] });
+      void queryClient.invalidateQueries({ queryKey: ["garage-bundles", "branch", branchId] });
+      toast.success(data.message || "Đã xóa combo.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Xóa combo thất bại");
+    },
+  });
+}
+
+export function useCreateGarageBundle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ branchId, payload }: { branchId: string; payload: CreateGarageBundlePayload }) => {
+      const body = await GarageService.createGarageBundle(branchId, payload);
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tạo được combo.");
+      }
+      return body;
+    },
+    onSuccess: (data, { branchId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["garage-bundles", "branch", branchId] });
+      toast.success(data.message || "Đã tạo combo.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Tạo combo thất bại");
+    },
   });
 }
 
