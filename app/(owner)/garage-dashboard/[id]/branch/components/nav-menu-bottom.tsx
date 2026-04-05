@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, LayoutDashboard, Package, Users, Wrench } from "lucide-react";
+import { Building2, Calendar, LayoutDashboard, Users, Wrench } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ const TAB_ICONS: Record<BranchTabId, typeof LayoutDashboard> = {
   profile: Building2,
   staff: Users,
   services: Wrench,
-  products: Package,
+  bookings: Calendar,
 };
 
 type BranchNavMenuBottomProps = {

@@ -97,9 +97,7 @@ export function formatGarageBranchAddress(address: GarageBranchDto["address"]): 
     const t = address.trim();
     return t.length > 0 ? t : "—";
   }
-  const parts = [address.streetDetail].filter(
-    (x): x is string => typeof x === "string" && x.trim().length > 0,
-  );
+  const parts = [address.streetDetail].filter((x): x is string => typeof x === "string" && x.trim().length > 0);
   return parts.length > 0 ? parts.join(", ") : "—";
 }
 
@@ -455,6 +453,109 @@ export interface GarageCatalogQueryParams extends RequestParams {
   CategoryId?: string;
 }
 
+/** Query GET danh sách theo chi nhánh: `/garage-bundles`, `/garage-products`, `/garage-services`. */
+export interface GarageBranchScopedListQueryParams extends RequestParams {
+  branchId: string;
+  activeOnly: boolean;
+  PageNumber: number;
+  PageSize: number;
+  IsDescending?: boolean;
+  /** Lọc theo danh mục dịch vụ (khi BE hỗ trợ). */
+  ServiceCategoryId?: string;
+}
+
+/** GET /api/v1/service-categories — danh mục dịch vụ (master). */
+export interface ServiceCategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  iconUrl: string | null;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface ServiceCategoriesListResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: ServiceCategoryDto[];
+  metadata: null;
+}
+
+export interface GarageBundleListItemDto {
+  id: string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
+  subTotal: number;
+  finalPrice: number;
+  currency: string;
+  itemCount: number;
+  status: string;
+  createdAt: string;
+  /** Khi BE gắn combo với danh mục dịch vụ — dùng lọc theo `serviceCategoryId`. */
+  serviceCategoryId?: string | null;
+}
+
+export interface GarageBundleListResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageBundleListItemDto[];
+  metadata: PaginationMetadata | null;
+}
+
+export interface GarageProductListItemDto {
+  id: string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  materialPrice: GarageCatalogPriceDto;
+  estimatedDurationMinutes: number | null;
+  imageUrl: string | null;
+  partCategoryId: string | null;
+  hasInstallationOption: boolean;
+  status: string;
+  createdAt: string;
+  /** Tùy BE — lọc theo danh mục dịch vụ nếu có. */
+  serviceCategoryId?: string | null;
+}
+
+export interface GarageProductListResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageProductListItemDto[];
+  metadata: PaginationMetadata | null;
+}
+
+export interface GarageServiceListItemDto {
+  id: string;
+  garageBranchId: string;
+  name: string;
+  description: string | null;
+  laborPrice: GarageCatalogPriceDto;
+  serviceCategoryId: string | null;
+  serviceCategoryName: string | null;
+  estimatedDurationMinutes: number | null;
+  imageUrl: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface GarageServiceListResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageServiceListItemDto[];
+  metadata: PaginationMetadata | null;
+}
+
 /** GET /api/v1/garage-products/{id} — chi tiết phụ tùng (có thể kèm dịch vụ lắp). */
 export interface GarageProductInstallationServiceDto {
   id: string;
@@ -489,6 +590,36 @@ export interface GarageProductDetailResponse {
   metadata: null;
 }
 
+/** POST /api/v1/garage-products?branchId= — tạo phụ tùng cho chi nhánh. */
+export type CreateGarageProductPayload = {
+  name: string;
+  description: string | null;
+  materialPrice: GarageCatalogPriceDto;
+  estimatedDurationMinutes: number;
+  imageUrl: string | null;
+  compatibleVehicleTypes: string | null;
+  manufacturerKmInterval: number | null;
+  manufacturerMonthInterval: number | null;
+  partCategoryId: string;
+  installationServiceId: string | null;
+};
+
+export type GarageProductCreateResponse = GarageProductDetailResponse;
+
+/** PUT /api/v1/garage-products/{id} — cập nhật phụ tùng (body giống tạo). */
+export type UpdateGarageProductPayload = CreateGarageProductPayload;
+
+export type GarageProductUpdateResponse = GarageProductDetailResponse;
+
+/** DELETE /api/v1/garage-products/{id} — xóa mềm phụ tùng. */
+export interface GarageProductDeleteResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: boolean;
+  metadata: null;
+}
+
 /** GET /api/v1/garage-services/{id} — chi tiết dịch vụ (nhân công). */
 export interface GarageServiceDetailDto {
   id: string;
@@ -510,6 +641,38 @@ export interface GarageServiceDetailResponse {
   statusCode?: number;
   message: string | null;
   data: GarageServiceDetailDto;
+  metadata: null;
+}
+
+/** POST /api/v1/garage-services?branchId= — tạo dịch vụ cho chi nhánh. */
+export interface CreateGarageServicePayload {
+  name: string;
+  description: string | null;
+  laborPrice: GarageCatalogPriceDto;
+  serviceCategoryId: string;
+  estimatedDurationMinutes: number;
+  imageUrl: string | null;
+}
+
+export interface GarageServiceCreateResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: GarageServiceDetailDto;
+  metadata: null;
+}
+
+/** PUT /api/v1/garage-services/{id} — cập nhật dịch vụ (body giống tạo). */
+export type UpdateGarageServicePayload = CreateGarageServicePayload;
+
+export type GarageServiceUpdateResponse = GarageServiceCreateResponse;
+
+/** DELETE /api/v1/garage-services/{id} — xóa mềm. */
+export interface GarageServiceDeleteResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: boolean;
   metadata: null;
 }
 
@@ -550,6 +713,38 @@ export interface GarageBundleDetailResponse {
   metadata: null;
 }
 
+/** PUT /api/v1/garage-bundles/{id} — body cập nhật combo (items: productId hoặc serviceId). */
+export type UpdateGarageBundleItemPayload = {
+  productId?: string | null;
+  serviceId?: string | null;
+  includeInstallation: boolean;
+  sortOrder: number;
+};
+
+export type UpdateGarageBundlePayload = {
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  discountAmount: number | null;
+  discountPercent: number | null;
+  items: UpdateGarageBundleItemPayload[];
+};
+
+export type GarageBundleUpdateResponse = GarageBundleDetailResponse;
+
+/** POST /api/v1/garage-bundles?branchId= — tạo combo (body giống PUT). */
+export type CreateGarageBundlePayload = UpdateGarageBundlePayload;
+export type GarageBundleCreateResponse = GarageBundleDetailResponse;
+
+/** DELETE /api/v1/garage-bundles/{id} — xóa mềm combo. */
+export interface GarageBundleDeleteResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: boolean;
+  metadata: null;
+}
+
 export const GarageService = {
   getGarages: async (params: GaragesQueryParams) => {
     const res = await api8080Service.get<GaragesListResponse>("/api/v1/garages", params);
@@ -577,10 +772,7 @@ export const GarageService = {
   },
 
   patchGarageStatus: async (id: string, payload: PatchGarageStatusPayload) => {
-    const res = await api8080Service.patch<GarageStatusPatchResponse>(
-      `/api/v1/garages/${id}/status`,
-      payload,
-    );
+    const res = await api8080Service.patch<GarageStatusPatchResponse>(`/api/v1/garages/${id}/status`, payload);
     return res.data;
   },
 
@@ -591,33 +783,22 @@ export const GarageService = {
 
   lookupBusinessByTaxCode: async (taxCode: string) => {
     const encoded = encodeURIComponent(taxCode.trim());
-    const res = await api8080Service.get<GarageBusinessLookupResponse>(
-      `/api/v1/garages/business-lookup/${encoded}`,
-    );
+    const res = await api8080Service.get<GarageBusinessLookupResponse>(`/api/v1/garages/business-lookup/${encoded}`);
     return res.data;
   },
 
   getGarageBranches: async (garageId: string, params: GarageBranchesQueryParams) => {
-    const res = await api8080Service.get<GarageBranchesListResponse>(
-      `/api/v1/garages/${garageId}/branches`,
-      params,
-    );
+    const res = await api8080Service.get<GarageBranchesListResponse>(`/api/v1/garages/${garageId}/branches`, params);
     return res.data;
   },
 
   getGarageBranchesMaps: async (params: GarageBranchesMapsQueryParams) => {
-    const res = await api8080Service.get<GarageBranchesMapsListResponse>(
-      "/api/v1/garages/branches/maps",
-      params,
-    );
+    const res = await api8080Service.get<GarageBranchesMapsListResponse>("/api/v1/garages/branches/maps", params);
     return res.data;
   },
 
   createGarageBranch: async (garageId: string, payload: CreateGarageBranchPayload) => {
-    const res = await api8080Service.post<GarageBranchCreateResponse>(
-      `/api/v1/garages/${garageId}/branches`,
-      payload,
-    );
+    const res = await api8080Service.post<GarageBranchCreateResponse>(`/api/v1/garages/${garageId}/branches`, payload);
     return res.data;
   },
 
@@ -634,11 +815,7 @@ export const GarageService = {
     return res.data;
   },
 
-  updateGarageBranch: async (
-    garageId: string,
-    branchId: string,
-    payload: UpdateGarageBranchPayload,
-  ) => {
+  updateGarageBranch: async (garageId: string, branchId: string, payload: UpdateGarageBranchPayload) => {
     const res = await api8080Service.put<GarageBranchUpdateResponse>(
       `/api/v1/garages/${garageId}/branches/${branchId}`,
       payload,
@@ -653,11 +830,7 @@ export const GarageService = {
     return res.data;
   },
 
-  patchGarageBranchStatus: async (
-    garageId: string,
-    branchId: string,
-    payload: PatchGarageBranchStatusPayload,
-  ) => {
+  patchGarageBranchStatus: async (garageId: string, branchId: string, payload: PatchGarageBranchStatusPayload) => {
     const res = await api8080Service.patch<GarageBranchStatusPatchResponse>(
       `/api/v1/garages/${garageId}/branches/${branchId}/status`,
       payload,
@@ -670,8 +843,67 @@ export const GarageService = {
     return res.data;
   },
 
+  /** GET /api/v1/service-categories — danh sách danh mục dịch vụ (rửa xe, kiểm tra…). */
+  getServiceCategories: async () => {
+    const res = await api8080Service.get<ServiceCategoriesListResponse>("/api/v1/service-categories");
+    return res.data;
+  },
+
+  /** GET /api/v1/garage-bundles — danh sách combo theo chi nhánh. */
+  getGarageBundlesByBranch: async (params: GarageBranchScopedListQueryParams) => {
+    const res = await api8080Service.get<GarageBundleListResponse>("/api/v1/garage-bundles", params);
+    return res.data;
+  },
+
+  /** GET /api/v1/garage-products — phụ tùng / sản phẩm theo chi nhánh. */
+  getGarageProductsByBranch: async (params: GarageBranchScopedListQueryParams) => {
+    const res = await api8080Service.get<GarageProductListResponse>("/api/v1/garage-products", params);
+    return res.data;
+  },
+
+  /** POST /api/v1/garage-products?branchId= */
+  createGarageProduct: async (branchId: string, payload: CreateGarageProductPayload) => {
+    const res = await api8080Service.post<GarageProductCreateResponse>(
+      `/api/v1/garage-products?branchId=${encodeURIComponent(branchId)}`,
+      payload,
+    );
+    return res.data;
+  },
+
+  /** GET /api/v1/garage-services — dịch vụ (nhân công) theo chi nhánh. */
+  getGarageServicesByBranch: async (params: GarageBranchScopedListQueryParams) => {
+    const res = await api8080Service.get<GarageServiceListResponse>("/api/v1/garage-services", params);
+    return res.data;
+  },
+
+  /** POST /api/v1/garage-services?branchId= — Owner/Manager tạo dịch vụ cho chi nhánh. */
+  createGarageService: async (branchId: string, payload: CreateGarageServicePayload) => {
+    const res = await api8080Service.post<GarageServiceCreateResponse>(
+      `/api/v1/garage-services?branchId=${encodeURIComponent(branchId)}`,
+      payload,
+    );
+    return res.data;
+  },
+
   getGarageProductById: async (id: string) => {
     const res = await api8080Service.get<GarageProductDetailResponse>(`/api/v1/garage-products/${id}`);
+    return res.data;
+  },
+
+  /** PUT /api/v1/garage-products/{id} */
+  updateGarageProduct: async (id: string, payload: UpdateGarageProductPayload) => {
+    const res = await api8080Service.put<GarageProductUpdateResponse>(
+      `/api/v1/garage-products/${encodeURIComponent(id)}`,
+      payload,
+    );
+    return res.data;
+  },
+
+  /** DELETE /api/v1/garage-products/{id} */
+  deleteGarageProduct: async (id: string) => {
+    const res = await api8080Service.delete<GarageProductDeleteResponse>(
+      `/api/v1/garage-products/${encodeURIComponent(id)}`,
+    );
     return res.data;
   },
 
@@ -680,8 +912,51 @@ export const GarageService = {
     return res.data;
   },
 
+  /** PUT /api/v1/garage-services/{id} */
+  updateGarageService: async (id: string, payload: UpdateGarageServicePayload) => {
+    const res = await api8080Service.put<GarageServiceUpdateResponse>(
+      `/api/v1/garage-services/${encodeURIComponent(id)}`,
+      payload,
+    );
+    return res.data;
+  },
+
+  /** DELETE /api/v1/garage-services/{id} */
+  deleteGarageService: async (id: string) => {
+    const res = await api8080Service.delete<GarageServiceDeleteResponse>(
+      `/api/v1/garage-services/${encodeURIComponent(id)}`,
+    );
+    return res.data;
+  },
+
   getGarageBundleById: async (id: string) => {
     const res = await api8080Service.get<GarageBundleDetailResponse>(`/api/v1/garage-bundles/${id}`);
+    return res.data;
+  },
+
+  /** POST /api/v1/garage-bundles?branchId= */
+  createGarageBundle: async (branchId: string, payload: CreateGarageBundlePayload) => {
+    const res = await api8080Service.post<GarageBundleCreateResponse>(
+      `/api/v1/garage-bundles?branchId=${encodeURIComponent(branchId)}`,
+      payload,
+    );
+    return res.data;
+  },
+
+  /** PUT /api/v1/garage-bundles/{id} */
+  updateGarageBundle: async (id: string, payload: UpdateGarageBundlePayload) => {
+    const res = await api8080Service.put<GarageBundleUpdateResponse>(
+      `/api/v1/garage-bundles/${encodeURIComponent(id)}`,
+      payload,
+    );
+    return res.data;
+  },
+
+  /** DELETE /api/v1/garage-bundles/{id} */
+  deleteGarageBundle: async (id: string) => {
+    const res = await api8080Service.delete<GarageBundleDeleteResponse>(
+      `/api/v1/garage-bundles/${encodeURIComponent(id)}`,
+    );
     return res.data;
   },
 };
