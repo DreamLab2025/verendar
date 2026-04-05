@@ -3,6 +3,7 @@
 import { Suspense, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 
+import { BranchMechanicTabSync } from "./components/branch-mechanic-tab-sync";
 import { BranchHeaderMenu } from "./components/header-menu";
 import { BranchNavMenuBottom } from "./components/nav-menu-bottom";
 
@@ -21,6 +22,7 @@ export default function GarageDashboardBranchLayout({ children }: { children: Re
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       <Suspense fallback={null}>
+        <BranchMechanicTabSync garageId={garageId} branchId={branchId} />
         <BranchHeaderMenu garageId={garageId} branchId={branchId} />
       </Suspense>
 

@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, Calendar, LayoutDashboard, Users, Wrench } from "lucide-react";
+import { Building2, Calendar, ClipboardList, LayoutDashboard, Users, Wrench } from "lucide-react";
 
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { cn } from "@/lib/utils";
 
 import {
-  BRANCH_TAB_IDS,
   BRANCH_TAB_LABELS,
   branchDetailHref,
+  getVisibleBranchTabIds,
   parseBranchTab,
   type BranchTabId,
 } from "./branch-tab-config";
+
+const EMPTY_ROLES: string[] = [];
 
 const TAB_ICONS: Record<BranchTabId, typeof LayoutDashboard> = {
   overview: LayoutDashboard,
@@ -20,6 +23,7 @@ const TAB_ICONS: Record<BranchTabId, typeof LayoutDashboard> = {
   staff: Users,
   services: Wrench,
   bookings: Calendar,
+  requires: ClipboardList,
 };
 
 type BranchNavMenuBottomProps = {
@@ -30,6 +34,9 @@ type BranchNavMenuBottomProps = {
 export function BranchNavMenuBottom({ garageId, branchId }: BranchNavMenuBottomProps) {
   const searchParams = useSearchParams();
   const activeTab = parseBranchTab(searchParams.get("tab"));
+  const user = useAuthStore((s) => s.user);
+  const roles = user?.role ?? EMPTY_ROLES;
+  const visibleTabs = getVisibleBranchTabIds(roles);
 
   return (
     <nav
@@ -37,7 +44,7 @@ export function BranchNavMenuBottom({ garageId, branchId }: BranchNavMenuBottomP
       aria-label="Chi nhánh"
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-between gap-0 px-1">
-        {BRANCH_TAB_IDS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const Icon = TAB_ICONS[tab];
           const href = branchDetailHref(garageId, branchId, tab);
           const active = activeTab === tab;
