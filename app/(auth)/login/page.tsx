@@ -6,20 +6,40 @@ import { useEffect, useState } from "react";
 import { CarFront, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resolveHomeRouteFromRoles } from "@/lib/auth/role-routing";
+import { ForgotPasswordDialog } from "@/components/dialog/auth/ForgotPasswordDialog";
+import { OtpDialog } from "@/components/dialog/auth/OtpDialog";
+import { ChangePasswordDialog } from "@/components/dialog/auth/ChangePasswordDialog";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, user, accessToken, loading, error, clearError } = useAuth();
+  const {
+    login,
+    forgotPassword,
+    verifyRegisterOtp,
+    verifyResetPasswordOtp,
+    resetPassword,
+    resendOtp,
+    user,
+    accessToken,
+    loading: authLoading,
+    error,
+    clearError,
+  } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isOtpOpen, setIsOtpOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [otpFlow, setOtpFlow] = useState<"forgot" | "activation" | null>(null);
 
   useEffect(() => {
     if (accessToken && user?.role) {
@@ -34,7 +54,60 @@ export default function LoginPage() {
     const result = await login(email.trim(), password);
     if (result.success) {
       router.replace(resolveHomeRouteFromRoles(result.user?.role ? [result.user.role] : []));
+      return;
     }
+
+    if (result.requiresOtpVerification) {
+      const targetEmail = result.email || email.trim();
+      setForgotPasswordEmail(targetEmail);
+      setOtpFlow("activation");
+      setIsOtpOpen(true);
+      await resendOtp(targetEmail);
+    }
+  };
+
+  const handleForgotPasswordSuccess = async (enteredEmail: string) => {
+    clearError();
+    const result = await forgotPassword(enteredEmail);
+    if (result.success) {
+      setForgotPasswordEmail(enteredEmail);
+      setOtpFlow("forgot");
+      setIsForgotPasswordOpen(false);
+      setIsOtpOpen(true);
+    }
+  };
+
+  const handleOtpVerify = async (otp: string) => {
+    clearError();
+
+    if (otpFlow === "activation") {
+      const result = await verifyRegisterOtp(forgotPasswordEmail, otp);
+      if (result.success) {
+        setIsOtpOpen(false);
+        toast.success("Kích hoạt tài khoản thành công! Bây giờ bạn có thể đăng nhập.");
+      }
+      return;
+    }
+
+    // Default to forgot password flow
+    const result = await verifyResetPasswordOtp(forgotPasswordEmail, otp);
+    if (result.success) {
+      setIsOtpOpen(false);
+      setIsResetPasswordOpen(true);
+    }
+  };
+
+  const handleChangePasswordSuccess = async (newPassword: string) => {
+    clearError();
+    const result = await resetPassword(forgotPasswordEmail, newPassword, newPassword);
+    if (result.success) {
+      setIsResetPasswordOpen(false);
+      toast.success("Đặt lại mật khẩu thành công!");
+    }
+  };
+
+  const handleResendOtp = async () => {
+    await resendOtp(forgotPasswordEmail);
   };
 
   return (
@@ -70,9 +143,13 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Mật khẩu</Label>
-                <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPasswordOpen(true)}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
                   Quên mật khẩu?
-                </Link>
+                </button>
               </div>
 
               <div className="relative">
@@ -97,14 +174,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error ? (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
+            <Button type="submit" className="w-full" disabled={authLoading}>
+              {authLoading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
                   Đang đăng nhập...
@@ -123,6 +194,26 @@ export default function LoginPage() {
           </p>
         </CardContent>
       </Card>
+      <ForgotPasswordDialog
+        open={isForgotPasswordOpen}
+        onOpenChange={setIsForgotPasswordOpen}
+        onSuccess={handleForgotPasswordSuccess}
+        isLoading={authLoading}
+      />
+      <OtpDialog
+        open={isOtpOpen}
+        onOpenChange={setIsOtpOpen}
+        email={forgotPasswordEmail}
+        onVerify={handleOtpVerify}
+        onResend={handleResendOtp}
+        isLoading={authLoading}
+      />
+      <ChangePasswordDialog
+        open={isResetPasswordOpen}
+        onOpenChange={setIsResetPasswordOpen}
+        onSuccess={handleChangePasswordSuccess}
+        isLoading={authLoading}
+      />
     </main>
   );
 }

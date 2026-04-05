@@ -13,7 +13,7 @@ export function useAuthClient() {
     setLoading(true);
     setError(null);
     try {
-      await AuthService.verifyOtp(email, otpCode);
+      await AuthService.verifyRegisterOtp({ email, otpCode });
       setLoading(false);
       return { success: true };
     } catch (err: unknown) {

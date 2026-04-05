@@ -40,6 +40,17 @@ export interface RegisterRequest {
   gender?: string;
 }
 
+export interface VerifyOtpRequest {
+  email: string;
+  otpCode: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
 export interface UserMeData {
   id: string;
   userName: string;
@@ -77,6 +88,8 @@ export interface AuthResult {
   user?: User | null;
   error?: string;
   message?: string;
+  requiresOtpVerification?: boolean;
+  email?: string;
 }
 
 export interface JwtPayload {
@@ -98,8 +111,11 @@ export const AuthService = {
   register: (payload: RegisterRequest) =>
     api8080Service.post<ApiSuccessResponse<RegisterResponseData>>("/api/v1/auth/register", payload),
 
-  verifyOtp: (email: string, otpCode: string) =>
-    api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/verify-otp", { email, otpCode }),
+  verifyRegisterOtp: (data: VerifyOtpRequest) =>
+    api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/verify-otp/register", data),
+
+  verifyResetPasswordOtp: (data: VerifyOtpRequest) =>
+    api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/verify-otp/reset-password", data),
  
   resendOtp: (email: string) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/resend-otp", { email }),
@@ -108,7 +124,7 @@ export const AuthService = {
   forgotPassword: (email: string) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/forgot-password", { email }),
 
-  resetPassword: (payload: { email: string; otpCode: string; newPassword: string; confirmNewPassword: string }) =>
+  resetPassword: (payload: ResetPasswordRequest) =>
     api8080Service.post<ApiSuccessResponse<boolean>>("/api/v1/auth/reset-password", payload),
 
   refreshToken: (refreshToken: string) =>

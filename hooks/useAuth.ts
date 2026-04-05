@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import api8080Service from "@/lib/api/api8080Service";
 import apiService from "@/lib/api/apiService";
-import type { ApiError } from "@/lib/api/apiService";
+import type { ApiError, ApiErrorData } from "@/lib/api/apiService";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
 import { getPrimaryRoleFromRoles, normalizeJwtRolesClaim } from "@/lib/auth/role-routing";
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -116,6 +116,24 @@ export function useAuth() {
 
       toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
+
+      if (err && typeof err === "object" && "error" in err) {
+        const apiError = err as ApiError;
+        const errorData = apiError.error as ApiErrorData & {
+          metadata?: { requiresOtpVerification?: boolean; email?: string };
+        };
+        const metadata = errorData?.metadata;
+
+        if (metadata?.requiresOtpVerification) {
+          return {
+            success: false,
+            error: message,
+            requiresOtpVerification: true,
+            email: metadata.email,
+          };
+        }
+      }
+
       return { success: false, error: message };
     }
   };
@@ -170,12 +188,12 @@ export function useAuth() {
 
   /* ===================== VERIFY OTP ===================== */
 
-  const verifyOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
+  const verifyRegisterOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
     setState((s) => ({ ...s, loading: true, error: null }));
- 
+
     try {
-      await AuthService.verifyOtp(email, otpCode);
- 
+      await AuthService.verifyRegisterOtp({ email, otpCode });
+
       setState((s) => ({ ...s, loading: false }));
       toast.success("Xác thực mã OTP thành công!");
       return { success: true };
@@ -186,7 +204,30 @@ export function useAuth() {
       } else if (err instanceof Error) {
         message = err.message || message;
       }
- 
+
+      toast.error(message);
+      setState((s) => ({ ...s, loading: false, error: message }));
+      return { success: false, error: message };
+    }
+  };
+
+  const verifyResetPasswordOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+
+    try {
+      await AuthService.verifyResetPasswordOtp({ email, otpCode });
+
+      setState((s) => ({ ...s, loading: false }));
+      toast.success("Xác thực mã OTP thành công!");
+      return { success: true };
+    } catch (err) {
+      let message = "Mã OTP không đúng hoặc đã hết hạn";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+
       toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
@@ -243,7 +284,6 @@ export function useAuth() {
 
   const resetPassword = async (
     email: string,
-    otpCode: string,
     newPassword: string,
     confirmNewPassword: string,
   ): Promise<AuthResult> => {
@@ -252,7 +292,6 @@ export function useAuth() {
     try {
       const response = await AuthService.resetPassword({
         email,
-        otpCode,
         newPassword,
         confirmNewPassword,
       });
@@ -416,7 +455,8 @@ export function useAuth() {
 
     login,
     register,
-    verifyOtp,
+    verifyRegisterOtp,
+    verifyResetPasswordOtp,
     resendOtp,
     forgotPassword,
     resetPassword,

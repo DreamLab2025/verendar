@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { X, Mail, CarFront, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
 
 interface ForgotPasswordDialogProps {
   open?: boolean;
@@ -24,10 +25,17 @@ export function ForgotPasswordDialog({
 }: ForgotPasswordDialogProps) {
   const [email, setEmail] = useState("");
 
+  // Reset email when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      setTimeout(() => setEmail(""), 300);
+    }
+  }, [open]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      onSuccess(email);
+    if (email.trim()) {
+      onSuccess(email.trim());
     }
   };
 
@@ -36,17 +44,15 @@ export function ForgotPasswordDialog({
       <AnimatePresence>
         {open && (
           <DialogPrimitive.Portal forceMount>
-            {/* Overlay */}
             <DialogPrimitive.Overlay asChild>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/80"
+                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
               />
             </DialogPrimitive.Overlay>
 
-            {/* Content */}
             <DialogPrimitive.Content asChild>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
@@ -54,37 +60,47 @@ export function ForgotPasswordDialog({
                 exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-50%" }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className={cn(
-                  "fixed left-[50%] top-[50%] z-50 grid w-full sm:max-w-[400px] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg"
+                  "fixed left-[50%] top-[50%] z-50 grid w-full sm:max-w-[420px] gap-6 border bg-background p-6 shadow-2xl sm:rounded-2xl"
                 )}
               >
-                <div className="flex flex-col space-y-1.5 text-center mb-2">
-                  <DialogPrimitive.Title className="text-xl font-bold text-primary">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <CarFront className="size-6" />
+                  </div>
+
+                  <DialogPrimitive.Title className="text-2xl font-bold tracking-tight text-foreground">
                     Quên mật khẩu
                   </DialogPrimitive.Title>
-                  <p className="text-sm text-muted-foreground">Nhập email của bạn để nhận mã xác thực.</p>
+                  <p className="mt-1 text-sm text-muted-foreground px-4">
+                    Nhập email của bạn để bắt đầu khôi phục mật khẩu.
+                  </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                   <div className="grid gap-2">
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Địa chỉ email của bạn"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={isLoading}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Địa chỉ email của bạn"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10 h-11 rounded-xl"
+                        required
+                        disabled={isLoading}
+                      />
+                      <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-2 mt-2">
-                    <Button type="submit" disabled={!email || isLoading} className="w-full">
-                      {isLoading ? "Đang gửi mã..." : "Tiếp tục"}
+                    <Button type="submit" disabled={!email || isLoading} className="w-full h-11 rounded-xl font-semibold">
+                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Tiếp tục"}
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
-                      className="w-full text-sm text-muted-foreground hover:bg-gray-200 hover:text-black"
+                      className="w-full h-11 text-sm text-muted-foreground hover:bg-muted rounded-xl"
                       onClick={() => onOpenChange?.(false)}
                     >
                       Quay lại đăng nhập
@@ -92,7 +108,7 @@ export function ForgotPasswordDialog({
                   </div>
                 </form>
 
-                <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                <DialogPrimitive.Close className="absolute right-4 top-4 rounded-xl opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none p-2">
                   <X className="h-4 w-4" />
                   <span className="sr-only">Close</span>
                 </DialogPrimitive.Close>

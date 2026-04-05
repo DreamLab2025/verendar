@@ -15,7 +15,7 @@ import { OtpDialog } from "@/components/dialog/auth/OtpDialog";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, verifyOtp, resendOtp, loading, clearError } = useAuth();
+  const { register, verifyRegisterOtp, resendOtp, loading, clearError } = useAuth();
 
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -74,7 +74,7 @@ export default function RegisterPage() {
   };
 
   const handleVerifyOtp = async (otp: string) => {
-    const result = await verifyOtp(email, otp);
+    const result = await verifyRegisterOtp(email, otp);
     if (result.success) {
       setIsOtpOpen(false);
       router.push("/login");
