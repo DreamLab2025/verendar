@@ -2,9 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogSheetHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGarageProductByIdQuery } from "@/hooks/useGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 
 function formatVnd(amount: number | null | undefined): string {
   if (amount == null || Number.isNaN(amount)) return "—";
@@ -39,12 +40,17 @@ export function GarageProductDetailDialog({ open, onOpenChange, productId }: Gar
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-6">
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={onOpenChange}
+        className="flex max-h-[min(90vh,800px)] w-full flex-col gap-0 overflow-hidden p-0 md:max-w-4xl"
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle className="text-left text-lg leading-snug">Chi tiết phụ tùng</DialogTitle>
-        </DialogHeader>
+        </DialogSheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {isPending ? (
             <div className="space-y-3">
               <Skeleton className="h-6 w-4/5 max-w-xs" />
@@ -65,7 +71,7 @@ export function GarageProductDetailDialog({ open, onOpenChange, productId }: Gar
           ) : data ? (
             <div className="space-y-6">
               {data.imageUrl ? (
-                <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+                <div className="overflow-hidden rounded-xl bg-muted/30 md:border md:border-border/60">
                   {/* eslint-disable-next-line @next/next/no-img-element -- ảnh từ CDN / URL ngoài */}
                   <img src={data.imageUrl} alt="" className="mx-auto max-h-64 w-full object-contain p-2" />
                 </div>
@@ -152,8 +158,8 @@ export function GarageProductDetailDialog({ open, onOpenChange, productId }: Gar
           ) : null}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border/60 px-4 py-3 sm:px-6">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="shrink-0 border-t border-border/60 bg-background px-4 py-3 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()}>
             Đóng
           </Button>
         </DialogFooter>

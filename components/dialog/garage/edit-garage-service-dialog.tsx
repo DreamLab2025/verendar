@@ -9,16 +9,18 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useGarageServiceByIdQuery, useUpdateGarageService } from "@/hooks/useGarage";
 import type { GarageServiceDetailDto, ServiceCategoryDto } from "@/lib/api/services/fetchGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 
 type FormState = {
@@ -121,7 +123,7 @@ export function EditGarageServiceDialog({
       },
       {
         onSuccess: () => {
-          handleOpenChange(false);
+          requestCloseBottomSheet();
         },
       },
     );
@@ -136,29 +138,37 @@ export function EditGarageServiceDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg" key={serviceId ?? undefined}>
-        <DialogHeader>
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={handleOpenChange}
+        className="flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden p-0 md:max-w-lg"
+        key={serviceId ?? undefined}
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle>Sửa dịch vụ</DialogTitle>
           <DialogDescription>
             Cập nhật qua <span className="font-mono text-xs">PUT /api/v1/garage-services/{"{id}"}</span>
           </DialogDescription>
-        </DialogHeader>
+        </DialogSheetHeader>
 
         {detailQuery.isError ? (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-            {detailQuery.error?.message ?? "Không tải được dịch vụ."}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => void detailQuery.refetch()}
-            >
-              Thử lại
-            </Button>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+              {detailQuery.error?.message ?? "Không tải được dịch vụ."}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => void detailQuery.refetch()}
+              >
+                Thử lại
+              </Button>
+            </div>
           </div>
         ) : loadingDetail ? (
-          <div className="space-y-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -168,7 +178,8 @@ export function EditGarageServiceDialog({
             </div>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
             <div className="space-y-2">
               <Label htmlFor="egms-category">Danh mục dịch vụ</Label>
               <Select
@@ -250,21 +261,17 @@ export function EditGarageServiceDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="egms-image">URL ảnh (tùy chọn)</Label>
-              <Input
-                id="egms-image"
-                name="imageUrl"
-                type="url"
-                value={form.imageUrl}
-                onChange={(ev) => setForm((f) => ({ ...f, imageUrl: ev.target.value }))}
-                disabled={pending}
-                autoComplete="off"
-              />
+            <ImageUrlDropzone
+              id="egms-image"
+              label="Ảnh (tùy chọn)"
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+              disabled={pending}
+            />
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>
+            <DialogFooter className="shrink-0 gap-2 border-t border-border/60 bg-background px-4 py-3 sm:gap-0 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()} disabled={pending}>
                 Hủy
               </Button>
               <Button type="submit" disabled={pending || noCategories} className={cn(pending && "gap-2")}>

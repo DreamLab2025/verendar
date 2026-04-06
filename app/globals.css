@@ -191,6 +191,34 @@
   }
 
   /**
+   * AlertDialog `variant="bottomSheet"`: animation CSS (Dialog dùng Framer Motion).
+   */
+  @media (max-width: 767px) {
+    .ver-bottom-sheet[data-state="open"] {
+      animation: ver-booking-status-sheet-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    .ver-bottom-sheet[data-state="closed"] {
+      animation: ver-booking-status-sheet-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ver-bottom-sheet[data-state="open"],
+    .ver-bottom-sheet[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  /** Dialog bottom sheet (Framer) — root Radix không animate, motion nằm trong khối con */
+  @media (max-width: 767px) {
+    .ver-ios-sheet-root[data-state="open"],
+    .ver-ios-sheet-root[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  /**
    * Tiến độ 3 mốc: đổ đỏ đều (linear), đầy cả đoạn → reset ngay, lặp (không nghỉ ở cuối).
    */
   @keyframes ver-booking-stepper-line-fill {
