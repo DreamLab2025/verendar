@@ -24,6 +24,7 @@ const KNOWN_APP_ROUTE_PATTERNS = [
   "/feedback",
   "/user",
   "/vehicle",
+  "/proposal",
 ];
 
 const routeMatches = (pathname: string, route: string) =>

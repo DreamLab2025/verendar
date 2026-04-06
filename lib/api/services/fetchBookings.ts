@@ -36,8 +36,8 @@ export interface BookingDetailResponse {
   isSuccess: boolean;
   statusCode?: number;
   message: string | null;
-  data: BookingDetailDto;
-  metadata: null;
+  data: BookingDetailDto | null;
+  metadata: unknown | null;
 }
 
 /** PATCH /api/v1/bookings/{id}/assign — Owner/Manager gán thợ (Pending/AwaitingConfirmation → Confirmed) */

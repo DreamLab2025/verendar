@@ -1,7 +1,10 @@
 "use client";
 
 import dayjs from "dayjs";
+import "dayjs/locale/vi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+dayjs.locale("vi");
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,7 +56,7 @@ export function MiniCalendarGrid({
         </Button>
         <div className="min-w-0 flex-1 text-center">
           <p className="truncate text-[15px] font-semibold capitalize leading-tight tracking-tight text-foreground">
-            {viewMonth.format("MMMM")}
+            {viewMonth.locale("vi").format("MMMM")}
           </p>
           <p className="mt-0.5 text-xs font-medium tabular-nums text-muted-foreground">{viewMonth.format("YYYY")}</p>
         </div>

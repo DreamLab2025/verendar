@@ -37,6 +37,28 @@ export interface BookingBundleDetailsDto {
   items: BookingBundleDetailItemDto[];
 }
 
+/** Nhúng từ GET /bookings/{id} — chi tiết phụ tùng đã book. */
+export interface BookingLineProductDetailsDto {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  materialPrice?: number | null;
+  materialPriceCurrency?: string | null;
+  estimatedDurationMinutes?: number | null;
+}
+
+/** Nhúng từ GET /bookings/{id} — chi tiết dịch vụ đã book. */
+export interface BookingLineServiceDetailsDto {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  estimatedDurationMinutes?: number | null;
+  laborPrice?: number | null;
+  laborPriceCurrency?: string | null;
+}
+
 export interface BookingLineItemDto {
   id: string;
   productId: string | null;
@@ -47,6 +69,8 @@ export interface BookingLineItemDto {
   bookedItemAmount: number;
   bookedItemCurrency: string;
   sortOrder: number;
+  productDetails?: BookingLineProductDetailsDto | null;
+  serviceDetails?: BookingLineServiceDetailsDto | null;
   bundleDetails?: BookingBundleDetailsDto | null;
 }
 
@@ -64,15 +88,16 @@ export interface BookingCustomerDto {
   phoneNumber: string;
 }
 
+/** Xe nhúng khi API trả (thợ/owner có thể thấy đủ hơn user). Một số field có thể thiếu. */
 export interface BookingVehicleDto {
-  userVehicleId: string;
-  licensePlate: string;
-  vin: string;
-  currentOdometer: number;
-  modelName: string;
-  brandName: string;
-  variantColor: string;
-  imageUrl: string;
+  userVehicleId?: string;
+  licensePlate?: string;
+  vin?: string;
+  currentOdometer?: number;
+  modelName?: string;
+  brandName?: string;
+  variantColor?: string;
+  imageUrl?: string | null;
 }
 
 export interface BookingStatusHistoryDto {
