@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans, Quicksand } from "next/font/google";
 import "./globals.css";
-import { RootShell } from "@/components/layout/root-shell";
+import { RootShell } from "@/components/shell/root-shell";
 import { Providers } from "@/lib/providers";
 import { Toaster } from "@/components/ui/sonner";
 

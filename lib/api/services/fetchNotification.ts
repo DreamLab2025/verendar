@@ -9,6 +9,8 @@ export interface NotificationQueryParams extends RequestParams {
   PageNumber: number;
   PageSize: number;
   IsDescending?: boolean;
+  /** Lọc chưa đọc (`false`) / đã đọc (`true`) — tùy BE có bật filter trên list */
+  isRead?: boolean;
 }
 
 export interface MarkAllAsReadResponse {
@@ -36,18 +38,32 @@ export interface ApiNotification {
   title: string;
   message: string;
   notificationType: string;
-  priority: "Critical" | "High" | "Medium" | "Low" | "Normal" | "Warning";
+  priority: string;
   status: string;
-  entityType: "MaintenanceReminder" | "OdometerReminder" | "System" | "Promotion";
-  entityId: string;
+  entityType: string | null;
+  entityId: string | null;
   actionUrl: string | null;
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+  /** List thường trả `null` — chi tiết mới có đủ (theo OVERVIEW) */
+  maintenanceItems?: unknown[] | null;
+}
+
+/** Chi tiết GET `/notifications/{id}` — có `maintenanceItems` khi loại xe/bảo dưỡng */
+export interface NotificationMaintenanceItem {
+  partCategoryName: string;
+  description: string | null;
+  currentOdometer: number;
+  targetOdometer: number;
+  percentageRemaining: number;
+  estimatedNextReplacementDate: string | null;
+  level: string;
 }
 
 export interface ApiNotificationDetail extends ApiNotification {
-  metadata: NotificationMetadata;
+  maintenanceItems?: NotificationMaintenanceItem[] | null;
+  metadata?: NotificationMetadata | null;
 }
 
 export interface MaintenanceReminderMetadata {
@@ -117,6 +133,9 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   actionUrl?: string;
+  /** Từ API list/detail — dùng điều hướng (OdometerReminder, UserVehicle, …) */
+  entityType?: string | null;
+  entityId?: string | null;
 }
 
 export interface NotificationDetailResponse {

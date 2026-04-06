@@ -77,4 +77,167 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /**
+   * Dialog “Cập nhật số km”: trượt lên khi mở, trượt xuống khi đóng.
+   * Ghi đè animate-in/zoom mặc định của shadcn Dialog (chỉ áp cho class này).
+   */
+  /**
+   * Chỉ animate opacity + scale — KHÔNG dùng transform/translate3d trong keyframes.
+   * Tailwind v4 căn giữa dialog bằng property `translate` (left/top 50% + translate -50%);
+   * nếu keyframes ghi đè `transform` sẽ lệch vị trí trên desktop.
+   */
+  @keyframes ver-odo-modal-in {
+    from {
+      opacity: 0;
+      scale: 0.96;
+    }
+    to {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @keyframes ver-odo-modal-out {
+    from {
+      opacity: 1;
+      scale: 1;
+    }
+    to {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+
+  /* Mobile sheet: mở/đóng + kéo xuống do Framer Motion trong UpdateOdometerDialog */
+  @media (max-width: 1023px) {
+    .update-odo-dialog[data-state="open"],
+    .update-odo-dialog[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .update-odo-dialog[data-state="open"] {
+      animation: ver-odo-modal-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    .update-odo-dialog[data-state="closed"] {
+      animation: ver-odo-modal-out 0.24s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .update-odo-dialog[data-state="open"],
+    .update-odo-dialog[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  /**
+   * BookingRequireDialog: sheet dưới `sm` (full-bleed).
+   * BookingRequireStatusDialog: sheet dưới `lg` (khớp layout bottom sheet).
+   */
+  @keyframes ver-booking-status-sheet-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 100%, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes ver-booking-status-sheet-out {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(0, 100%, 0);
+    }
+  }
+
+  /* Chi tiết: full-bleed chỉ dưới `sm` — sheet khớp layout; từ `sm` trở lên là modal giữa màn (zoom mặc định). */
+  @media (max-width: 639px) {
+    .booking-require-dialog[data-state="open"] {
+      animation: ver-booking-status-sheet-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    .booking-require-dialog[data-state="closed"] {
+      animation: ver-booking-status-sheet-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .booking-require-status-dialog[data-state="open"] {
+      animation: ver-booking-status-sheet-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    .booking-require-status-dialog[data-state="closed"] {
+      animation: ver-booking-status-sheet-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .booking-require-dialog[data-state="open"],
+    .booking-require-dialog[data-state="closed"],
+    .booking-require-status-dialog[data-state="open"],
+    .booking-require-status-dialog[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  /**
+   * AlertDialog `variant="bottomSheet"`: animation CSS (Dialog dùng Framer Motion).
+   */
+  @media (max-width: 767px) {
+    .ver-bottom-sheet[data-state="open"] {
+      animation: ver-booking-status-sheet-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    .ver-bottom-sheet[data-state="closed"] {
+      animation: ver-booking-status-sheet-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ver-bottom-sheet[data-state="open"],
+    .ver-bottom-sheet[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  /** Dialog bottom sheet (Framer) — root Radix không animate, motion nằm trong khối con */
+  @media (max-width: 767px) {
+    .ver-ios-sheet-root[data-state="open"],
+    .ver-ios-sheet-root[data-state="closed"] {
+      animation: none !important;
+    }
+  }
+
+  /**
+   * Tiến độ 3 mốc: đổ đỏ đều (linear), đầy cả đoạn → reset ngay, lặp (không nghỉ ở cuối).
+   */
+  @keyframes ver-booking-stepper-line-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .ver-booking-stepper-line-fill {
+    transform-origin: left center;
+    animation: ver-booking-stepper-line-fill 1.5s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ver-booking-stepper-line-fill {
+      animation: none;
+    }
+  }
 }

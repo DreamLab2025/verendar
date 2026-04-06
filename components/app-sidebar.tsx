@@ -2,20 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Bell,
-  CalendarClock,
-  CarFront,
-  ClipboardList,
-  Compass,
-  HomeIcon,
-  LayoutDashboard,
-  LifeBuoy,
-  Settings,
-} from "lucide-react";
+import { CalendarClock, CarFront, ClipboardList, HomeIcon, PenLine } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -38,17 +27,18 @@ type NavItem = {
 
 const MAIN_NAV: NavItem[] = [
   { title: "Phương tiện", href: "/", icon: CarFront },
-  { title: "Garage", href: "/user/dashboard", icon: HomeIcon },
+  { title: "Garage", href: "/user/garage", icon: HomeIcon },
   { title: "Thông báo", href: "/notifications", icon: CalendarClock },
-  { title: "Lịch sử", href: "/logs", icon: ClipboardList },
+  { title: "Lịch sử", href: "/user/booking-history", icon: ClipboardList },
+  { title: "Phản hồi", href: "/feedback", icon: PenLine },
 ];
 
-const HELP_NAV: NavItem[] = [
-  { title: "Kham pha garage", href: "/garage", icon: Compass },
-  { title: "Thong bao", href: "/notifications", icon: Bell },
-  { title: "Tro giup", href: "/support", icon: LifeBuoy },
-  { title: "Cai dat", href: "/settings", icon: Settings },
-];
+// const HELP_NAV: NavItem[] = [
+//   { title: "Kham pha garage", href: "/user/garage", icon: Compass },
+//   { title: "Thong bao", href: "/notifications", icon: Bell },
+//   { title: "Tro giup", href: "/support", icon: LifeBuoy },
+//   { title: "Cai dat", href: "/settings", icon: Settings },
+// ];
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -73,7 +63,8 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {MAIN_NAV.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
 
                 return (
@@ -98,7 +89,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="space-y-2.5">
+        {/* <SidebarGroup className="space-y-2.5">
           <SidebarGroupLabel>Tien ich</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -119,23 +110,10 @@ export function AppSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>
+        </SidebarGroup> */}
       </SidebarContent>
 
-      <SidebarFooter>
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background/70 p-2 text-left transition-colors hover:bg-accent/70"
-        >
-          <Avatar className="size-9">
-            <AvatarFallback>VH</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 group-data-[state=collapsed]/sidebar:hidden">
-            <p className="truncate text-sm font-medium">Hau Vu</p>
-            <p className="truncate text-xs text-muted-foreground">Free plan</p>
-          </div>
-        </button>
-      </SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }

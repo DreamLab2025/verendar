@@ -1,8 +1,37 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtDecode } from "jwt-decode";
+import {
+  GARAGE_HOME_ROUTE,
+  USER_HOME_ROUTE,
+  hasAdminRole,
+  hasGarageRole,
+  normalizeJwtRolesClaim,
+  resolveHomeRouteFromRoles,
+} from "@/lib/auth/role-routing";
 
-const BYPASS_AUTH_FOR_UI_TEST = true;
+const BYPASS_AUTH_FOR_UI_TEST = false;
+
+const KNOWN_APP_ROUTE_PATTERNS = [
+  "/",
+  "/admin/dashboard",
+  "/admin/feedback",
+  "/admin/users",
+  "/garage",
+  "/garage-dashboard",
+  "/notifications",
+  "/settings",
+  "/feedback",
+  "/user",
+  "/vehicle",
+  "/proposal",
+];
+
+const routeMatches = (pathname: string, route: string) =>
+  route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
+
+const isKnownAppRoute = (pathname: string) =>
+  KNOWN_APP_ROUTE_PATTERNS.some((route) => routeMatches(pathname, route));
 
 const getUserRoles = (token: string | undefined): string[] => {
   if (!token) return [];
@@ -12,24 +41,11 @@ const getUserRoles = (token: string | undefined): string[] => {
       exp?: number;
     } | null;
 
-    if (!decoded?.role) return [];
-    return Array.isArray(decoded.role) ? decoded.role : [decoded.role];
+    if (!decoded) return [];
+    return normalizeJwtRolesClaim(decoded.role);
   } catch {
     return [];
   }
-};
-
-const getPrimaryRole = (roles: string[]) => {
-  if (roles.includes("admin")) return "admin";
-  if (
-    roles.includes("executive_board") ||
-    roles.includes("vice_rector") ||
-    roles.includes("campus_academic_director")
-  ) {
-    return "management";
-  }
-  if (roles.includes("department_head")) return "department_head";
-  return "other";
 };
 
 export function proxy(request: NextRequest) {
@@ -43,13 +59,13 @@ export function proxy(request: NextRequest) {
 
   const token = request.cookies.get("authToken")?.value;
   const userRoles = getUserRoles(token);
-  const primaryRole = getPrimaryRole(userRoles);
+  const homeRoute = resolveHomeRouteFromRoles(userRoles);
 
   const publicRoutes: string[] = [];
-  const authRoutes = ["/login"];
+  const authRoutes = ["/login", "/register", "/forgot-password"];
 
-  const isPublicRoute = publicRoutes.some((r) => pathname === r || pathname.startsWith(`${r}/`));
-  const isAuthRoute = authRoutes.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  const isPublicRoute = publicRoutes.some((r) => routeMatches(pathname, r));
+  const isAuthRoute = authRoutes.some((r) => routeMatches(pathname, r));
 
   if (!token || userRoles.length === 0) {
     if (isPublicRoute || isAuthRoute) return NextResponse.next();
@@ -59,42 +75,38 @@ export function proxy(request: NextRequest) {
   }
 
   const isAdminRoute = pathname.startsWith("/admin");
-  const isManagementRoute = pathname.startsWith("/manage-project");
-  const isDepartmentHeadRoute = pathname.startsWith("/department-head");
+  const isGarageRoute = pathname === GARAGE_HOME_ROUTE || pathname.startsWith(`${GARAGE_HOME_ROUTE}/`);
+  const isAdmin = hasAdminRole(userRoles);
+  const isGarageMember = hasGarageRole(userRoles);
 
-  if (isAuthRoute || pathname === "/" || pathname === "") {
-    if (primaryRole === "admin") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-    if (primaryRole === "management") {
-      return NextResponse.redirect(new URL("/manage-project", request.url));
-    }
-    if (primaryRole === "department_head") {
-      return NextResponse.redirect(new URL("/department-head", request.url));
-    }
-    return NextResponse.redirect(new URL("/project", request.url));
+  if (isAuthRoute) {
+    return NextResponse.redirect(new URL(homeRoute, request.url));
   }
 
-  if (primaryRole === "admin") {
-    return NextResponse.next();
-  }
-
-  if (primaryRole === "management") {
-    if (isAdminRoute || isDepartmentHeadRoute) {
-      return NextResponse.redirect(new URL("/manage-project", request.url));
+  if (pathname === "/" || pathname === "") {
+    if (homeRoute !== USER_HOME_ROUTE) {
+      return NextResponse.redirect(new URL(homeRoute, request.url));
     }
     return NextResponse.next();
   }
 
-  if (primaryRole === "department_head") {
-    if (isAdminRoute || isManagementRoute) {
-      return NextResponse.redirect(new URL("/department-head", request.url));
+  if (!isKnownAppRoute(pathname)) {
+    return NextResponse.redirect(new URL(homeRoute, request.url));
+  }
+
+  if (isAdmin) {
+    if (isGarageRoute) {
+      return NextResponse.redirect(new URL(homeRoute, request.url));
     }
     return NextResponse.next();
   }
 
-  if (isAdminRoute || isManagementRoute || isDepartmentHeadRoute) {
-    return NextResponse.redirect(new URL("/project", request.url));
+  if (isAdminRoute) {
+    return NextResponse.redirect(new URL(homeRoute, request.url));
+  }
+
+  if (isGarageRoute && !isGarageMember) {
+    return NextResponse.redirect(new URL(USER_HOME_ROUTE, request.url));
   }
 
   return NextResponse.next();

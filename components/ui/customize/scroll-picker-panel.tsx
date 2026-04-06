@@ -110,12 +110,13 @@ const ScrollPickerPanel = ({
         }
       };
 
-      // Update active index immediately
+      // Update active index immediately (do not call onSelect inside setState updater — it updates parent during child's update)
+      let nextIdx = 0;
       setActiveIdx((prev) => {
-        const next = wrap(prev + dir);
-        onSelect?.(items[next]);
-        return next;
+        nextIdx = wrap(prev + dir);
+        return nextIdx;
       });
+      queueMicrotask(() => onSelect?.(items[nextIdx]));
 
       animRef.current = requestAnimationFrame(tick);
     },
@@ -146,7 +147,7 @@ const ScrollPickerPanel = ({
       pendingDir.current = steps > 0 ? 1 : -1;
 
       setActiveIdx(next);
-      onSelect?.(items[next]);
+      queueMicrotask(() => onSelect?.(items[next]));
 
       const startOffset = steps;
       const startTime = performance.now();
@@ -175,7 +176,8 @@ const ScrollPickerPanel = ({
   );
 
   useEffect(() => {
-    if (items[activeIdx]) onSelect?.(items[activeIdx]);
+    const item = items[activeIdx];
+    if (item) queueMicrotask(() => onSelect?.(item));
     // Chỉ đồng bộ lần mount; navigate đã gọi onSelect trong doNavigate
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -207,38 +209,137 @@ const ScrollPickerPanel = ({
 
   const selectedItem = items[activeIdx] || null;
 
+  const detailBorderTint =
+    accentColor.startsWith("#") && accentColor.length === 7 ? `${accentColor}33` : accentColor;
+
+  /** Cuộn chip đang chọn trong rail (mobile) — không dùng scrollIntoView để tránh kéo cả trang lệch ngang */
+  const mobileChipRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const mobileRailRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const rail = mobileRailRef.current;
+    const btn = mobileChipRefs.current[activeIdx];
+    if (!rail || !btn) return;
+    const run = () => {
+      const r = rail.getBoundingClientRect();
+      const b = btn.getBoundingClientRect();
+      const nextLeft = rail.scrollLeft + (b.left - r.left) + b.width / 2 - r.width / 2;
+      const maxLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+      rail.scrollTo({ left: Math.max(0, Math.min(nextLeft, maxLeft)), behavior: "smooth" });
+    };
+    requestAnimationFrame(run);
+  }, [activeIdx]);
+
+  const jumpToIndex = useCallback(
+    (targetIdx: number) => {
+      if (len === 0) return;
+      const next = wrap(targetIdx);
+      if (next === activeIdx && Math.abs(offset) < 0.001) return;
+      cancelAnimationFrame(animRef.current);
+      setOffset(0);
+      pendingDir.current = 0;
+      setActiveIdx(next);
+      queueMicrotask(() => onSelect?.(items[next]));
+    },
+    [len, wrap, activeIdx, offset, items, onSelect],
+  );
+
   return (
     <div
-      className={className}
-      style={{
-        display: "flex",
-        gap: 16,
-        width: "100%",
-        height: panelHeight,
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
+      className={cn(
+        "flex w-full min-w-0 flex-col gap-3 overflow-x-hidden lg:h-(--sp-ph) lg:flex-row lg:gap-4",
+        className,
+      )}
+      style={
+        {
+          "--sp-ph": `${panelHeight}px`,
+          "--detail-accent-border": detailBorderTint,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        } as React.CSSProperties
+      }
     >
-      {/* ── Left Picker ── */}
-      <div
-        ref={wrapperRef}
-        onTouchStart={(e) => {
-          touchY.current = e.touches[0].clientY;
-        }}
-        onTouchEnd={(e) => {
-          const dy = touchY.current - e.changedTouches[0].clientY;
-          if (dy > 25) doNavigate(-1);
-          else if (dy < -25) doNavigate(1);
-        }}
-        style={{
-          position: "relative",
-          width: slotH + 8,
-          minWidth: slotH + 8,
-          height: panelHeight,
-          overflow: "hidden",
-          cursor: "ns-resize",
-          userSelect: "none",
-        }}
-      >
+      {/* Mobile: hàng icon nằm ngang (cuộn trong rail), chi tiết full width bên dưới — scrollTo(left) thay scrollIntoView */}
+      {len > 0 ? (
+        <div className="w-full shrink-0 lg:hidden">
+          <div className="rounded-xl border border-border/60 bg-muted/40 py-2 pl-2 pr-1 dark:bg-muted/25">
+            <div
+              ref={mobileRailRef}
+              className={cn(
+                "scrollbar-hide flex overflow-x-auto overscroll-x-contain px-0.5 pb-0.5 touch-pan-x",
+                "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+                "snap-x snap-mandatory scroll-pl-2 scroll-pr-2",
+              )}
+              role="tablist"
+              aria-label="Chọn phụ tùng"
+            >
+              <div className="flex w-max flex-row items-center gap-2.5 py-1 pr-2">
+                {items.map((item, i) => {
+                  const highlighted = i === activeIdx;
+                  return (
+                    <button
+                      key={item.key}
+                      ref={(el) => {
+                        mobileChipRefs.current[i] = el;
+                      }}
+                      type="button"
+                      role="tab"
+                      aria-selected={highlighted}
+                      aria-label={item.label}
+                      onClick={() => jumpToIndex(i)}
+                      className={cn(
+                        "flex size-[52px] shrink-0 snap-center items-center justify-center rounded-2xl border-2 transition-all touch-manipulation active:scale-95",
+                        itemClassName,
+                        highlighted
+                          ? cn("text-white shadow-md", activeItemClassName)
+                          : "border-border/50 bg-background text-foreground shadow-sm dark:bg-card",
+                      )}
+                      style={
+                        highlighted
+                          ? {
+                              borderColor: accentColor,
+                              background: accentColor,
+                              boxShadow: `0 2px 12px -2px ${accentColor}66`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span className="flex size-11 items-center justify-center overflow-hidden rounded-[10px]">
+                        {renderItem ? (
+                          renderItem(item, highlighted)
+                        ) : (
+                          <span className="max-w-12 truncate px-1 text-center text-[11px] font-medium">{item.label}</span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Desktop: picker dọc */}
+      <div className="hidden w-full shrink-0 justify-center overflow-hidden lg:flex lg:h-full lg:w-auto lg:justify-start">
+        <div
+          ref={wrapperRef}
+          onTouchStart={(e) => {
+            touchY.current = e.touches[0].clientY;
+          }}
+          onTouchEnd={(e) => {
+            const dy = touchY.current - e.changedTouches[0].clientY;
+            if (dy > 25) doNavigate(-1);
+            else if (dy < -25) doNavigate(1);
+          }}
+          style={{
+            position: "relative",
+            width: slotH + 8,
+            minWidth: slotH + 8,
+            height: panelHeight,
+            overflow: "hidden",
+            cursor: "ns-resize",
+            userSelect: "none",
+          }}
+        >
         {/* Fade edges */}
         <div
           className="pointer-events-none absolute left-0 right-0 top-0 z-2 h-10 bg-linear-to-b from-white to-transparent dark:from-neutral-950"
@@ -344,47 +445,49 @@ const ScrollPickerPanel = ({
             </div>
           );
         })}
+        </div>
       </div>
 
-      {/* ── Right Detail — nền & viền theo accent */}
+      {/* Detail: mobile phẳng (chỉ gạch ngăn); desktop chiếm hết phần ngang còn lại — tránh w-full trong flex-row làm co cụm */}
       <div
         className={cn(
-          "box-border h-full min-h-0 flex-1 overflow-auto rounded-2xl border bg-neutral-50/95 p-6 text-neutral-900 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_-4px_rgba(226,32,40,0.08)] dark:border-neutral-700/80 dark:bg-neutral-900/90 dark:text-neutral-100 dark:shadow-none sm:p-7",
+          "box-border flex min-h-[min(240px,45dvh)] min-w-0 flex-1 flex-col overflow-hidden p-0 text-neutral-900 dark:text-neutral-100",
+          "w-full max-lg:border-t max-lg:border-neutral-200/90 max-lg:pt-4 max-lg:dark:border-neutral-800",
+          "lg:h-full lg:min-h-0 lg:w-auto lg:min-w-0 lg:flex-1 lg:rounded-2xl lg:border lg:border-(--detail-accent-border) lg:bg-neutral-50/95 lg:p-6 lg:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_-4px_rgba(226,32,40,0.08)] dark:lg:border-neutral-700/80 dark:lg:bg-neutral-900/90 dark:lg:shadow-none xl:p-7",
           detailClassName,
         )}
-        style={{
-          borderColor: accentColor.startsWith("#") && accentColor.length === 7 ? `${accentColor}33` : accentColor,
-        }}
       >
-        {selectedItem ? (
-          renderDetail ? (
-            renderDetail(selectedItem)
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {selectedItem ? (
+            renderDetail ? (
+              renderDetail(selectedItem)
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "#888",
+                    margin: "0 0 4px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    fontWeight: 500,
+                  }}
+                >
+                  Selected
+                </p>
+                <h3 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 12px" }}>{selectedItem.label}</h3>
+                <p style={{ fontSize: 13, color: "#666" }}>
+                  Key:{" "}
+                  <code style={{ background: "#e8e8e8", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>
+                    {selectedItem.key}
+                  </code>
+                </p>
+              </div>
+            )
           ) : (
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "#888",
-                  margin: "0 0 4px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  fontWeight: 500,
-                }}
-              >
-                Selected
-              </p>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 12px" }}>{selectedItem.label}</h3>
-              <p style={{ fontSize: 13, color: "#666" }}>
-                Key:{" "}
-                <code style={{ background: "#e8e8e8", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>
-                  {selectedItem.key}
-                </code>
-              </p>
-            </div>
-          )
-        ) : (
-          <p style={{ color: "#999", fontSize: 14 }}>No item selected</p>
-        )}
+            <p className="text-[14px] text-neutral-500 dark:text-neutral-400">No item selected</p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -2,19 +2,40 @@
 
 import { useState } from "react";
 import { AuthService, JwtPayload, AuthState, AuthResult, User } from "@/lib/api/services/fetchAuth";
-import { setCookie, getCookie, deleteCookie } from "cookies-next";
+import { setCookie, getCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import api8080Service from "@/lib/api/api8080Service";
 import apiService from "@/lib/api/apiService";
-import type { ApiError } from "@/lib/api/apiService";
+import type { ApiError, ApiErrorData } from "@/lib/api/apiService";
 import { getAuthCookieConfig } from "@/utils/cookieConfig";
+import { getPrimaryRoleFromRoles, normalizeJwtRolesClaim } from "@/lib/auth/role-routing";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { toast } from "sonner";
+
+export function isAccessTokenValid(token: string | null | undefined): boolean {
+  if (!token) return false;
+  try {
+    const part = token.split(".")[1];
+    if (!part) return false;
+    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = JSON.parse(atob(base64)) as { exp?: number };
+    const expMs = decoded.exp ? decoded.exp * 1000 : 0;
+    if (expMs && expMs < Date.now()) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: null, accessToken: null, loading: false, error: null });
 
   const router = useRouter();
   const queryClient = useQueryClient();
+  const setAuthSession = useAuthStore((s) => s.setAuthSession);
+  const clearAuthSession = useAuthStore((s) => s.logout);
+  const storedRefreshToken = useAuthStore((s) => s.refreshToken);
 
   /* ---------- JWT HELPERS ---------- */
 
@@ -31,13 +52,16 @@ export function useAuth() {
 
   const buildUserFromToken = (token: string): User => {
     const payload = decodeJwt(token);
+    const roles = normalizeJwtRolesClaim(payload.role);
+    const primaryRole = getPrimaryRoleFromRoles(roles);
+    const userName = payload.userName || payload.unique_name || payload.email?.split("@")[0] || "";
 
     return {
       userId: payload.userId || payload.sub || "",
-      userName: payload.userName || payload.unique_name || payload.email?.split("@")[0] || "",
+      userName,
       email: payload.email || "",
-      role: Array.isArray(payload.role) ? payload.role[0] : payload.role || "User",
-      avatarUrl: `https://ui-avatars.com/api/?name=${payload.userName}&background=0D8ABC&color=fff`,
+      role: primaryRole || "User",
+      avatarUrl: `https://ui-avatars.com/api/?name=${userName}&background=0D8ABC&color=fff`,
     };
   };
 
@@ -50,15 +74,16 @@ export function useAuth() {
       const response = await AuthService.login(email, password);
 
       const token = response.data.data.accessToken;
+      const refreshToken = response.data.data.refreshToken ?? null;
       const user = buildUserFromToken(token);
 
       // ✅ LƯU COOKIE
       setCookie("authToken", token, getAuthCookieConfig());
-      setCookie("auth-token", token, getAuthCookieConfig()); // Backward compatibility
 
       // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
       api8080Service.setAuthToken(token);
       apiService.setAuthToken(token);
+      setAuthSession({ accessToken: token, refreshToken });
       setState({
         user,
         accessToken: token,
@@ -76,6 +101,7 @@ export function useAuth() {
       //   }
       // });
 
+      toast.success("Đăng nhập thành công!");
       return { success: true, user };
     } catch (err) {
       // Lấy message từ BE response nếu có
@@ -88,18 +114,42 @@ export function useAuth() {
         message = err.message || message;
       }
 
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
+
+      if (err && typeof err === "object" && "error" in err) {
+        const apiError = err as ApiError;
+        const errorData = apiError.error as ApiErrorData & {
+          metadata?: { requiresOtpVerification?: boolean; email?: string };
+        };
+        const metadata = errorData?.metadata;
+
+        if (metadata?.requiresOtpVerification) {
+          return {
+            success: false,
+            error: message,
+            requiresOtpVerification: true,
+            email: metadata.email,
+          };
+        }
+      }
+
       return { success: false, error: message };
     }
   };
 
   /* ===================== REGISTER ===================== */
 
-  const register = async (email: string, password: string): Promise<AuthResult> => {
+  const register = async (email: string, password: string, phoneNumber: string): Promise<AuthResult> => {
     setState((s) => ({ ...s, loading: true, error: null }));
-
+ 
     try {
-      const response = await AuthService.register(email, password);
+      const response = await AuthService.register({
+        email,
+        password,
+        phoneNumber,
+        fullName: email.split("@")[0],
+      });
       const userData = response.data.data;
 
       const user: User = {
@@ -117,6 +167,7 @@ export function useAuth() {
         error: null,
       });
 
+      toast.success("Đăng ký thành công!");
       return { success: true, user };
     } catch (err) {
       // Lấy message từ BE response nếu có
@@ -129,6 +180,7 @@ export function useAuth() {
         message = err.message || message;
       }
 
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -136,21 +188,73 @@ export function useAuth() {
 
   /* ===================== VERIFY OTP ===================== */
 
-  const verifyOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
+  const verifyRegisterOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
     setState((s) => ({ ...s, loading: true, error: null }));
 
     try {
-      await AuthService.verifyOtp(email, otpCode);
+      await AuthService.verifyRegisterOtp({ email, otpCode });
 
       setState((s) => ({ ...s, loading: false }));
+      toast.success("Xác thực mã OTP thành công!");
       return { success: true };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Mã OTP không đúng hoặc đã hết hạn";
+      let message = "Mã OTP không đúng hoặc đã hết hạn";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
 
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
   };
+
+  const verifyResetPasswordOtp = async (email: string, otpCode: string): Promise<AuthResult> => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+
+    try {
+      await AuthService.verifyResetPasswordOtp({ email, otpCode });
+
+      setState((s) => ({ ...s, loading: false }));
+      toast.success("Xác thực mã OTP thành công!");
+      return { success: true };
+    } catch (err) {
+      let message = "Mã OTP không đúng hoặc đã hết hạn";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+
+      toast.error(message);
+      setState((s) => ({ ...s, loading: false, error: message }));
+      return { success: false, error: message };
+    }
+  };
+ 
+  const resendOtp = async (email: string): Promise<AuthResult> => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+ 
+    try {
+      await AuthService.resendOtp(email);
+      setState((s) => ({ ...s, loading: false }));
+      toast.success("Mã OTP đã được gửi lại!");
+      return { success: true };
+    } catch (err) {
+      let message = "Gửi lại mã OTP thất bại";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+      toast.error(message);
+      setState((s) => ({ ...s, loading: false, error: message }));
+      return { success: false, error: message };
+    }
+  };
+ 
   /* ===================== FORGOT PASSWORD ===================== */
 
   const forgotPassword = async (email: string): Promise<AuthResult> => {
@@ -161,9 +265,16 @@ export function useAuth() {
       const msg = response.data.message;
 
       setState((s) => ({ ...s, loading: false }));
+      toast.info(msg || "Vui lòng kiểm tra email để lấy mã OTP");
       return { success: true, message: msg };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Gửi OTP thất bại";
+      let message = "Gửi OTP thất bại";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -173,7 +284,6 @@ export function useAuth() {
 
   const resetPassword = async (
     email: string,
-    otpCode: string,
     newPassword: string,
     confirmNewPassword: string,
   ): Promise<AuthResult> => {
@@ -182,16 +292,22 @@ export function useAuth() {
     try {
       const response = await AuthService.resetPassword({
         email,
-        otpCode,
         newPassword,
         confirmNewPassword,
       });
 
       const msg = response.data.message;
       setState((s) => ({ ...s, loading: false }));
+      toast.success(msg || "Đặt lại mật khẩu thành công!");
       return { success: true, message: msg };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại";
+      let message = "Đặt lại mật khẩu thất bại";
+      if (err && typeof err === "object" && "message" in err) {
+        message = (err as ApiError).message || (err as ApiError).error?.message || message;
+      } else if (err instanceof Error) {
+        message = err.message || message;
+      }
+      toast.error(message);
       setState((s) => ({ ...s, loading: false, error: message }));
       return { success: false, error: message };
     }
@@ -200,14 +316,7 @@ export function useAuth() {
   /* ===================== LOGOUT ===================== */
 
   const logout = () => {
-    // ✅ XÓA COOKIE (với tất cả các options để đảm bảo xóa hoàn toàn)
-    deleteCookie("auth-token", {
-      path: "/",
-      domain: undefined, // Xóa trên tất cả domains
-    });
-    deleteCookie("authToken", { path: "/" });
-
-    // ✅ CLEAR TOKEN Ở TẤT CẢ API SERVICES
+    clearAuthSession();
     api8080Service.setAuthToken(null);
     apiService.setAuthToken(null);
 
@@ -229,6 +338,7 @@ export function useAuth() {
     });
 
     // ✅ REDIRECT TO LOGIN
+    toast.info("Đã đăng xuất");
     router.push("/login");
   };
 
@@ -237,8 +347,9 @@ export function useAuth() {
   const initAuthFromStorage = async () => {
     setState((s) => ({ ...s, loading: true }));
 
-    const token = (getCookie("authToken") as string | undefined) ?? (getCookie("auth-token") as string | undefined);
+    const token = getCookie("authToken") as string | undefined;
     if (!token) {
+      clearAuthSession();
       setState((s) => ({ ...s, loading: false }));
       return;
     }
@@ -246,8 +357,31 @@ export function useAuth() {
     const payload = decodeJwt(token);
     const exp = payload.exp ? payload.exp * 1000 : 0;
 
-    const now = new Date().getTime(); // ✅ Tách ra biến
+    const now = new Date().getTime();
     if (exp && exp < now) {
+      // Access token hết hạn — thử refresh trước khi logout
+      const persistedRefresh = storedRefreshToken;
+      if (persistedRefresh) {
+        try {
+          const res = await AuthService.refreshToken(persistedRefresh);
+          const nextAccess = res.data.data.accessToken;
+          const nextRefresh = res.data.data.refreshToken ?? null;
+
+          setCookie("authToken", nextAccess, getAuthCookieConfig());
+          api8080Service.setAuthToken(nextAccess);
+          apiService.setAuthToken(nextAccess);
+          setAuthSession({ accessToken: nextAccess, refreshToken: nextRefresh });
+          setState((s) => ({ ...s, accessToken: nextAccess }));
+
+          await fetchCurrentUser();
+          setState((s) => ({ ...s, loading: false }));
+          return;
+        } catch {
+          // Refresh thất bại → logout
+          logout();
+          return;
+        }
+      }
       logout();
       return;
     }
@@ -255,13 +389,14 @@ export function useAuth() {
     // ✅ SET TOKEN CHO TẤT CẢ API SERVICES
     api8080Service.setAuthToken(token);
     apiService.setAuthToken(token);
+    setAuthSession({ accessToken: token, refreshToken: storedRefreshToken });
 
     setState((s) => ({ ...s, accessToken: token }));
 
     await fetchCurrentUser();
 
     // TEMP: disable SignalR during UI/auth testing
-    // const currentState = getCookie("auth-token") as string | undefined;
+    // const currentState = getCookie("authToken") as string | undefined;
     // if (currentState) {
     //   console.log("🔌 Attempting to connect to notification hub on init...");
     //   notificationHubService.startConnection(currentState).then((connected) => {
@@ -297,23 +432,32 @@ export function useAuth() {
 
       return user;
     } catch (err) {
+      // Lỗi 401: interceptor của api8080Service đã tự động thử refresh và redirect nếu thất bại.
+      // Không gọi logout() ở đây để tránh double-redirect.
       console.error("Lấy thông tin user thất bại:", err);
-      logout(); // 401 / token hết hạn
       return null;
     }
   };
 
-  
+
+
+  /** Token cho hub / API khi cookie còn nhưng state `useAuth` chưa hydrate (vd. sau reload). */
+  const resolvedAccessToken =
+    state.accessToken ??
+    ((getCookie("authToken") as string | undefined) ?? null);
 
   return {
     user: state.user,
     accessToken: state.accessToken,
+    resolvedAccessToken,
     loading: state.loading,
     error: state.error,
 
     login,
     register,
-    verifyOtp,
+    verifyRegisterOtp,
+    verifyResetPasswordOtp,
+    resendOtp,
     forgotPassword,
     resetPassword,
     logout,

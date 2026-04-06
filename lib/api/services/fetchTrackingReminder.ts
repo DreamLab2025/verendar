@@ -4,12 +4,14 @@ import { PartTrackingReminder, ReminderDetailStatus, TrackingCycleSummary } from
 export type ReminderLevel = "Critical" | "High" | "Medium" | "Low" | "Normal" | "Warning";
 
 export interface ApplyTrackingRequest {
-  partCategoryCode: string;
+  /** Slug loại phụ tùng (vd. `engine-oil`) — BE validate `PartCategorySlug` */
+  partCategorySlug: string;
   lastReplacementOdometer: number;
   lastReplacementDate: string;
   predictedNextOdometer: number;
   predictedNextDate: string;
   aiReasoning: string;
+  /** Độ tin cậy chuẩn hóa 0..1 (BE không chấp nhận thang 0..100) */
   confidenceScore: number;
 }
 
@@ -43,6 +45,7 @@ export interface ApplyTrackingData {
 
 export interface VehicleRemindersResponse {
   isSuccess: boolean;
+  statusCode?: number;
   message: string;
   data: VehicleReminder[];
   metadata: unknown;
@@ -68,8 +71,8 @@ export interface VehicleReminder {
 export interface ReminderPartCategory {
   id: string;
   name: string;
-  code: string;
-  /** Một số API trả `slug` (vd. ENGINE-OIL) thay cho hoặc cùng với `code` */
+  /** Swagger có thể chỉ trả `slug`, không có `code` */
+  code?: string;
   slug?: string;
   description: string;
   iconUrl: string;
@@ -97,6 +100,15 @@ export const TrackingReminderService = {
   getReminders: async (userVehicleId: string) => {
     const response = await api8080Service.get<VehicleRemindersResponse>(
       `/api/v1/user-vehicles/${userVehicleId}/reminders`,
+    );
+    return response.data;
+  },
+
+  getRemindersByPartCategorySlug: async (userVehicleId: string, partCategorySlug: string) => {
+    const safeSlug = encodeURIComponent(partCategorySlug);
+    const response = await api8080Service.get<PartCategoryRemindersResponse>(
+      `/api/v1/part-categories/${safeSlug}/reminders`,
+      { userVehicleId },
     );
     return response.data;
   },

@@ -1,6 +1,7 @@
 import {
   ApplyTrackingRequest,
   TrackingReminderService,
+  type PartCategoryRemindersResponse,
   VehicleRemindersResponse,
 } from "@/lib/api/services/fetchTrackingReminder";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,8 +14,10 @@ export function useApplyTracking() {
     mutationKey: ["apply-tracking"],
     mutationFn: ({ userVehicleId, payload }: { userVehicleId: string; payload: ApplyTrackingRequest }) =>
       TrackingReminderService.applyTracking(userVehicleId, payload),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["user-vehicle-parts"] });
+      queryClient.invalidateQueries({ queryKey: ["part-category-reminders", variables.userVehicleId] });
+      queryClient.invalidateQueries({ queryKey: ["user-vehicle-reminders", variables.userVehicleId] });
       toast.success(data.message || "Áp dụng cấu hình thành công!");
     },
     onError: (err: Error) => {
@@ -44,6 +47,34 @@ export function useUserVehicleReminders(userVehicleId: string, enabled: boolean 
       reminders: data.data ?? [],
       message: data.message,
       isSuccess: data.isSuccess,
+    }),
+  });
+
+  return {
+    refetch,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    reminders: data?.reminders ?? [],
+    message: data?.message,
+    isSuccess: data?.isSuccess,
+  };
+}
+
+export function usePartCategoryReminders(
+  userVehicleId: string,
+  partCategorySlug: string | undefined,
+  enabled: boolean = true,
+) {
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ["part-category-reminders", userVehicleId, partCategorySlug],
+    queryFn: () => TrackingReminderService.getRemindersByPartCategorySlug(userVehicleId, partCategorySlug || ""),
+    enabled: enabled && !!userVehicleId && !!partCategorySlug,
+    select: (res: PartCategoryRemindersResponse) => ({
+      reminders: res.data ?? [],
+      message: res.message,
+      isSuccess: res.isSuccess,
     }),
   });
 

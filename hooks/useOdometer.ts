@@ -14,8 +14,12 @@ export function useUpdateOdometer() {
     mutationKey: ["update-odometer"],
     mutationFn: ({ userVehicleId, payload }: { userVehicleId: string; payload: UpdateOdometerRequest }) =>
       OdometerService.updateOdometer(userVehicleId, payload),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["user-vehicles"] });
+      queryClient.invalidateQueries({
+        queryKey: ["user-vehicle", "odometer-history", variables.userVehicleId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["user-vehicle-parts", variables.userVehicleId] });
       toast.success(data.message || "Cập nhật số km thành công!");
     },
     onError: (err: Error) => {
