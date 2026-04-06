@@ -30,9 +30,9 @@ import { DeleteGarageProductAlert } from "../../../../../../../../components/dia
 import { GarageBundleDetailDialog } from "../../../../../../../../components/dialog/garage/garage-bundle-detail-dialog";
 import { GarageProductDetailDialog } from "../../../../../../../../components/dialog/garage/garage-product-detail-dialog";
 import { GarageServiceDetailDialog } from "../../../../../../../../components/dialog/garage/garage-service-detail-dialog";
-import { BundlesTable } from "./components/bundle-table";
-import { ProductsTable } from "./components/product-table";
-import { ServicesTable } from "./components/service-table";
+import { BundlesGridSkeleton, BundlesTable } from "./components/bundle-table";
+import { ProductsGridSkeleton, ProductsTable } from "./components/product-table";
+import { ServicesGridSkeleton, ServicesTable } from "./components/service-table";
 
 export function formatVnd(amount: number | null | undefined): string {
   if (amount == null || Number.isNaN(amount)) return "—";
@@ -409,7 +409,7 @@ export default function BranchServicesPage() {
                 <div className="space-y-4">
                   <CatalogCreateToolbar label="Tạo combo" onClick={() => setCreateBundleOpen(true)} />
                   {bundlesQ.isPending ? (
-                    <CatalogLoadingSkeleton cols={8} />
+                    <BundlesGridSkeleton />
                   ) : bundlesQ.isError ? (
                     <CatalogError
                       message={bundlesQ.error?.message ?? "Không tải được danh sách combo."}
@@ -417,6 +417,7 @@ export default function BranchServicesPage() {
                     />
                   ) : (
                     <BundlesTable
+                      key={bundleRows.map((r) => r.id).join("|")}
                       rows={bundleRows}
                       onViewBundle={(id) => setDetailBundleId(id)}
                       onEditBundle={(id) => setEditBundleId(id)}
@@ -430,7 +431,7 @@ export default function BranchServicesPage() {
                 <div className="space-y-4">
                   <CatalogCreateToolbar label="Tạo phụ tùng" onClick={() => setCreateProductOpen(true)} />
                   {productsQ.isPending ? (
-                    <CatalogLoadingSkeleton cols={7} />
+                    <ProductsGridSkeleton />
                   ) : productsQ.isError ? (
                     <CatalogError
                       message={productsQ.error?.message ?? "Không tải được danh sách phụ tùng."}
@@ -438,6 +439,7 @@ export default function BranchServicesPage() {
                     />
                   ) : (
                     <ProductsTable
+                      key={productRows.map((r) => r.id).join("|")}
                       rows={productRows}
                       onViewProduct={(id) => setDetailProductId(id)}
                       onEditProduct={(id) => setEditProductId(id)}
@@ -467,7 +469,7 @@ export default function BranchServicesPage() {
                     </Button>
                   </div>
                   {servicesQ.isPending ? (
-                    <CatalogLoadingSkeleton cols={6} />
+                    <ServicesGridSkeleton />
                   ) : servicesQ.isError ? (
                     <CatalogError
                       message={servicesQ.error?.message ?? "Không tải được danh sách dịch vụ."}
@@ -475,6 +477,7 @@ export default function BranchServicesPage() {
                     />
                   ) : (
                     <ServicesTable
+                      key={serviceRows.map((r) => r.id).join("|")}
                       rows={serviceRows}
                       onViewService={(id) => setDetailServiceId(id)}
                       onEditService={(id) => setEditServiceId(id)}
