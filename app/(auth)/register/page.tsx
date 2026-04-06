@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CarFront, Eye, EyeOff, Loader2, Mail, Phone } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Phone, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OtpDialog } from "@/components/dialog/auth/OtpDialog";
@@ -82,122 +82,126 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/10 via-background to-background" />
-
-      <Card className="relative z-10 w-full max-w-md border-border/70 bg-background/85 shadow-xl backdrop-blur">
-        <CardHeader className="space-y-4">
-          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/15 text-primary">
-            <CarFront className="size-6" />
+    <>
+      <div className="w-full max-w-[440px] shrink-0">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col items-center space-y-3 sm:space-y-4 text-center">
+            <div className="flex size-20 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-zinc-200">
+              <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900">Đăng ký mới</h1>
+              <p className="text-[15px] text-zinc-500 font-medium font-quicksand">
+                Tham gia cùng Verendar ngay hôm nay.
+              </p>
+            </div>
           </div>
-          <div className="space-y-1 text-center">
-            <CardTitle className="text-2xl">Đăng ký tài khoản</CardTitle>
-            <CardDescription>Tham gia cùng Verendar ngay hôm nay.</CardDescription>
-          </div>
-        </CardHeader>
 
-        <CardContent className="space-y-4">
-          <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={cn("pl-10", fieldErrors.email && "border-destructive")}
-                  required
-                />
-                <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <form className="space-y-5" onSubmit={onSubmit}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="sr-only">Email</Label>
+                <div className="relative group">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={cn("pl-11 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm", fieldErrors.email && "border-destructive focus-visible:ring-destructive/10")}
+                    required
+                  />
+                  <Mail className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+                </div>
+                {fieldErrors.email && <p className="text-xs font-medium text-destructive">{fieldErrors.email}</p>}
               </div>
-              {fieldErrors.email && <p className="text-xs font-medium text-destructive">{fieldErrors.email}</p>}
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="sr-only">Số điện thoại</Label>
+                <div className="relative group">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="0987654321"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className={cn("pl-11 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm", fieldErrors.phoneNumber && "border-destructive focus-visible:ring-destructive/10")}
+                    required
+                  />
+                  <Phone className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+                </div>
+                {fieldErrors.phoneNumber && <p className="text-xs font-medium text-destructive">{fieldErrors.phoneNumber}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="sr-only">Mật khẩu</Label>
+                <div className="relative group">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Nhập mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={cn("pl-11 pr-12 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm", fieldErrors.password && "border-destructive focus-visible:ring-destructive/10")}
+                    required
+                  />
+                  <Lock className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-2 flex w-10 items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                  </button>
+                </div>
+                {fieldErrors.password && <p className="text-xs font-medium text-destructive">{fieldErrors.password}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password" className="sr-only">Xác nhận mật khẩu</Label>
+                <div className="relative group">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Nhập lại mật khẩu"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={cn("pl-11 pr-12 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm", fieldErrors.confirmPassword && "border-destructive focus-visible:ring-destructive/10")}
+                    required
+                  />
+                  <Lock className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-2 flex w-10 items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && <p className="text-xs font-medium text-destructive">{fieldErrors.confirmPassword}</p>}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <div className="relative">
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="0987654321"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className={cn("pl-10", fieldErrors.phoneNumber && "border-destructive")}
-                  required
-                />
-                <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
-              {fieldErrors.phoneNumber && <p className="text-xs font-medium text-destructive">{fieldErrors.phoneNumber}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Nhập mật khẩu"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={cn("pr-10", fieldErrors.password && "border-destructive")}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground"
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              {fieldErrors.password && <p className="text-xs font-medium text-destructive">{fieldErrors.password}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Xác nhận mật khẩu</Label>
-              <div className="relative">
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Nhập lại mật khẩu"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={cn("pr-10", fieldErrors.confirmPassword && "border-destructive")}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground"
-                >
-                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              {fieldErrors.confirmPassword && <p className="text-xs font-medium text-destructive">{fieldErrors.confirmPassword}</p>}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full h-14 text-[16px] rounded-2xl font-bold shadow-sm hover:shadow-lg active:scale-[0.98] transition-all mt-6 bg-primary hover:bg-primary/90" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" />
+                  <Loader2 className="mr-2 size-5 animate-spin" />
                   Đang xử lý...
                 </>
               ) : (
-                "Đăng ký"
+                "Đăng ký thành viên"
               )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
             Đã có tài khoản?{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link href="/login" className="font-semibold text-primary hover:underline underline-offset-4">
               Đăng nhập ngay
             </Link>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <OtpDialog
         open={isOtpOpen}
@@ -207,6 +211,6 @@ export default function RegisterPage() {
         onResend={() => resendOtp(email)}
         isLoading={loading}
       />
-    </main>
+    </>
   );
 }

@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { X, Eye, EyeOff, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface ChangePasswordDialogProps {
   open?: boolean;
@@ -72,7 +73,7 @@ export function ChangePasswordDialog({
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-                    <Lock className="size-6" />
+                    <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" />
                   </div>
 
                   <DialogPrimitive.Title className="text-2xl font-bold tracking-tight text-foreground">
