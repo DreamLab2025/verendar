@@ -32,10 +32,15 @@ export function garageDashboardHref(garageId: string): string {
   return `/garage-dashboard/${garageId}?tab=overview`;
 }
 
-/** Thợ máy (Mechanic, không phải GarageOwner) chỉ dùng tab Yêu cầu trên header / bottom nav. */
+/** Claim có chứa chuỗi Mechanic (đồng bộ claim BE). */
+export function roleClaimContainsMechanic(roles: string[]): boolean {
+  return roles.some((r) => String(r).includes(GARAGE_PORTAL_ROLE_MECHANIC));
+}
+
 export function getVisibleBranchTabIds(roles: string[]): BranchTabId[] {
   if (roles.includes(GARAGE_PORTAL_ROLE_MECHANIC) && !roles.includes(GARAGE_PORTAL_ROLE_OWNER)) {
     return ["requires"];
   }
-  return [...BRANCH_TAB_IDS];
+  const showRequires = roleClaimContainsMechanic(roles);
+  return BRANCH_TAB_IDS.filter((id) => id !== "requires" || showRequires);
 }

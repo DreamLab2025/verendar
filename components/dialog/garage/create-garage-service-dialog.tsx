@@ -9,15 +9,17 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateGarageService } from "@/hooks/useGarage";
 import type { ServiceCategoryDto } from "@/lib/api/services/fetchGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 
 type FormState = {
@@ -101,7 +103,7 @@ export function CreateGarageServiceDialog({
       },
       {
         onSuccess: () => {
-          handleOpenChange(false);
+          requestCloseBottomSheet();
         },
       },
     );
@@ -112,12 +114,18 @@ export function CreateGarageServiceDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={handleOpenChange}
+        className="flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden p-0 md:max-w-lg"
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle>Tạo dịch vụ</DialogTitle>
           <DialogDescription>Thêm dịch vụ nhân công cho chi nhánh hiện tại</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        </DialogSheetHeader>
+        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           <div className="space-y-2">
             <Label htmlFor="gms-category">Danh mục dịch vụ</Label>
             <Select
@@ -205,22 +213,17 @@ export function CreateGarageServiceDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="gms-image">URL ảnh (tùy chọn)</Label>
-            <Input
-              id="gms-image"
-              name="imageUrl"
-              type="url"
-              value={form.imageUrl}
-              onChange={(ev) => setForm((f) => ({ ...f, imageUrl: ev.target.value }))}
-              placeholder="https://…"
-              disabled={pending}
-              autoComplete="off"
-            />
+          <ImageUrlDropzone
+            id="gms-image"
+            label="Ảnh (tùy chọn)"
+            value={form.imageUrl}
+            onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+            disabled={pending}
+          />
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>
+          <DialogFooter className="shrink-0 gap-2 border-t border-border/60 bg-background px-4 py-3 sm:gap-0 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()} disabled={pending}>
               Hủy
             </Button>
             <Button type="submit" disabled={pending || noCategories} className={cn(pending && "gap-2")}>

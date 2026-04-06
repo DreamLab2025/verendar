@@ -140,7 +140,9 @@ export function GarageCheckoutContent() {
   useEffect(() => {
     if (userVehicleId || vehicles.length === 0) return;
     if (vehicles.length === 1) {
-      setUserVehicleId(vehicles[0].id);
+      setTimeout(() => {
+        setUserVehicleId(vehicles[0].id);
+      }, 0);
     }
   }, [vehicles, userVehicleId]);
 

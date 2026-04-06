@@ -12,7 +12,6 @@ import { AdminSidebar } from "@/components/admin-sidebar";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { BookingCartHeaderButton } from "@/components/shell/booking-cart-header";
 import { NotificationInboxPopover } from "@/components/shell/notification-inbox-popover";
-import { NotificationRealtimeBridge } from "@/components/shell/notification-realtime-bridge";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import apiService from "@/lib/api/apiService";
@@ -53,7 +52,6 @@ export function RootShell({ children }: RootShellProps) {
 
   return (
     <SidebarProvider defaultOpen>
-      <NotificationRealtimeBridge />
       {isAdminRoute ? <AdminSidebar /> : <AppSidebar />}
       <SidebarInset className="h-dvh overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-linear-to-b from-primary/10 via-primary/5 to-transparent" />
