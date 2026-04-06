@@ -87,7 +87,7 @@ export default function RegisterPage() {
         <div className="flex flex-col space-y-6">
           <div className="flex flex-col items-center space-y-3 sm:space-y-4 text-center">
             <div className="flex size-20 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-zinc-200">
-              <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" />
+              <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" style={{ height: "auto" }} />
             </div>
             <div className="space-y-2">
               <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900">Đăng ký mới</h1>
@@ -105,7 +105,7 @@ export default function RegisterPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@example.com"
+                    placeholder="Nhập email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={cn("pl-11 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm", fieldErrors.email && "border-destructive focus-visible:ring-destructive/10")}
