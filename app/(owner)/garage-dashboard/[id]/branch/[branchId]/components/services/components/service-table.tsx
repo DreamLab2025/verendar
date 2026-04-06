@@ -3,6 +3,7 @@ import { GarageServiceListItemDto } from "@/lib/api/services/fetchGarage";
 import { cn } from "@/lib/utils";
 import { CatalogStatusBadge, formatDurationMinutes, formatVnd, ServiceRowActions } from "../page";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SafeImage from "@/components/ui/SafeImage";
 
 function MobileKv({
   label,
@@ -50,10 +51,10 @@ export function ServicesTable({
           >
             <div className="flex gap-2.5">
               {row.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <SafeImage
                   src={row.imageUrl}
-                  alt=""
+                  alt={row.name}
+                  fill
                   className="size-11 shrink-0 rounded-md border border-border/50 object-cover"
                 />
               ) : (

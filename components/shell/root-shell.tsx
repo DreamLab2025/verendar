@@ -62,7 +62,7 @@ export function RootShell({ children }: RootShellProps) {
               <p className="truncate bg-linear-to-r from-foreground to-foreground/60 bg-clip-text text-[15px] font-bold text-transparent tracking-tight md:text-base md:font-semibold">
                 Verendar
               </p>
-              <p className="hidden text-xs text-muted-foreground sm:block">Quan ly xe thong minh</p>
+              <p className="hidden text-xs text-muted-foreground sm:block">Quản lý xe thông minh</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-0.5">

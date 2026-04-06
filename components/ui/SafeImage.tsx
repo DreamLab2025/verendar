@@ -45,9 +45,16 @@ export default function SafeImage({
     }
   };
 
+  /** Tránh dùng `next/image` cho URL ngoài khi chưa khai báo remotePatterns — đặc biệt trên SSR (`window` không có). */
   const isExternalUrl = (url: string) => {
     try {
+      if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) {
+        return false;
+      }
       const urlObj = new URL(url);
+      if (typeof window === 'undefined') {
+        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+      }
       return urlObj.hostname !== window.location.hostname;
     } catch {
       return false;
