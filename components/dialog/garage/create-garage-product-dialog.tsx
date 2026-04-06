@@ -19,6 +19,7 @@ import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateGarageProduct, useGarageServicesByBranchQuery } from "@/hooks/useGarage";
 import { usePartCategories } from "@/hooks/usePartCategories";
+import { uploadMediaFile } from "@/lib/api/services/fetchMedia";
 import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 
@@ -258,6 +259,11 @@ export function CreateGarageProductDialog({ open, onOpenChange, branchId }: Crea
             value={form.imageUrl}
             onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
             disabled={pending}
+            description="Ảnh được tải lên qua S3 (GarageProductImage)."
+            resolveFileUpload={async (file) => {
+              const { imageUrl } = await uploadMediaFile(file, "GarageProductImage");
+              return imageUrl;
+            }}
           />
 
           <div className="space-y-2">
