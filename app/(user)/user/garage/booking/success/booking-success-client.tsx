@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { ArrowLeft, Building2, CheckCircle2, Clock } from "lucide-react";
 
+import {
+  bookingStatusLabelVi,
+  formatBookingRequireStatusHistoryTime,
+} from "@/components/helper/booking-require";
+import { BookingRequireStepper } from "@/components/dialog/booking-require/BookingRequireStepper";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { BookingDetailDto, BookingLineItemDto } from "@/lib/api/services/fetchBooking";
@@ -84,9 +89,24 @@ function FieldBlock({ kicker, children, className }: { kicker: string; children:
   );
 }
 
+function BookingSuccessShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-0 w-full min-w-0 max-w-[100vw] overflow-x-hidden bg-linear-to-b from-muted/45 to-background pb-[max(3rem,env(safe-area-inset-bottom))] pt-3 dark:from-muted/20 sm:pb-16 sm:pt-6">
+      <div className="mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-6 lg:px-8">{children}</div>
+    </div>
+  );
+}
+
 export function BookingSuccessClient() {
+  const [hydrated, setHydrated] = useState(false);
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("bookingId");
+
+  /* eslint-disable react-hooks/set-state-in-effect -- cờ post-mount để đồng bộ SSR/hydration với searchParams + sessionStorage */
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const payload = useMemo(() => {
     if (!bookingId) return null;
@@ -94,6 +114,15 @@ export function BookingSuccessClient() {
   }, [bookingId]);
 
   const data: BookingDetailDto | null | undefined = payload?.data ?? undefined;
+
+  /** Tránh hydration mismatch: `useSearchParams` / sessionStorage khác SSR vs client. */
+  if (!hydrated) {
+    return (
+      <BookingSuccessShell>
+        <p className="py-16 text-center text-sm text-muted-foreground">Đang tải…</p>
+      </BookingSuccessShell>
+    );
+  }
 
   if (!bookingId) {
     return (
@@ -130,8 +159,7 @@ export function BookingSuccessClient() {
       : null;
 
   return (
-    <div className="min-h-0 w-full min-w-0 max-w-[100vw] overflow-x-hidden bg-linear-to-b from-muted/45 to-background pb-[max(3rem,env(safe-area-inset-bottom))] pt-3 dark:from-muted/20 sm:pb-16 sm:pt-6">
-      <div className="mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-6 lg:px-8">
+    <BookingSuccessShell>
         <Button
           variant="ghost"
           size="sm"
@@ -181,6 +209,10 @@ export function BookingSuccessClient() {
           {/* Thân: trái thông tin | phải biên lai */}
           <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:items-start xl:grid-cols-[minmax(0,1fr)_400px]">
             <div className="min-w-0 space-y-5 overflow-hidden border-border/60 p-4 sm:space-y-8 sm:p-6 lg:border-r lg:p-8">
+              <BookingRequireStepper
+                serverStatus={data.status ?? ""}
+                layoutId="booking-success-progress-pill"
+              />
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8 lg:gap-x-12">
                 <FieldBlock kicker="Lịch hẹn">
                   <div className="flex min-w-0 gap-2 sm:gap-2.5">
@@ -257,26 +289,58 @@ export function BookingSuccessClient() {
                     <h2 className="text-[13px] font-semibold tracking-tight text-foreground sm:text-sm">
                       Lịch sử trạng thái
                     </h2>
-                    <ul className="mt-2 divide-y divide-border/45 border-t border-border/45 sm:mt-3">
-                      {data.statusHistory.map((h) => (
-                        <li
-                          key={h.id}
-                          className="flex min-w-0 flex-wrap items-baseline justify-between gap-2 py-2.5 first:pt-2.5 sm:py-3 sm:first:pt-3"
-                        >
-                          <span className="min-w-0 wrap-break-word text-[13px] font-medium text-foreground sm:text-sm">
-                            {h.fromStatus} → {h.toStatus}
-                          </span>
-                          <time
-                            className="shrink-0 break-all text-[11px] tabular-nums text-muted-foreground sm:text-xs"
-                            dateTime={h.changedAt}
-                          >
-                            {dayjs(h.changedAt).isValid() ? dayjs(h.changedAt).format("D/M/YYYY HH:mm") : h.changedAt}
-                          </time>
-                          {h.note ? (
-                            <p className="w-full text-[11px] text-muted-foreground sm:text-xs">{h.note}</p>
-                          ) : null}
-                        </li>
-                      ))}
+                    <ul className="relative mt-4">
+                      {/* Đường dọc xuyên tâm cột chấm — cùng pattern BookingRequireDialog */}
+                      <div
+                        className="pointer-events-none absolute bottom-3 left-3 top-3 w-px -translate-x-1/2 bg-border"
+                        aria-hidden
+                      />
+                      {[...data.statusHistory]
+                        .sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime())
+                        .map((h, index) => {
+                          const isLatest = index === 0;
+                          return (
+                            <li key={h.id} className="relative flex gap-3 pb-7 last:pb-0">
+                              <div className="relative z-10 flex w-6 shrink-0 justify-center pt-0.5">
+                                {isLatest ? (
+                                  <span className="relative flex size-3.5 items-center justify-center">
+                                    <span
+                                      className="absolute inline-flex size-4 animate-ping rounded-full bg-primary/45 opacity-60 motion-reduce:animate-none"
+                                      aria-hidden
+                                    />
+                                    <span className="relative size-3 shrink-0 rounded-full bg-primary shadow-[0_0_0_3px_hsl(var(--background))]" />
+                                  </span>
+                                ) : (
+                                  <span className="size-2.5 shrink-0 rounded-full bg-muted-foreground/35 shadow-[0_0_0_3px_hsl(var(--background))]" />
+                                )}
+                              </div>
+                              <div
+                                className={cn(
+                                  "min-w-0 flex-1 pt-0",
+                                  !isLatest && "text-muted-foreground",
+                                )}
+                              >
+                                <p
+                                  className={cn(
+                                    "text-sm font-medium leading-snug",
+                                    isLatest ? "text-foreground" : "text-muted-foreground",
+                                  )}
+                                >
+                                  {bookingStatusLabelVi(h.toStatus)}
+                                </p>
+                                <time
+                                  className={cn("mt-0.5 block text-xs", !isLatest && "text-muted-foreground/90")}
+                                  dateTime={h.changedAt}
+                                >
+                                  {formatBookingRequireStatusHistoryTime(h.changedAt)}
+                                </time>
+                                {h.note ? (
+                                  <p className="mt-1 text-xs italic text-muted-foreground/90">{h.note}</p>
+                                ) : null}
+                              </div>
+                            </li>
+                          );
+                        })}
                     </ul>
                   </div>
                 </>
@@ -317,7 +381,6 @@ export function BookingSuccessClient() {
             </Button>
           </div>
         </article>
-      </div>
-    </div>
+    </BookingSuccessShell>
   );
 }
