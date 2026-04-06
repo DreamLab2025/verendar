@@ -17,7 +17,6 @@ import {
 } from "@/components/helper/booking-require";
 import { LicensePlateBadge } from "@/components/shared/LicensePlateBadge";
 import { BookingRequireStatusDialog } from "./BookingRequireStatusDialog";
-import { isRadixSelectPortalTarget } from "./radix-select-portal-guard";
 import { useBookingDetailEnrichedQuery } from "@/hooks/useBookings";
 import { cn } from "@/lib/utils";
 import SafeImage from "@/components/ui/SafeImage";
@@ -29,9 +28,52 @@ const MILESTONES = [
   { id: "completed", InactiveIcon: Check },
 ] as const;
 
+function isRadixSelectPortalTarget(node: EventTarget | null): boolean {
+  if (!(node instanceof Element)) return false;
+  return Boolean(
+    node.closest("[data-radix-select-viewport]") ||
+      node.closest('[role="listbox"]') ||
+      node.closest("[data-radix-popper-content-wrapper]"),
+  );
+}
+
 type BookingRequireStepperProps = {
   serverStatus: string;
 };
+
+/** Đoạn nối giữa hai mốc: đỏ nếu đã qua; xám + đổ đầy đỏ lặp nếu đang chờ bước kế. */
+function BookingRequireStepConnector({
+  filled,
+  sweep,
+  className,
+}: {
+  filled: boolean;
+  sweep: boolean;
+  className?: string;
+}) {
+  if (filled) {
+    return <div className={cn("h-0.5 min-w-[0.4rem] flex-1 rounded-full bg-primary sm:min-w-3", className)} aria-hidden />;
+  }
+
+  return (
+    <div
+      className={cn(
+        "relative h-0.5 min-w-[0.4rem] flex-1 overflow-hidden rounded-full bg-border sm:min-w-3",
+        className,
+      )}
+      aria-hidden
+    >
+      {sweep ? (
+        <span
+          className={cn(
+            "ver-booking-stepper-line-fill pointer-events-none absolute inset-y-0 left-0 block w-full rounded-full bg-primary",
+            "shadow-[0_0_0_1px_rgba(205,38,38,0.15)]",
+          )}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 function BookingRequireStepper({ serverStatus }: BookingRequireStepperProps) {
   const activeIndex = statusToMilestoneIndex(serverStatus);
@@ -60,30 +102,25 @@ function BookingRequireStepper({ serverStatus }: BookingRequireStepperProps) {
           const stepLabel = milestoneLabelAtIndex(i, serverStatus, activeIndex);
           const InactiveIcon = step.InactiveIcon;
           const lineBeforeRed = i > 0 && activeIndex > i - 1;
+          const sweepBeforeThisStep = i > 0 && activeIndex === i - 1;
 
           return (
             <Fragment key={step.id}>
               {i > 0 ? (
-                <div
-                  className={cn(
-                    "h-0.5 min-w-[0.4rem] flex-1 rounded-full sm:min-w-3",
-                    lineBeforeRed ? "bg-primary" : "bg-border",
-                  )}
-                  aria-hidden
-                />
+                <BookingRequireStepConnector filled={lineBeforeRed} sweep={sweepBeforeThisStep} />
               ) : null}
 
               <div className="flex min-w-0 shrink-0 flex-col items-center gap-1 sm:flex-row sm:gap-2">
                 {isActive ? (
                   <motion.div
                     layoutId="booking-require-progress-pill"
-                    className="flex items-center gap-2 rounded-full bg-primary px-3 py-2 text-primary-foreground shadow-md sm:px-4 sm:py-2.5"
+                    className="flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1.5 text-primary-foreground shadow-md sm:gap-2 sm:px-3 sm:py-2"
                     transition={{ type: "spring", stiffness: 420, damping: 34 }}
                   >
-                    <span className="grid size-7 place-items-center rounded-full bg-white/25 sm:size-8">
-                      <Check className="size-4 text-white sm:size-4.5" strokeWidth={2.5} aria-hidden />
+                    <span className="grid size-6 place-items-center rounded-full bg-white/25 sm:size-7">
+                      <Check className="size-3.5 text-white sm:size-4" strokeWidth={2.5} aria-hidden />
                     </span>
-                    <span className="max-w-22 text-xs font-semibold leading-tight sm:max-w-none sm:text-sm">{stepLabel}</span>
+                    <span className="max-w-22 text-[11px] font-semibold leading-tight sm:max-w-none sm:text-xs">{stepLabel}</span>
                   </motion.div>
                 ) : (
                   <div
@@ -359,7 +396,6 @@ export function BookingRequireDialog({ open, onOpenChange, bookingId, branchId }
           onOpenChange={setStatusDialogOpen}
           bookingId={bookingId}
           branchId={branchId}
-          currentOdometer={q.data?.raw.currentOdometer}
         />
       </DialogContent>
     </Dialog>

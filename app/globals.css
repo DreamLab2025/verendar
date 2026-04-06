@@ -189,4 +189,27 @@
       animation: none !important;
     }
   }
+
+  /**
+   * Tiến độ 3 mốc: đổ đỏ đều (linear), đầy cả đoạn → reset ngay, lặp (không nghỉ ở cuối).
+   */
+  @keyframes ver-booking-stepper-line-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .ver-booking-stepper-line-fill {
+    transform-origin: left center;
+    animation: ver-booking-stepper-line-fill 1.5s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ver-booking-stepper-line-fill {
+      animation: none;
+    }
+  }
 }

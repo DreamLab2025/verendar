@@ -48,7 +48,7 @@ export interface AssignBookingPayload {
 /** PATCH /api/v1/bookings/{id}/status — cập nhật trạng thái (vd. InProgress, Completed). */
 export interface PatchBookingStatusPayload {
   status: string;
-  currentOdometer: number;
+  currentOdometer: number | null;
 }
 
 /** Giá trị `status` thường dùng cho PATCH status (theo contract). */
