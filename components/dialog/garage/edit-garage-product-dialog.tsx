@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useGarageProductByIdQuery, useGarageServicesByBranchQuery, useUpdateGarageProduct } from "@/hooks/useGarage";
 import { usePartCategories } from "@/hooks/usePartCategories";
 import type { GarageProductDetailDto } from "@/lib/api/services/fetchGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 
 const INSTALL_NONE = "__none__";
@@ -175,7 +176,7 @@ export function EditGarageProductDialog({
       },
       {
         onSuccess: () => {
-          handleOpenChange(false);
+          requestCloseBottomSheet();
         },
       },
     );
@@ -192,29 +193,37 @@ export function EditGarageProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg" key={productId ?? undefined}>
-        <DialogHeader>
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={handleOpenChange}
+        className="flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden p-0 md:max-w-lg"
+        key={productId ?? undefined}
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle>Sửa phụ tùng</DialogTitle>
           <DialogDescription>
             Cập nhật qua <span className="font-mono text-xs">PUT /api/v1/garage-products/{"{id}"}</span>
           </DialogDescription>
-        </DialogHeader>
+        </DialogSheetHeader>
 
         {detailQuery.isError ? (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-            {detailQuery.error?.message ?? "Không tải được phụ tùng."}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => void detailQuery.refetch()}
-            >
-              Thử lại
-            </Button>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+              {detailQuery.error?.message ?? "Không tải được phụ tùng."}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => void detailQuery.refetch()}
+              >
+                Thử lại
+              </Button>
+            </div>
           </div>
         ) : loadingDetail ? (
-          <div className="space-y-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -224,7 +233,8 @@ export function EditGarageProductDialog({
             </div>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
             <div className="space-y-2">
               <Label htmlFor="egmp-part-category">Danh mục phụ tùng</Label>
               <Select
@@ -398,9 +408,10 @@ export function EditGarageProductDialog({
                 </p>
               ) : null}
             </div>
+            </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>
+            <DialogFooter className="shrink-0 gap-2 border-t border-border/60 bg-background px-4 py-3 sm:gap-0 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()} disabled={pending}>
                 Hủy
               </Button>
               <Button

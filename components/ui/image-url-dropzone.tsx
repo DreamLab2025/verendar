@@ -114,7 +114,7 @@ export function ImageUrlDropzone({ id, label, value, onChange, disabled, descrip
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
         {preview ? (
-          <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg border border-border bg-muted/30 sm:h-auto sm:min-h-[120px] sm:w-36">
+          <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted/30 max-md:border-0 md:border md:border-border sm:h-auto sm:min-h-[120px] sm:w-36">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={value.trim()} alt="" className="h-full w-full object-contain p-1" />
           </div>

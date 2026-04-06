@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useGarageBundleByIdQuery } from "@/hooks/useGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 
 function formatVnd(amount: number | null | undefined): string {
   if (amount == null || Number.isNaN(amount)) return "—";
@@ -35,6 +35,12 @@ function formatDate(iso: string | null | undefined): string {
   }
 }
 
+function itemTypeLabel(it: { productId?: string | null; serviceId?: string | null }): string {
+  if (it.productId) return "Phụ tùng";
+  if (it.serviceId) return "Dịch vụ";
+  return "—";
+}
+
 export type GarageBundleDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -47,18 +53,27 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-6">
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={onOpenChange}
+        className="flex max-h-[min(90vh,800px)] w-full flex-col gap-0 overflow-hidden p-0 md:max-w-4xl"
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle className="text-left text-lg leading-snug">Chi tiết combo</DialogTitle>
-        </DialogHeader>
+        </DialogSheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {isPending ? (
             <div className="space-y-3">
               <Skeleton className="h-6 w-4/5 max-w-xs" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="aspect-[4/3] w-full max-h-48 rounded-xl" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
             </div>
           ) : isError ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -69,6 +84,13 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
             </div>
           ) : data ? (
             <div className="space-y-6">
+              {data.imageUrl ? (
+                <div className="overflow-hidden rounded-xl bg-muted/30 md:border md:border-border/60">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- ảnh từ CDN / URL ngoài */}
+                  <img src={data.imageUrl} alt="" className="mx-auto max-h-64 w-full object-contain p-2" />
+                </div>
+              ) : null}
+
               <dl className="grid gap-x-4 gap-y-3 text-sm sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <dt className="text-muted-foreground">Tên</dt>
@@ -84,7 +106,7 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Giá sau giảm</dt>
-                  <dd className="tabular-nums font-medium">{formatVnd(data.finalPrice)}</dd>
+                  <dd className="tabular-nums font-semibold text-foreground">{formatVnd(data.finalPrice)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Giảm (số tiền)</dt>
@@ -95,10 +117,6 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
                   <dd className="tabular-nums font-medium">
                     {data.discountPercent != null ? `${data.discountPercent}%` : "—"}
                   </dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-muted-foreground">URL ảnh</dt>
-                  <dd className="break-all text-xs text-muted-foreground">{data.imageUrl ?? "—"}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Trạng thái</dt>
@@ -113,11 +131,51 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
               </dl>
 
               <div>
-                <h3 className="mb-2 text-sm font-semibold text-foreground">Mục trong combo</h3>
-                <div className="overflow-x-auto rounded-md border">
+                <h3 className="mb-3 text-sm font-semibold text-foreground">Mục trong combo</h3>
+
+                {/* Mobile: thẻ từng dòng — không dùng bảng ngang */}
+                <ul className="space-y-3 md:hidden">
+                  {[...data.items]
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((it) => (
+                      <li
+                        key={it.id}
+                        className="rounded-xl border border-border/60 bg-muted/20 p-3 shadow-none"
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="text-xs tabular-nums text-muted-foreground">#{it.sortOrder}</span>
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                            {itemTypeLabel(it)}
+                          </span>
+                        </div>
+                        <p className="mb-3 font-medium leading-snug text-foreground">{it.itemName}</p>
+                        <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                          <div>
+                            <dt className="text-muted-foreground">Vật tư</dt>
+                            <dd className="tabular-nums font-medium text-foreground">
+                              {formatVnd(it.materialPrice?.amount)}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Nhân công</dt>
+                            <dd className="tabular-nums font-medium text-foreground">
+                              {formatVnd(it.laborPrice?.amount)}
+                            </dd>
+                          </div>
+                          <div className="col-span-2">
+                            <dt className="text-muted-foreground">Lắp đặt</dt>
+                            <dd className="text-foreground">{it.includeInstallation ? "Có" : "Không"}</dd>
+                          </div>
+                        </dl>
+                      </li>
+                    ))}
+                </ul>
+
+                {/* Desktop: bảng */}
+                <div className="hidden overflow-x-auto rounded-lg border border-border/60 md:block">
                   <Table>
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="hover:bg-transparent">
                         <TableHead className="w-10">#</TableHead>
                         <TableHead>Tên</TableHead>
                         <TableHead>Loại</TableHead>
@@ -133,9 +191,7 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
                           <TableRow key={it.id}>
                             <TableCell className="tabular-nums text-muted-foreground">{it.sortOrder}</TableCell>
                             <TableCell className="font-medium">{it.itemName}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {it.productId ? <span>Phụ tùng</span> : it.serviceId ? <span>Dịch vụ</span> : "—"}
-                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{itemTypeLabel(it)}</TableCell>
                             <TableCell className="text-right tabular-nums">
                               {formatVnd(it.materialPrice?.amount)}
                             </TableCell>
@@ -155,8 +211,8 @@ export function GarageBundleDetailDialog({ open, onOpenChange, bundleId }: Garag
           ) : null}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border/60 px-4 py-3 sm:px-6">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="shrink-0 border-t border-border/60 bg-background px-4 py-3 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()}>
             Đóng
           </Button>
         </DialogFooter>

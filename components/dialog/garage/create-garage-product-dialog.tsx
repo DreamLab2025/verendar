@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateGarageProduct, useGarageServicesByBranchQuery } from "@/hooks/useGarage";
 import { usePartCategories } from "@/hooks/usePartCategories";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 
 /** Giá trị Select khi không gắn dịch vụ lắp — gửi `installationServiceId: null` lên BE. */
@@ -74,13 +75,8 @@ export function CreateGarageProductDialog({ open, onOpenChange, branchId }: Crea
   });
   const services = servicesQ.data?.data ?? [];
 
-  useEffect(() => {
-    if (open) {
-      setForm(emptyForm());
-    }
-  }, [open]);
-
   const handleOpenChange = (next: boolean) => {
+    if (next) setForm(emptyForm());
     onOpenChange(next);
   };
 
@@ -136,7 +132,7 @@ export function CreateGarageProductDialog({ open, onOpenChange, branchId }: Crea
       },
       {
         onSuccess: () => {
-          handleOpenChange(false);
+          requestCloseBottomSheet();
         },
       },
     );
@@ -148,12 +144,18 @@ export function CreateGarageProductDialog({ open, onOpenChange, branchId }: Crea
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={handleOpenChange}
+        className="flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden p-0 md:max-w-lg"
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle>Tạo phụ tùng</DialogTitle>
           <DialogDescription>Thêm sản phẩm / phụ tùng cho chi nhánh hiện tại</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        </DialogSheetHeader>
+        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           <div className="space-y-2">
             <Label htmlFor="gmp-part-category">Danh mục phụ tùng</Label>
             <Select
@@ -330,9 +332,10 @@ export function CreateGarageProductDialog({ open, onOpenChange, branchId }: Crea
               </p>
             ) : null}
           </div>
+          </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>
+          <DialogFooter className="shrink-0 gap-2 border-t border-border/60 bg-background px-4 py-3 sm:gap-0 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()} disabled={pending}>
               Hủy
             </Button>
             <Button

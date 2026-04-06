@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGarageServiceByIdQuery } from "@/hooks/useGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 
 function formatVnd(amount: number | null | undefined): string {
   if (amount == null || Number.isNaN(amount)) return "—";
@@ -46,12 +46,17 @@ export function GarageServiceDetailDialog({ open, onOpenChange, serviceId }: Gar
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-6">
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={onOpenChange}
+        className="flex max-h-[min(90vh,800px)] w-full flex-col gap-0 overflow-hidden p-0 md:max-w-4xl"
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle className="text-left text-lg leading-snug">Chi tiết dịch vụ</DialogTitle>
-        </DialogHeader>
+        </DialogSheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {isPending ? (
             <div className="space-y-3">
               <Skeleton className="h-6 w-4/5 max-w-xs" />
@@ -109,8 +114,8 @@ export function GarageServiceDetailDialog({ open, onOpenChange, serviceId }: Gar
           ) : null}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border/60 px-4 py-3 sm:px-6">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="shrink-0 border-t border-border/60 bg-background px-4 py-3 sm:px-6 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()}>
             Đóng
           </Button>
         </DialogFooter>

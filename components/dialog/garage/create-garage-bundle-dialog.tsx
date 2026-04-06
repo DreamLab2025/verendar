@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
+  DialogSheetHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import {
   useGarageServicesByBranchQuery,
 } from "@/hooks/useGarage";
 import type { CreateGarageBundlePayload } from "@/lib/api/services/fetchGarage";
+import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -152,7 +153,7 @@ export function CreateGarageBundleDialog({ open, onOpenChange, branchId }: Creat
       { branchId, payload },
       {
         onSuccess: () => {
-          handleOpenChange(false);
+          requestCloseBottomSheet();
         },
       },
     );
@@ -181,17 +182,22 @@ export function CreateGarageBundleDialog({ open, onOpenChange, branchId }: Creat
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[min(92vh,800px)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-6">
+      <DialogContent
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={handleOpenChange}
+        className="flex max-h-[min(92vh,800px)] max-w-2xl flex-col gap-0 overflow-hidden p-0 md:max-w-2xl"
+      >
+        <DialogSheetHeader className="shrink-0">
           <DialogTitle>Tạo combo</DialogTitle>
           <DialogDescription>
             Tạo qua <span className="font-mono text-xs">POST /api/v1/garage-bundles?branchId=…</span> — phụ tùng → có lắp
             đặt; dịch vụ → không lắp đặt.
           </DialogDescription>
-        </DialogHeader>
+        </DialogSheetHeader>
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
             <div className="space-y-2">
               <Label htmlFor="cgb-name">Tên combo</Label>
               <Input
@@ -352,8 +358,8 @@ export function CreateGarageBundleDialog({ open, onOpenChange, branchId }: Creat
             </div>
           </div>
 
-          <DialogFooter className="shrink-0 gap-2 border-t border-border/60 px-4 py-3 sm:px-6 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>
+          <DialogFooter className="shrink-0 gap-2 border-t border-border/60 bg-background px-4 py-3 sm:px-6 sm:gap-0 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <Button type="button" variant="outline" onClick={() => requestCloseBottomSheet()} disabled={pending}>
               Hủy
             </Button>
             <Button type="submit" disabled={pending || form.items.length === 0} className={cn(pending && "gap-2")}>

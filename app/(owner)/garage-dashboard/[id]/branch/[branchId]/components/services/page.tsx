@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Eye, Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,7 @@ import {
   useServiceCategoriesQuery,
 } from "@/hooks/useGarage";
 import { cn } from "@/lib/utils";
-import type {
-  GarageBundleListItemDto,
-  GarageProductListItemDto,
-  GarageServiceListItemDto,
-  ServiceCategoryDto,
-} from "@/lib/api/services/fetchGarage";
+import type { GarageServiceListItemDto } from "@/lib/api/services/fetchGarage";
 
 import { CreateGarageBundleDialog } from "../../../../../../../../components/dialog/garage/create-garage-bundle-dialog";
 import { CreateGarageProductDialog } from "../../../../../../../../components/dialog/garage/create-garage-product-dialog";
@@ -72,10 +67,10 @@ function filterServicesByCategory(
   return rows.filter((r) => r.serviceCategoryId === categoryId);
 }
 
-export function CatalogStatusBadge({ status }: { status: string }) {
+export function CatalogStatusBadge({ status, className }: { status: string; className?: string }) {
   const active = status === "Active";
   return (
-    <Badge variant={active ? "secondary" : "outline"} className="font-normal">
+    <Badge variant={active ? "secondary" : "outline"} className={cn("font-normal", className)}>
       {active ? "Đang hoạt động" : status}
     </Badge>
   );
@@ -87,44 +82,38 @@ export function ServiceRowActions({
   onView,
   onEdit,
   onDelete,
+  compact,
 }: {
   serviceId: string;
   serviceName: string;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string, name: string) => void;
+  /** Thẻ catalog mobile — nút nhỏ hơn, bớt chiếm chỗ. */
+  compact?: boolean;
 }) {
+  const btn = cn(
+    "shrink-0 touch-manipulation text-muted-foreground hover:text-foreground",
+    compact ? "size-8 active:bg-muted/80" : "size-9",
+  );
+  const icon = compact ? "size-3.5" : "size-4";
   return (
     <div className="flex shrink-0 flex-nowrap items-center justify-end gap-0.5">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-        aria-label="Xem chi tiết"
-        onClick={() => onView(serviceId)}
-      >
-        <Eye className="size-4" />
+      <Button type="button" variant="ghost" size="icon" className={btn} aria-label="Xem chi tiết" onClick={() => onView(serviceId)}>
+        <Eye className={icon} />
+      </Button>
+      <Button type="button" variant="ghost" size="icon" className={btn} aria-label="Chỉnh sửa" onClick={() => onEdit(serviceId)}>
+        <Pencil className={icon} />
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="size-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-        aria-label="Chỉnh sửa"
-        onClick={() => onEdit(serviceId)}
-      >
-        <Pencil className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-9 shrink-0 touch-manipulation text-destructive hover:bg-destructive/10 hover:text-destructive"
+        className={cn(btn, "text-destructive hover:bg-destructive/10 hover:text-destructive")}
         aria-label="Xóa"
         onClick={() => onDelete(serviceId, serviceName)}
       >
-        <Trash2 className="size-4" />
+        <Trash2 className={icon} />
       </Button>
     </div>
   );
@@ -136,44 +125,37 @@ export function ProductRowActions({
   onView,
   onEdit,
   onDelete,
+  compact,
 }: {
   productId: string;
   productName: string;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string, name: string) => void;
+  compact?: boolean;
 }) {
+  const btn = cn(
+    "shrink-0 touch-manipulation text-muted-foreground hover:text-foreground",
+    compact ? "size-8 active:bg-muted/80" : "size-9",
+  );
+  const icon = compact ? "size-3.5" : "size-4";
   return (
     <div className="flex shrink-0 flex-nowrap items-center justify-end gap-0.5">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-        aria-label="Xem chi tiết"
-        onClick={() => onView(productId)}
-      >
-        <Eye className="size-4" />
+      <Button type="button" variant="ghost" size="icon" className={btn} aria-label="Xem chi tiết" onClick={() => onView(productId)}>
+        <Eye className={icon} />
+      </Button>
+      <Button type="button" variant="ghost" size="icon" className={btn} aria-label="Chỉnh sửa" onClick={() => onEdit(productId)}>
+        <Pencil className={icon} />
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="size-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-        aria-label="Chỉnh sửa"
-        onClick={() => onEdit(productId)}
-      >
-        <Pencil className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-9 shrink-0 touch-manipulation text-destructive hover:bg-destructive/10 hover:text-destructive"
+        className={cn(btn, "text-destructive hover:bg-destructive/10 hover:text-destructive")}
         aria-label="Xóa"
         onClick={() => onDelete(productId, productName)}
       >
-        <Trash2 className="size-4" />
+        <Trash2 className={icon} />
       </Button>
     </div>
   );
@@ -185,44 +167,37 @@ export function BundleRowActions({
   onView,
   onEdit,
   onDelete,
+  compact,
 }: {
   bundleId: string;
   bundleName: string;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string, name: string) => void;
+  compact?: boolean;
 }) {
+  const btn = cn(
+    "shrink-0 touch-manipulation text-muted-foreground hover:text-foreground",
+    compact ? "size-8 active:bg-muted/80" : "size-9",
+  );
+  const icon = compact ? "size-3.5" : "size-4";
   return (
     <div className="flex shrink-0 flex-nowrap items-center justify-end gap-0.5">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-        aria-label="Xem chi tiết"
-        onClick={() => onView(bundleId)}
-      >
-        <Eye className="size-4" />
+      <Button type="button" variant="ghost" size="icon" className={btn} aria-label="Xem chi tiết" onClick={() => onView(bundleId)}>
+        <Eye className={icon} />
+      </Button>
+      <Button type="button" variant="ghost" size="icon" className={btn} aria-label="Chỉnh sửa" onClick={() => onEdit(bundleId)}>
+        <Pencil className={icon} />
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="size-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-        aria-label="Chỉnh sửa"
-        onClick={() => onEdit(bundleId)}
-      >
-        <Pencil className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-9 shrink-0 touch-manipulation text-destructive hover:bg-destructive/10 hover:text-destructive"
+        className={cn(btn, "text-destructive hover:bg-destructive/10 hover:text-destructive")}
         aria-label="Xóa"
         onClick={() => onDelete(bundleId, bundleName)}
       >
-        <Trash2 className="size-4" />
+        <Trash2 className={icon} />
       </Button>
     </div>
   );
@@ -238,9 +213,15 @@ export function CatalogCreateToolbar({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex justify-end">
-      <Button type="button" size="default" className="shrink-0 gap-2 px-4" onClick={onClick} disabled={disabled}>
-        <Plus className="size-4 shrink-0" aria-hidden />
+    <div className="flex w-full justify-stretch md:justify-end">
+      <Button
+        type="button"
+        size="sm"
+        className="h-10 w-full touch-manipulation gap-1.5 px-3 text-sm active:scale-[0.99] md:h-10 md:min-h-0 md:w-auto md:px-4 md:text-base"
+        onClick={onClick}
+        disabled={disabled}
+      >
+        <Plus className="size-3.5 shrink-0 md:size-4" aria-hidden />
         {label}
       </Button>
     </div>
@@ -273,6 +254,36 @@ export function CatalogTableSkeleton({ cols, rows = 6 }: { cols: number; rows?: 
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+/** Loading: thẻ giả trên mobile, bảng trên md+ — tránh bảng co cụm trên điện thoại. */
+export function CatalogLoadingSkeleton({ cols, rows = 6 }: { cols: number; rows?: number }) {
+  return (
+    <>
+      <div className="space-y-2.5 md:hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="space-y-2.5 rounded-lg border border-border/60 bg-card/50 p-3 shadow-sm">
+            <div className="flex gap-2.5">
+              <Skeleton className="size-11 shrink-0 rounded-md" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 max-w-[200px] w-[88%]" />
+                <Skeleton className="h-2.5 w-full" />
+                <Skeleton className="h-2.5 w-4/5" />
+              </div>
+            </div>
+            <Skeleton className="h-12 w-full rounded-md" />
+            <div className="space-y-1.5 border-t border-border/40 pt-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="hidden md:block">
+        <CatalogTableSkeleton cols={cols} rows={rows} />
+      </div>
+    </>
   );
 }
 
@@ -320,7 +331,8 @@ export default function BranchServicesPage() {
   const params = useParams();
   const branchId = typeof params?.branchId === "string" ? params.branchId : "";
 
-  const [selectedServiceCategoryId, setSelectedServiceCategoryId] = useState<string | null>(null);
+  /** Khi gắn `ServiceCategoriesRail`, dùng setter để đồng bộ `listOpts.serviceCategoryId`. */
+  const [selectedServiceCategoryId] = useState<string | null>(null);
   const [createServiceOpen, setCreateServiceOpen] = useState(false);
   const [detailServiceId, setDetailServiceId] = useState<string | null>(null);
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
@@ -364,12 +376,11 @@ export default function BranchServicesPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Dịch vụ</h2>
-        <p className="text-sm text-muted-foreground md:text-base">
-          Chọn danh mục dịch vụ phía dưới để lọc combo, phụ tùng và dịch vụ theo{" "}
-          <span className="font-medium text-foreground">serviceCategoryId</span>.
+    <div className="space-y-4 md:space-y-6">
+      <div className="space-y-1.5">
+        <h2 className="text-xl font-semibold tracking-tight md:text-2xl lg:text-3xl">Dịch vụ</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
+          Chọn danh mục ở phần lọc phía trên (nếu có) để xem combo, phụ tùng và dịch vụ theo từng nhóm.
         </p>
       </div>
 
@@ -381,24 +392,24 @@ export default function BranchServicesPage() {
             <Tabs defaultValue="bundles" className="w-full">
               <TabsList
                 variant="line"
-                className="w-full justify-start gap-0 overflow-x-auto rounded-none border-b border-neutral-200 bg-transparent p-0 dark:border-neutral-800"
+                className="h-auto min-h-10 w-full justify-start gap-0 overflow-x-auto rounded-none border-b border-neutral-200 bg-transparent p-0 dark:border-neutral-800"
               >
-                <TabsTrigger variant="line" value="bundles" className="shrink-0">
+                <TabsTrigger variant="line" value="bundles" className="min-h-10 shrink-0 px-3 text-sm touch-manipulation md:min-h-10 md:px-4 md:text-base">
                   Combo
                 </TabsTrigger>
-                <TabsTrigger variant="line" value="products" className="shrink-0">
+                <TabsTrigger variant="line" value="products" className="min-h-10 shrink-0 px-3 text-sm touch-manipulation md:min-h-10 md:px-4 md:text-base">
                   Phụ tùng
                 </TabsTrigger>
-                <TabsTrigger variant="line" value="services" className="shrink-0">
+                <TabsTrigger variant="line" value="services" className="min-h-10 shrink-0 px-3 text-sm touch-manipulation md:min-h-10 md:px-4 md:text-base">
                   Dịch vụ
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="bundles" className="mt-6">
+              <TabsContent value="bundles" className="mt-4 md:mt-6">
                 <div className="space-y-4">
                   <CatalogCreateToolbar label="Tạo combo" onClick={() => setCreateBundleOpen(true)} />
                   {bundlesQ.isPending ? (
-                    <CatalogTableSkeleton cols={8} />
+                    <CatalogLoadingSkeleton cols={8} />
                   ) : bundlesQ.isError ? (
                     <CatalogError
                       message={bundlesQ.error?.message ?? "Không tải được danh sách combo."}
@@ -415,11 +426,11 @@ export default function BranchServicesPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="products" className="mt-6">
+              <TabsContent value="products" className="mt-4 md:mt-6">
                 <div className="space-y-4">
                   <CatalogCreateToolbar label="Tạo phụ tùng" onClick={() => setCreateProductOpen(true)} />
                   {productsQ.isPending ? (
-                    <CatalogTableSkeleton cols={7} />
+                    <CatalogLoadingSkeleton cols={7} />
                   ) : productsQ.isError ? (
                     <CatalogError
                       message={productsQ.error?.message ?? "Không tải được danh sách phụ tùng."}
@@ -436,13 +447,13 @@ export default function BranchServicesPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="services" className="mt-6">
+              <TabsContent value="services" className="mt-4 md:mt-6">
                 <div className="space-y-4">
-                  <div className="flex justify-end">
+                  <div className="flex w-full justify-stretch md:justify-end">
                     <Button
                       type="button"
-                      size="default"
-                      className="shrink-0 gap-2 px-4"
+                      size="sm"
+                      className="h-10 w-full touch-manipulation gap-1.5 px-3 text-sm active:scale-[0.99] md:h-10 md:w-auto md:px-4 md:text-base"
                       onClick={() => setCreateServiceOpen(true)}
                       disabled={categoriesQ.isPending || categories.length === 0}
                       title={
@@ -451,12 +462,12 @@ export default function BranchServicesPage() {
                           : undefined
                       }
                     >
-                      <Plus className="size-4 shrink-0" aria-hidden />
+                      <Plus className="size-3.5 shrink-0 md:size-4" aria-hidden />
                       Tạo dịch vụ
                     </Button>
                   </div>
                   {servicesQ.isPending ? (
-                    <CatalogTableSkeleton cols={6} />
+                    <CatalogLoadingSkeleton cols={6} />
                   ) : servicesQ.isError ? (
                     <CatalogError
                       message={servicesQ.error?.message ?? "Không tải được danh sách dịch vụ."}

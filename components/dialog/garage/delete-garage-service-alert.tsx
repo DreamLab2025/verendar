@@ -38,7 +38,7 @@ export function DeleteGarageServiceAlert({ open, onOpenChange, branchId, target 
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-md">
+      <AlertDialogContent variant="bottomSheet" className="md:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>Xóa dịch vụ?</AlertDialogTitle>
           <AlertDialogDescription className="text-left">

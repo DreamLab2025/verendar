@@ -1,6 +1,25 @@
+import type { ReactNode } from "react";
 import { GarageServiceListItemDto } from "@/lib/api/services/fetchGarage";
+import { cn } from "@/lib/utils";
 import { CatalogStatusBadge, formatDurationMinutes, formatVnd, ServiceRowActions } from "../page";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+function MobileKv({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: ReactNode;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-[13px] leading-tight">
+      <span className="min-w-0 shrink text-muted-foreground">{label}</span>
+      <span className={cn("max-w-[58%] shrink-0 text-right tabular-nums text-foreground", valueClassName)}>{value}</span>
+    </div>
+  );
+}
 
 export function ServicesTable({
   rows,
@@ -23,40 +42,59 @@ export function ServicesTable({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-2.5 md:hidden">
         {rows.map((row) => (
-          <article key={row.id} className="rounded-xl border border-border/80 bg-card/50 p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
+          <article
+            key={row.id}
+            className="rounded-lg border border-border/50 bg-card p-3 shadow-sm active:bg-muted/15"
+          >
+            <div className="flex gap-2.5">
+              {row.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={row.imageUrl}
+                  alt=""
+                  className="size-11 shrink-0 rounded-md border border-border/50 object-cover"
+                />
+              ) : (
+                <div className="size-11 shrink-0 rounded-md border border-dashed border-border/60 bg-muted/25" />
+              )}
               <div className="min-w-0 flex-1">
-                <p className="font-semibold leading-snug text-foreground">{row.name}</p>
-                <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+                <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-foreground">{row.name}</h3>
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
                   {row.description ?? "—"}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-2.5 flex items-center justify-end border-t border-border/40 pt-2">
               <ServiceRowActions
                 serviceId={row.id}
                 serviceName={row.name}
                 onView={onViewService}
                 onEdit={onEditService}
                 onDelete={onDeleteService}
+                compact
               />
             </div>
-            <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-border/60 pt-3 text-xs sm:grid-cols-3">
-              <div>
-                <dt className="text-muted-foreground">Giá NC</dt>
-                <dd className="font-medium tabular-nums text-foreground">{formatVnd(row.laborPrice?.amount)}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Thời lượng</dt>
-                <dd className="tabular-nums">{formatDurationMinutes(row.estimatedDurationMinutes)}</dd>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <dt className="text-muted-foreground">Trạng thái</dt>
-                <dd>
-                  <CatalogStatusBadge status={row.status} />
-                </dd>
-              </div>
-            </dl>
+
+            <div className="mt-2.5 rounded-md border border-border/40 bg-muted/20 px-2.5 py-2">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Giá nhân công</p>
+              <p className="mt-1 text-lg font-semibold tabular-nums leading-none tracking-tight text-foreground">
+                {formatVnd(row.laborPrice?.amount)}
+              </p>
+            </div>
+
+            <div className="mt-2 space-y-1.5">
+              <MobileKv label="Thời lượng" value={formatDurationMinutes(row.estimatedDurationMinutes)} />
+            </div>
+
+            <div className="mt-2.5 flex items-center border-t border-border/40 pt-2">
+              <CatalogStatusBadge
+                status={row.status}
+                className="h-6 border-0 bg-primary/10 px-2 text-[10px] font-medium text-primary hover:bg-primary/15"
+              />
+            </div>
           </article>
         ))}
       </div>
