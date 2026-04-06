@@ -16,11 +16,13 @@ export type CustomerDisplay = {
   phone: string;
 };
 
-/** Hãng + model (+ biển số nếu có). */
+/** Hãng + model + biển số + ảnh xe (variant) nếu có. */
 export type VehicleDisplay = {
   brand: string;
   model: string;
   licensePlate: string;
+  /** Ảnh xe từ API (variant / embedded vehicle). */
+  imageUrl: string | null;
 };
 
 async function fetchUserDisplayName(id: string): Promise<string | null> {
@@ -69,10 +71,12 @@ async function resolveCustomerDisplay(d: BookingDetailDto): Promise<CustomerDisp
 }
 
 function vehicleFromEmbedded(v: BookingVehicleDto): VehicleDisplay {
+  const img = v.imageUrl?.trim();
   return {
     brand: v.brandName?.trim() || "—",
     model: v.modelName?.trim() || "—",
     licensePlate: v.licensePlate?.trim() || "",
+    imageUrl: img ? img : null,
   };
 }
 
@@ -84,10 +88,12 @@ async function resolveVehicleDisplay(d: BookingDetailDto): Promise<VehicleDispla
     const r = await UserVehicleService.getUserVehicleById(d.userVehicleId);
     const uv = r.data;
     const m = uv.variant.model;
+    const img = uv.variant.imageUrl?.trim();
     return {
       brand: m.brandName?.trim() || "—",
       model: m.name?.trim() || "—",
       licensePlate: uv.licensePlate?.trim() || "",
+      imageUrl: img ? img : null,
     };
   } catch {
     /* ignore */
@@ -96,6 +102,7 @@ async function resolveVehicleDisplay(d: BookingDetailDto): Promise<VehicleDispla
     brand: "—",
     model: "—",
     licensePlate: "",
+    imageUrl: null,
   };
 }
 

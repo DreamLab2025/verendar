@@ -72,6 +72,7 @@ export interface BookingVehicleDto {
   modelName: string;
   brandName: string;
   variantColor: string;
+  imageUrl: string;
 }
 
 export interface BookingStatusHistoryDto {
