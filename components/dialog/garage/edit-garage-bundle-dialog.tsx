@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useGarageBundleByIdQuery,
@@ -273,18 +274,13 @@ export function EditGarageBundleDialog({ open, onOpenChange, branchId, bundleId 
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="egb-image">URL ảnh</Label>
-                <Input
-                  id="egb-image"
-                  name="imageUrl"
-                  type="url"
-                  value={form.imageUrl}
-                  onChange={(ev) => setForm((f) => ({ ...f, imageUrl: ev.target.value }))}
-                  disabled={pending}
-                  autoComplete="off"
-                />
-              </div>
+              <ImageUrlDropzone
+                id="egb-image"
+                label="Ảnh (tùy chọn)"
+                value={form.imageUrl}
+                onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+                disabled={pending}
+              />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">

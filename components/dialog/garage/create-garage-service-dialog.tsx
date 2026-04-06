@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateGarageService } from "@/hooks/useGarage";
 import type { ServiceCategoryDto } from "@/lib/api/services/fetchGarage";
@@ -205,19 +206,13 @@ export function CreateGarageServiceDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="gms-image">URL ảnh (tùy chọn)</Label>
-            <Input
-              id="gms-image"
-              name="imageUrl"
-              type="url"
-              value={form.imageUrl}
-              onChange={(ev) => setForm((f) => ({ ...f, imageUrl: ev.target.value }))}
-              placeholder="https://…"
-              disabled={pending}
-              autoComplete="off"
-            />
-          </div>
+          <ImageUrlDropzone
+            id="gms-image"
+            label="Ảnh (tùy chọn)"
+            value={form.imageUrl}
+            onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+            disabled={pending}
+          />
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>

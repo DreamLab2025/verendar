@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useGarageProductByIdQuery, useGarageServicesByBranchQuery, useUpdateGarageProduct } from "@/hooks/useGarage";
 import { usePartCategories } from "@/hooks/usePartCategories";
@@ -317,18 +318,13 @@ export function EditGarageProductDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="egmp-image">URL ảnh (tùy chọn)</Label>
-              <Input
-                id="egmp-image"
-                name="imageUrl"
-                type="url"
-                value={form.imageUrl}
-                onChange={(ev) => setForm((f) => ({ ...f, imageUrl: ev.target.value }))}
-                disabled={pending}
-                autoComplete="off"
-              />
-            </div>
+            <ImageUrlDropzone
+              id="egmp-image"
+              label="Ảnh (tùy chọn)"
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+              disabled={pending}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="egmp-compat">Loại xe tương thích</Label>

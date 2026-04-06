@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useCreateGarageBundle,
@@ -218,18 +219,13 @@ export function CreateGarageBundleDialog({ open, onOpenChange, branchId }: Creat
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cgb-image">URL ảnh</Label>
-              <Input
-                id="cgb-image"
-                name="imageUrl"
-                type="url"
-                value={form.imageUrl}
-                onChange={(ev) => setForm((f) => ({ ...f, imageUrl: ev.target.value }))}
-                disabled={pending}
-                autoComplete="off"
-              />
-            </div>
+            <ImageUrlDropzone
+              id="cgb-image"
+              label="Ảnh (tùy chọn)"
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+              disabled={pending}
+            />
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
