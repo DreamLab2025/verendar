@@ -15,7 +15,8 @@ import {
   Search,
 } from "lucide-react";
 
-import { BookingDetailBody, bookingStatusLabel } from "@/components/booking/booking-detail-body";
+import { BookingDetailSuccessLayout } from "@/components/booking/booking-detail-success-layout";
+import { bookingStatusLabel } from "@/components/booking/booking-detail-body";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -1010,35 +1011,34 @@ function BookingHistoryDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton
-        className="flex max-h-[min(90dvh,100svh)] w-[calc(100vw-1rem)] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border p-0 sm:max-h-[min(92vh,900px)]"
+        className="flex max-h-[min(90dvh,100svh)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border p-0 sm:max-h-[min(92vh,900px)]"
       >
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 sm:px-6 sm:py-4">
-          <DialogTitle className="text-left text-base font-semibold sm:text-lg">Chi tiết lịch hẹn</DialogTitle>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
         </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-0">
           {q.isPending ? (
-            <div className="space-y-3">
+            <div className="space-y-3 px-4 py-3 sm:px-6 sm:py-4">
               <Skeleton className="h-8 w-2/3 max-w-sm" />
               <Skeleton className="h-24 w-full rounded-xl" />
               <Skeleton className="h-32 w-full rounded-xl" />
             </div>
           ) : q.isError ? (
-            <p className="text-sm text-destructive">{q.error?.message ?? "Không tải được chi tiết."}</p>
+            <p className="px-4 py-3 text-sm text-destructive sm:px-6 sm:py-4">{q.error?.message ?? "Không tải được chi tiết."}</p>
           ) : q.data ? (
-            <BookingDetailBody data={q.data} />
+            <BookingDetailSuccessLayout
+              data={q.data}
+              variant="detail"
+              showHeader={false}
+              stepperLayoutId="booking-history-dialog-progress-pill"
+              className="rounded-none border-0 shadow-none sm:rounded-none dark:sm:shadow-none"
+            />
           ) : null}
         </div>
         {q.isFetching && !q.isPending ? (
           <div className="flex items-center gap-2 border-t border-border/50 px-4 py-2 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin" />
             Đang làm mới…
-          </div>
-        ) : null}
-        {q.data ? (
-          <div className="shrink-0 border-t border-border/50 px-4 py-3 sm:px-6">
-            <Button variant="outline" size="sm" className="w-full rounded-xl sm:w-auto" asChild>
-              <Link href={`/user/booking-history/${q.data.raw.id}`}>Mở trang đầy đủ</Link>
-            </Button>
           </div>
         ) : null}
       </DialogContent>

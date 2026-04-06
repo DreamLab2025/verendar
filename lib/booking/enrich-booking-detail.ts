@@ -106,10 +106,21 @@ async function resolveVehicleDisplay(d: BookingDetailDto): Promise<VehicleDispla
   };
 }
 
+function embeddedLineTitle(line: BookingLineItemDto): string | null {
+  const t = line.itemName?.trim();
+  if (t) return t;
+  const p = line.productDetails?.name?.trim();
+  if (p) return p;
+  const s = line.serviceDetails?.name?.trim();
+  if (s) return s;
+  const b = line.bundleDetails?.name?.trim();
+  if (b) return b;
+  return null;
+}
+
 async function resolveLineItemTitle(line: BookingLineItemDto): Promise<string> {
-  const trimmed = line.itemName?.trim();
-  if (trimmed) return trimmed;
-  if (line.bundleDetails?.name?.trim()) return line.bundleDetails.name.trim();
+  const embedded = embeddedLineTitle(line);
+  if (embedded) return embedded;
 
   try {
     if (line.bundleId) {
@@ -179,6 +190,32 @@ export async function fetchAndEnrichBookingDetail(id: string): Promise<EnrichedB
       : "—",
   }));
 
+  return {
+    raw: d,
+    customer,
+    vehicle,
+    mechanicLabel,
+    lineItems,
+    historyEntries,
+  };
+}
+
+/**
+ * Khi đã có đủ `BookingDetailDto` (vd. sessionStorage sau POST) — không gọi API enrich.
+ * Dùng cho trang success và preview nhanh.
+ */
+export function minimalEnrichedFromBookingDetailDto(d: BookingDetailDto): EnrichedBookingDetail {
+  const customer = d.customer ? customerFromEmbedded(d.customer) : { name: "—", email: "—", phone: "—" };
+  const vehicle = d.vehicle ? vehicleFromEmbedded(d.vehicle) : { brand: "—", model: "—", licensePlate: "", imageUrl: null };
+  const mechanicLabel = d.mechanicDisplayName?.trim() || (d.mechanicId ?? "—");
+  const lineItems = d.lineItems.map((line) => ({
+    line,
+    title: embeddedLineTitle(line) || "—",
+  }));
+  const historyEntries = d.statusHistory.map((entry) => ({
+    entry,
+    changedByLabel: entry.changedByUserId ?? "—",
+  }));
   return {
     raw: d,
     customer,

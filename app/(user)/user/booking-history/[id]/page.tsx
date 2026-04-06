@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
-import { BookingDetailBody } from "@/components/booking/booking-detail-body";
+import { BookingDetailSuccessLayout } from "@/components/booking/booking-detail-success-layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBookingDetailEnrichedQuery } from "@/hooks/useBookings";
@@ -31,29 +31,9 @@ export default function UserBookingDetailPage() {
           </Link>
         </Button>
 
-        <header className="px-0.5 md:px-0">
-          <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary sm:size-12">
-              <CalendarDays className="size-5 sm:size-6" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl md:text-[1.65rem] md:leading-tight">
-                Chi tiết lịch hẹn
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground md:text-base">
-                Khách, xe, dòng đặt chỗ và lịch sử trạng thái.
-              </p>
-            </div>
-          </div>
-        </header>
       </div>
 
-      <div
-        className={cn(
-          "min-h-0 flex-1 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm",
-          "sm:p-6 md:p-8",
-        )}
-      >
+      <div className={cn("min-h-0 flex-1 overflow-x-hidden")}>
         {!id ? (
           <p className="text-base text-muted-foreground">Thiếu mã lịch hẹn.</p>
         ) : q.isPending ? (
@@ -71,7 +51,11 @@ export default function UserBookingDetailPage() {
           </div>
         ) : q.data ? (
           <>
-            <BookingDetailBody data={q.data} />
+            <BookingDetailSuccessLayout
+              data={q.data}
+              variant="detail"
+              stepperLayoutId="booking-history-page-progress-pill"
+            />
             {q.isFetching && !q.isPending ? (
               <div className="mt-6 flex items-center gap-2 border-t border-border/50 pt-6 text-sm text-muted-foreground md:text-base">
                 <Loader2 className="size-4 animate-spin" aria-hidden />
