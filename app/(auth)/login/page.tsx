@@ -114,7 +114,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[440px] shrink-0">
         <div className="flex flex-col space-y-6">
           <div className="flex flex-col items-center space-y-3 sm:space-y-4 text-center">
-            <div className="flex size-20 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-zinc-200">
+            <div className="flex size-20 items-center justify-center rounded-2xl bg-white">
               <Image width={48} height={48} src="/icon.svg" alt="Verendar Icon" className="size-12" style={{ width: "auto", height: "auto" }} />
             </div>
             <div className="space-y-2">

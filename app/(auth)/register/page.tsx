@@ -86,8 +86,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-[440px] shrink-0">
         <div className="flex flex-col space-y-6">
           <div className="flex flex-col items-center space-y-3 sm:space-y-4 text-center">
-            <div className="flex size-20 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-zinc-200">
-              <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" style={{ height: "auto" }} />
+            <div className="flex size-20 items-center justify-center rounded-2xl bg-white">
+              <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" style={{ width: "auto" }} />
             </div>
             <div className="space-y-2">
               <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900">Đăng ký mới</h1>

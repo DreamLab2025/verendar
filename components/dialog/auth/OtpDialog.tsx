@@ -87,7 +87,7 @@ export function OtpDialog({
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-                    <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" style={{ height: "auto" }} />
+                    <Image width={40} height={40} src="/icon.svg" alt="Verendar Logo" className="h-10 w-auto" style={{ width: "auto" }} />
                   </div>
 
                   <DialogPrimitive.Title className="text-2xl font-bold tracking-tight text-foreground">
