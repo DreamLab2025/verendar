@@ -147,6 +147,80 @@ export function useBranchBookingsQuery(branchId: string | undefined, options?: B
   });
 }
 
+export type UserBookingsQueryOptions = {
+  pageNumber?: number;
+  pageSize?: number;
+  /** Lọc trạng thái — optional */
+  status?: string;
+  isDescending?: boolean;
+  enabled?: boolean;
+};
+
+/**
+ * Danh sách booking của user đăng nhập — GET /api/v1/bookings (không gửi branchId / assignedToMe).
+ */
+export function useUserBookingsQuery(options?: UserBookingsQueryOptions) {
+  const pageNumber = options?.pageNumber ?? 1;
+  const pageSize = options?.pageSize ?? DEFAULT_PAGE_SIZE;
+  const status = options?.status;
+  const isDescending = options?.isDescending;
+  const enabled = options?.enabled ?? true;
+
+  return useQuery({
+    queryKey: ["bookings", "user", pageNumber, pageSize, status ?? "", isDescending ?? ""],
+    queryFn: async () => {
+      const body = await BookingsService.getBookings({
+        PageNumber: pageNumber,
+        PageSize: pageSize,
+        ...(isDescending != null ? { IsDescending: isDescending } : {}),
+        ...(status != null && status !== "" ? { status } : {}),
+      });
+      if (!body.isSuccess) {
+        throw new Error(body.message || "Không tải được danh sách lịch hẹn.");
+      }
+      return body;
+    },
+    enabled,
+    staleTime: 30_000,
+  });
+}
+
+const CALENDAR_FETCH_PAGE_SIZE = 100;
+const CALENDAR_MAX_PAGES = 50;
+
+/**
+ * Tải toàn bộ booking của user (lặp phân trang) cho calendar view — tối đa CALENDAR_MAX_PAGES trang.
+ */
+export function useUserBookingsCalendarQuery(options?: { status?: string; enabled?: boolean }) {
+  const status = options?.status;
+  const enabled = options?.enabled ?? true;
+
+  return useQuery({
+    queryKey: ["bookings", "user", "calendar", status ?? ""],
+    queryFn: async () => {
+      const all: BookingListItemDto[] = [];
+      let page = 1;
+      while (page <= CALENDAR_MAX_PAGES) {
+        const body = await BookingsService.getBookings({
+          PageNumber: page,
+          PageSize: CALENDAR_FETCH_PAGE_SIZE,
+          IsDescending: true,
+          ...(status != null && status !== "" ? { status } : {}),
+        });
+        if (!body.isSuccess) {
+          throw new Error(body.message || "Không tải được danh sách lịch hẹn.");
+        }
+        all.push(...body.data);
+        if (!body.metadata?.hasNextPage) break;
+        page += 1;
+      }
+      return all;
+    },
+    enabled,
+    staleTime: 30_000,
+  });
+}
+
 /** GET /api/v1/bookings/{id} + tra cứu tên khách, xe, dịch vụ / sản phẩm / combo theo ID. */
 export function useBookingDetailEnrichedQuery(bookingId: string | undefined, enabled = true) {
   return useQuery({
@@ -175,6 +249,7 @@ export function useAssignBookingMutation(branchId: string | undefined) {
         void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", branchId] });
       }
       void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", "assigned-to-me"] });
+      void qc.invalidateQueries({ queryKey: ["bookings", "user"] });
       void qc.invalidateQueries({ queryKey: ["bookings", "detail", variables.bookingId, "enriched"] });
       toast.success(data.message?.trim() || "Đã gán thợ máy.");
     },
@@ -205,6 +280,7 @@ export function usePatchBookingStatusMutation(branchId: string | undefined) {
         void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", branchId] });
       }
       void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", "assigned-to-me"] });
+      void qc.invalidateQueries({ queryKey: ["bookings", "user"] });
       void qc.invalidateQueries({ queryKey: ["bookings", "detail", variables.bookingId, "enriched"] });
       toast.success(data.message?.trim() || "Đã cập nhật trạng thái.");
     },

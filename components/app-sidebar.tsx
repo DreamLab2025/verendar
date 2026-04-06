@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CalendarClock,
-  CarFront,
-  ClipboardList,
-  HomeIcon,
-  PenLine,
-} from "lucide-react";
+import { CalendarClock, CarFront, ClipboardList, HomeIcon, PenLine } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,7 +29,7 @@ const MAIN_NAV: NavItem[] = [
   { title: "Phương tiện", href: "/", icon: CarFront },
   { title: "Garage", href: "/user/garage", icon: HomeIcon },
   { title: "Thông báo", href: "/notifications", icon: CalendarClock },
-  { title: "Lịch sử", href: "/logs", icon: ClipboardList },
+  { title: "Lịch sử", href: "/user/booking-history", icon: ClipboardList },
   { title: "Phản hồi", href: "/feedback", icon: PenLine },
 ];
 
@@ -70,9 +64,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {MAIN_NAV.map((item) => {
                 const isActive =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
 
                 return (
