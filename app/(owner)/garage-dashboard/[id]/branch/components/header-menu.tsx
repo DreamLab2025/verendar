@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, CarFront, LogOut, Menu } from "lucide-react";
+import { Building2, LogOut, Menu } from "lucide-react";
 
 import { NotificationInboxPopover } from "@/components/shell/notification-inbox-popover";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
   parseBranchTab,
   type BranchTabId,
 } from "./branch-tab-config";
+import SafeImage from "@/components/ui/SafeImage";
 
 type BranchHeaderMenuProps = {
   garageId: string;
@@ -53,13 +54,16 @@ export function BranchHeaderMenu({ garageId, branchId }: BranchHeaderMenuProps) 
       <div className="flex h-14 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-4 md:h-16 lg:px-8">
         <Link
           href={branchDetailHref(garageId, branchId, defaultBranchTab)}
-          className="flex min-w-0 shrink-0 items-center gap-2.5"
+          className="flex min-w-0 shrink-0 items-center justify-start"
         >
-          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
-            <CarFront className="size-5" aria-hidden />
-          </div>
-          <span className="hidden truncate text-lg font-semibold tracking-tight text-foreground lowercase md:inline">
-            varender
+          <span className="relative block h-8 w-38">
+            <SafeImage
+              src="/logo.svg"
+              alt="Verendar"
+              fill
+              className="object-cover object-left "
+              priority
+            />
           </span>
         </Link>
 

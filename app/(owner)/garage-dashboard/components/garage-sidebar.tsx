@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { getGarageDashboardNavItems, isGarageDashboardNavItemActive } from "../garage-nav";
+import SafeImage from "@/components/ui/SafeImage";
 
 interface GarageSidebarProps {
   garageId: string;
@@ -35,9 +36,15 @@ export function GarageSidebar({ garageId, businessName }: GarageSidebarProps) {
     >
       <SidebarHeader className="border-b border-border/60 bg-background/90 p-0 backdrop-blur-md">
         <div className="flex h-14 min-h-14 items-center gap-2 px-3">
-          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-            <CarFront className="size-4" aria-hidden />
-          </div>
+        <span className="relative block size-8">
+            <SafeImage
+              src="/icon.svg"
+              alt="Verendar"
+              fill
+              className="object-cover object-left "
+              priority
+            />
+          </span>
           <span
             className="min-w-0 flex-1 truncate text-sm font-semibold group-data-[state=collapsed]/sidebar:hidden"
             title={businessName}
