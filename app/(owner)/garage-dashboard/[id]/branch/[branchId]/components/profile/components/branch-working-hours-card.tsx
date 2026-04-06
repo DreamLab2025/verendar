@@ -3,6 +3,7 @@
 import { Clock } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { GarageBranchDaySchedule, GarageBranchWorkingHoursDto } from "@/lib/api/services/fetchGarage";
 
 const DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
@@ -55,24 +56,28 @@ function formatSlot(day: GarageBranchDaySchedule): string {
 
 type BranchWorkingHoursCardProps = {
   workingHours: GarageBranchWorkingHoursDto | null | undefined;
+  isMobile: boolean;
 };
 
-export function BranchWorkingHoursCard({ workingHours }: BranchWorkingHoursCardProps) {
+export function BranchWorkingHoursCard({ workingHours, isMobile }: BranchWorkingHoursCardProps) {
   const schedule = workingHours?.schedule;
   const keys = schedule && typeof schedule === "object" ? Object.keys(schedule) : [];
   const sortedKeys = sortScheduleKeys(keys);
 
+  const pad = isMobile ? "p-4" : "p-5 sm:p-7";
+  const bodyPad = isMobile ? "px-4 pb-5 pt-4" : "px-5 pb-6 pt-5 sm:px-7 sm:pb-7";
+
   return (
     <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
-      <div className="border-b border-border/60 p-5 sm:p-7">
-        <div className="flex min-w-0 gap-4">
-          <Clock className="mt-0.5 size-6 shrink-0 text-muted-foreground" aria-hidden />
+      <div className={cn("border-b border-border/60", pad)}>
+        <div className="flex min-w-0 gap-3 sm:gap-4">
+          <Clock className="mt-0.5 size-5 shrink-0 text-muted-foreground sm:size-6" aria-hidden />
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold tracking-tight text-foreground">Giờ làm việc</h3>
+            <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">Giờ làm việc</h3>
           </div>
         </div>
       </div>
-      <div className="px-5 pb-6 pt-5 sm:px-7 sm:pb-7">
+      <div className={bodyPad}>
         {sortedKeys.length === 0 ? (
           <p className="text-base text-muted-foreground">Chưa cấu hình giờ làm việc.</p>
         ) : (
@@ -83,10 +88,15 @@ export function BranchWorkingHoursCard({ workingHours }: BranchWorkingHoursCardP
               return (
                 <li
                   key={key}
-                  className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                  className={cn(
+                    "flex gap-1 px-3 py-3.5 sm:px-4 sm:py-4",
+                    isMobile
+                      ? "flex-col"
+                      : "flex-row items-center justify-between gap-4",
+                  )}
                 >
-                  <span className="text-base font-medium text-foreground">{labelForDayKey(key)}</span>
-                  <span className="text-base text-muted-foreground tabular-nums">{formatSlot(day)}</span>
+                  <span className="text-sm font-medium text-foreground sm:text-base">{labelForDayKey(key)}</span>
+                  <span className="text-sm text-muted-foreground tabular-nums sm:text-base">{formatSlot(day)}</span>
                 </li>
               );
             })}

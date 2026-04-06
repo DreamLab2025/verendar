@@ -38,6 +38,7 @@ type BranchBasicInfoCardProps = {
   phoneDisplay: string;
   taxDisplay: string;
   ratingDisplay: string | null;
+  isMobile: boolean;
 };
 
 export function BranchBasicInfoCard({
@@ -46,6 +47,7 @@ export function BranchBasicInfoCard({
   phoneDisplay,
   taxDisplay,
   ratingDisplay,
+  isMobile,
 }: BranchBasicInfoCardProps) {
   const { data: meRes } = useMyGarageQuery(Boolean(garageId));
   const garage =
@@ -58,10 +60,17 @@ export function BranchBasicInfoCard({
 
   return (
     <Card className="border-border/70 shadow-sm">
-      <CardHeader className="pb-3 pt-6 sm:pt-7">
-        <CardTitle className="text-xl font-semibold tracking-tight">Thông tin cơ bản</CardTitle>
+      <CardHeader className={cn("pb-3", isMobile ? "pt-5" : "pt-6 sm:pt-7")}>
+        <CardTitle className={cn("font-semibold tracking-tight", isMobile ? "text-lg" : "text-xl")}>
+          Thông tin cơ bản
+        </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-6 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-6">
+      <CardContent
+        className={cn(
+          "grid gap-6 sm:gap-x-10 sm:gap-y-6",
+          isMobile ? "grid-cols-1" : "sm:grid-cols-2",
+        )}
+      >
         <BranchProfileInfoField label="Chủ sở hữu" icon={User}>
           {owner}
         </BranchProfileInfoField>
@@ -96,7 +105,7 @@ export function BranchBasicInfoCard({
           {branchCount}
         </BranchProfileInfoField>
         {ratingDisplay ? (
-          <div className="sm:col-span-2">
+          <div className={isMobile ? undefined : "sm:col-span-2"}>
             <BranchProfileInfoField
               label="Đánh giá"
               icon={Star}

@@ -52,6 +52,7 @@ function mapUserVehicleToDto(v: UserVehicle): BookingVehicleDto {
     brandName: m.brandName,
     modelName: m.name,
     variantColor: v.variant.color,
+    imageUrl: v.variant.imageUrl ?? "",
   };
 }
 

@@ -22,11 +22,11 @@ export interface BookingsListResponse {
   metadata: PaginationMetadata | null;
 }
 
-/** GET /api/v1/bookings — Owner/Manager: branchId; User: userId; Mechanic: assignedToMe=true */
 export interface BookingsQueryParams extends RequestParams {
   branchId?: string;
   userId?: string;
   assignedToMe?: boolean;
+  status?: string;
   PageNumber: number;
   PageSize: number;
   IsDescending?: boolean;
@@ -45,6 +45,15 @@ export interface AssignBookingPayload {
   garageMemberId: string;
 }
 
+/** PATCH /api/v1/bookings/{id}/status — cập nhật trạng thái (vd. InProgress, Completed). */
+export interface PatchBookingStatusPayload {
+  status: string;
+  currentOdometer: number | null;
+}
+
+/** Giá trị `status` thường dùng cho PATCH status (theo contract). */
+export type PatchBookingStatusValue = "InProgress" | "Completed";
+
 const BookingsService = {
   getBookings: async (params: BookingsQueryParams) => {
     const res = await api8080Service.get<BookingsListResponse>("/api/v1/bookings", params);
@@ -61,6 +70,15 @@ const BookingsService = {
   assignBooking: async (bookingId: string, payload: AssignBookingPayload) => {
     const res = await api8080Service.patch<BookingDetailResponse>(
       `/api/v1/bookings/${encodeURIComponent(bookingId)}/assign`,
+      payload,
+    );
+    return res.data;
+  },
+
+  /** PATCH /api/v1/bookings/{id}/status */
+  patchBookingStatus: async (bookingId: string, payload: PatchBookingStatusPayload) => {
+    const res = await api8080Service.patch<BookingDetailResponse>(
+      `/api/v1/bookings/${encodeURIComponent(bookingId)}/status`,
       payload,
     );
     return res.data;

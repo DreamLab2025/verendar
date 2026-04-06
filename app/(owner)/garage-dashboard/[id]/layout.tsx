@@ -9,8 +9,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useMyGarageQuery } from "@/hooks/useGarage";
 
 import { GarageDashboardHeader } from "../components/garage-dashboard-header";
+import { GarageDashboardNavBottom } from "../components/garage-dashboard-nav-bottom";
 import { GarageSidebar } from "../components/garage-sidebar";
-import { NavGarageMenu } from "../components/nav-garage-menu";
 
 export default function GarageDashboardIdLayout({ children }: { children: ReactNode }) {
   const params = useParams();
@@ -51,13 +51,14 @@ export default function GarageDashboardIdLayout({ children }: { children: ReactN
       </Suspense>
       <SidebarInset className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
         <Suspense fallback={null}>
-          <GarageDashboardHeader
-            className="shrink-0"
-            garageId={garageId}
-            mobileActions={<NavGarageMenu garageId={garageId} />}
-          />
+          <GarageDashboardHeader className="shrink-0" garageId={garageId} />
         </Suspense>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(4.25rem+env(safe-area-inset-bottom))] md:pb-0">
+          {children}
+        </div>
+        <Suspense fallback={null}>
+          <GarageDashboardNavBottom garageId={garageId} />
+        </Suspense>
       </SidebarInset>
     </SidebarProvider>
   );

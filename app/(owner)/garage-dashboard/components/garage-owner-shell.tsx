@@ -13,8 +13,8 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { GarageOwnerShellMobileHeader } from "./garage-owner-shell-mobile-header";
 import { getGaragePortalViewFromRoles } from "@/lib/auth/garage-portal-roles";
 import { readAuthRolesFromCookies } from "@/lib/auth/read-auth-cookie-user";
 import { cn } from "@/lib/utils";
@@ -72,11 +72,10 @@ export function GarageOwnerShell({ children }: { children: ReactNode }) {
             "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-linear-to-b from-background to-muted/25",
           )}
         >
-          <SidebarTrigger
-            className="fixed left-3 top-3 z-50 md:hidden"
-            aria-label="Mở sidebar garage"
-          />
-          <div className="flex w-full min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-4 pb-12 pt-14 md:px-6 md:pt-6">
+          <div className="md:hidden">
+            <GarageOwnerShellMobileHeader />
+          </div>
+          <div className="flex w-full min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-4 pb-12 pt-4 md:px-6 md:pt-6">
             <header className="space-y-1">
               <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Quản lý garage</h1>
               <p className="text-sm text-muted-foreground md:text-base">Quản lý garage và chi nhánh của bạn.</p>

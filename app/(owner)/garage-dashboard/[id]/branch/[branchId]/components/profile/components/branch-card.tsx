@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBranchProfileBranch } from "@/hooks/useGarage";
+import { useMobile } from "@/hooks/useMobile";
 import {
   garageBranchMeToGarageBranchDto,
   getGarageBranchStatusLabelVi,
@@ -14,7 +15,9 @@ import { BranchDescriptionCard } from "./branch-description-card";
 import { BranchMapCard } from "./branch-map-card";
 import { BranchWorkingHoursCard } from "./branch-working-hours-card";
 
-const branchProfileContentInsetClass = "w-full min-w-0 px-10";
+function branchProfileContentInsetClass(isMobile: boolean) {
+  return cn("w-full min-w-0", isMobile ? "px-0" : "px-6 md:px-10");
+}
 
 type BranchProfileCardProps = {
   garageId: string;
@@ -25,12 +28,13 @@ function isPendingBranch(status: string): boolean {
   return status === "Pending";
 }
 
-function BranchProfileCardsSkeleton() {
+function BranchProfileCardsSkeleton({ isMobile }: { isMobile: boolean }) {
+  const inset = branchProfileContentInsetClass(isMobile);
   const sectionBlock = (
     <Card className="border-border/70 shadow-sm">
       <CardContent className="space-y-4 p-4 sm:p-6">
         <Skeleton className="h-6 w-48" />
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "sm:grid-cols-2")}>
           <Skeleton className="h-14 w-full rounded-lg" />
           <Skeleton className="h-14 w-full rounded-lg" />
         </div>
@@ -41,7 +45,7 @@ function BranchProfileCardsSkeleton() {
   return (
     <div
       className={cn(
-        branchProfileContentInsetClass,
+        inset,
         "grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6",
       )}
     >
@@ -49,7 +53,7 @@ function BranchProfileCardsSkeleton() {
         <Card className="border-border/70 shadow-sm">
           <CardContent className="space-y-4 p-4 sm:p-6">
             <Skeleton className="h-7 w-56" />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "sm:grid-cols-2")}>
               <Skeleton className="h-14 w-full rounded-lg" />
               <Skeleton className="h-14 w-full rounded-lg" />
               <Skeleton className="h-14 w-full rounded-lg" />
@@ -71,10 +75,11 @@ function BranchProfileCardsSkeleton() {
 }
 
 export function BranchProfileCard({ garageId, branchId }: BranchProfileCardProps) {
+  const isMobile = useMobile();
   const { isGarageOwner, isPending, isError, res, branchMe } = useBranchProfileBranch(garageId, branchId);
 
   if (isPending) {
-    return <BranchProfileCardsSkeleton />;
+    return <BranchProfileCardsSkeleton isMobile={isMobile} />;
   }
 
   let errorMessage: string | null = null;
@@ -90,7 +95,12 @@ export function BranchProfileCard({ garageId, branchId }: BranchProfileCardProps
 
   if (errorMessage) {
     return (
-      <div className={cn(branchProfileContentInsetClass, "flex min-h-[80dvh] flex-col items-center justify-center")}>
+      <div
+        className={cn(
+          branchProfileContentInsetClass(isMobile),
+          "flex min-h-[80dvh] flex-col items-center justify-center",
+        )}
+      >
         <Card className="w-full border-2 border-destructive bg-destructive/5 shadow-sm dark:bg-destructive/10">
           <CardContent className="flex min-h-60 items-center justify-center px-6 py-12 text-center text-sm font-medium text-destructive sm:px-10 sm:text-base">
             {errorMessage}
@@ -118,7 +128,7 @@ export function BranchProfileCard({ garageId, branchId }: BranchProfileCardProps
   return (
     <div
       className={cn(
-        branchProfileContentInsetClass,
+        branchProfileContentInsetClass(isMobile),
         "grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6",
       )}
     >
@@ -129,13 +139,19 @@ export function BranchProfileCard({ garageId, branchId }: BranchProfileCardProps
           phoneDisplay={phone}
           taxDisplay={tax}
           ratingDisplay={rating}
+          isMobile={isMobile}
         />
-        <BranchDescriptionCard description={desc} />
-        <BranchWorkingHoursCard workingHours={branchMe.workingHours} />
+        <BranchDescriptionCard description={desc} isMobile={isMobile} />
+        <BranchWorkingHoursCard workingHours={branchMe.workingHours} isMobile={isMobile} />
       </div>
-      <div className="min-w-0 sticky top-5 z-10">
-      <BranchMapCard branch={branch} branchMe={branchMe} statusLabel={statusLabel} pending={pending} />
-
+      <div className={cn("min-w-0", !isMobile && "sticky top-5 z-10")}>
+        <BranchMapCard
+          branch={branch}
+          branchMe={branchMe}
+          statusLabel={statusLabel}
+          pending={pending}
+          isMobile={isMobile}
+        />
       </div>
     </div>
   );
