@@ -30,6 +30,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const ROLE_MAP: Record<string, string> = {
   Admin: "Quản trị viên",
@@ -54,6 +62,8 @@ export function AdminUsersList() {
   const pageSize = 9;
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -89,16 +99,8 @@ export function AdminUsersList() {
     PageNumber: page,
     PageSize: pageSize,
     IsDescending: true,
-  });
-
-  // Client-side filtering for demonstration, though server-side is better
-  const filteredUsers = (users || []).filter((u) => {
-    const matchesSearch =
-      u.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-
-    return matchesSearch;
+    Name: debouncedSearchTerm || undefined,
+    Role: selectedRole !== "all" ? [selectedRole] : undefined,
   });
 
   if (isError) {
@@ -112,50 +114,92 @@ export function AdminUsersList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-4 sm:flex-row sm:items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            Quản lý người dùng
-          </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          Quản lý người dùng
+        </h2>
+      </div>
+
+      {/* Toolbar / Filters */}
+      <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-3 rounded-2xl border border-border/40 shadow-sm">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-background rounded-xl border border-border/50 shadow-sm min-w-[320px] md:min-w-[450px] flex-1 sm:flex-initial">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Tìm theo tên..."
+            className="text-sm bg-transparent border-0 focus:ring-0 w-full outline-none placeholder:text-muted-foreground/60"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
+
         <div className="flex items-center gap-2">
+          <Select
+            value={selectedRole}
+            onValueChange={(value) => {
+              setSelectedRole(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[180px] h-9 rounded-xl border-border/50 bg-background">
+              <SelectValue placeholder="Tất cả vai trò" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả vai trò</SelectItem>
+              {Object.entries(ROLE_MAP).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2 ml-auto">
+          {(searchTerm || selectedRole !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedRole("all");
+                setPage(1);
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground h-9 px-2"
+            >
+              Xóa bộ lọc
+            </Button>
+          )}
+          
+          <div className="h-6 w-px bg-border/40 mx-1 hidden sm:block" />
+
           <Button
             onClick={handleCreate}
             className="h-9 px-4 gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm shadow-primary/20"
           >
             <Plus className="h-4 w-4" />
-            <span>Thêm người dùng</span>
+            <span>Thêm</span>
           </Button>
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetch()}
             disabled={mounted && isFetching}
-            className="h-9 px-3 gap-2 rounded-xl border-border/60 hover:bg-muted"
+            className="h-9 px-3 gap-2 rounded-xl border-border/60 hover:bg-muted shadow-sm"
           >
             <RefreshCcw className={`h-4 w-4 ${mounted && isFetching ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Làm mới</span>
+            <span className="hidden sm:inline text-xs font-medium">Làm mới</span>
           </Button>
-        </div>
-      </div>
-
-      {/* Toolbar / Filters */}
-      <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-3 rounded-2xl border border-border/40 shadow-sm">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-background rounded-xl border border-border/50 shadow-sm min-w-[280px] flex-1 sm:flex-initial">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Tìm theo tên, email, sđt..."
-            className="text-sm bg-transparent border-0 focus:ring-0 w-full outline-none placeholder:text-muted-foreground/60"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
       </div>
 
       {isLoading ? (
         <UsersSkeleton />
-      ) : filteredUsers.length === 0 ? (
+      ) : users.length === 0 ? (
         <div className="flex h-72 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/40 bg-card/40 p-8 text-center shadow-sm">
           <div className="flex size-14 items-center justify-center rounded-full bg-muted/50 mb-4 transition-transform hover:scale-110">
             <UsersIcon className="size-7 text-muted-foreground/60" />
@@ -184,7 +228,7 @@ export function AdminUsersList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {users.map((user) => (
                   <TableRow
                     key={user.id}
                     className="group cursor-pointer hover:bg-muted/40 transition-colors"
@@ -283,7 +327,7 @@ export function AdminUsersList() {
 
           {/* Mobile View */}
           <div className="grid gap-4 md:hidden">
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <Card
                 key={user.id}
                 className="overflow-hidden shadow-sm border-border/60 hover:border-primary/40 transition-all cursor-pointer active:scale-[0.98]"

@@ -39,6 +39,8 @@ export interface UserDetailResponse {
 }
 
 export interface UsersQueryParams extends RequestParams {
+  Name?: string;
+  Role?: string[];
   PageNumber: number;
   PageSize: number;
   IsDescending?: boolean;

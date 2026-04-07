@@ -18,8 +18,6 @@ export default function AuthLayout({
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
-          {/* Light overlay to remove "dark" feel */}
-          <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
         </div>
         <div className="relative z-20 flex items-center gap-2 text-lg font-medium">
           <Image width={180} height={180} src="/logo.svg" alt="Verendar Logo" className="h-14" style={{ width: "auto" }} />
