@@ -61,7 +61,11 @@ export function AssignMechanicDialog({
   const assign = useAssignBookingMutation(branchId || undefined);
 
   useEffect(() => {
-    if (open) setSelectedId("");
+    if (open) {
+      setTimeout(() => {
+        setSelectedId("");
+      }, 0);
+    }
   }, [open, bookingId]);
 
   const handleConfirm = () => {
