@@ -251,13 +251,15 @@ export function BookingDetailSuccessLayout({
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8 lg:gap-x-12">
             <FieldBlock kicker="Khách">
-              <p className="wrap-break-word font-medium">{q.customer?.name ?? raw.customer?.fullName ?? "—"}</p>
+              <p className="wrap-break-word font-medium">{q.customer?.name ?? raw.customer?.fullName ?? raw.customerName ?? "—"}</p>
               {q.customer?.phone && q.customer.phone !== "—" ? (
                 <p className="mt-1 break-all text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">{q.customer.phone}</p>
               ) : raw.customer?.phoneNumber ? (
                 <p className="mt-1 break-all text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">
                   {raw.customer.phoneNumber}
                 </p>
+              ) : raw.customerPhone ? (
+                <p className="mt-1 break-all text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">{raw.customerPhone}</p>
               ) : null}
               {q.customer?.email && q.customer.email !== "—" ? (
                 <p className="mt-1 break-all text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">{q.customer.email}</p>
@@ -268,7 +270,7 @@ export function BookingDetailSuccessLayout({
             <FieldBlock kicker="Xe">
               <p className="wrap-break-word font-medium tabular-nums">{q.vehicle?.licensePlate || raw.vehicle?.licensePlate || "—"}</p>
               <p className="mt-1 wrap-break-word text-[13px] text-muted-foreground sm:mt-1.5 sm:text-sm">
-                {[q.vehicle?.brand || raw.vehicle?.brandName, q.vehicle?.model || raw.vehicle?.modelName]
+                {[q.vehicle?.brand || raw.vehicle?.brandName || raw.vehicleBrand, q.vehicle?.model || raw.vehicle?.modelName || raw.vehicleModel]
                   .filter(Boolean)
                   .join(" ") || "—"}
               </p>
