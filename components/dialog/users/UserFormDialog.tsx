@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import { Loader2, UserPlus, UserCog } from "lucide-react";
 import { useMobile } from "@/hooks/useMobile";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { MiniCalendarDateField } from "@/components/garage/mini-calendar-date-field";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 interface FormValues extends CreateUserRequest {
@@ -49,7 +50,15 @@ export function UserFormDialog({ open, onOpenChange, mode, userId }: UserFormDia
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    control,
+    formState: { errors },
+  } = useForm<FormValues>({
     defaultValues: {
       fullName: "",
       email: "",
@@ -215,14 +224,14 @@ export function UserFormDialog({ open, onOpenChange, mode, userId }: UserFormDia
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {/* Date of Birth */}
+          {/* Date of Birth — lịch mini (MiniCalendarGrid) giống garage */}
           <div className="space-y-2">
             <Label htmlFor="dateOfBirth">Ngày sinh</Label>
-            <Input 
-              id="dateOfBirth" 
-              type="date" 
-              {...register("dateOfBirth", {
-                required: "Vui lòng nhập ngày sinh",
+            <Controller
+              name="dateOfBirth"
+              control={control}
+              rules={{
+                required: "Vui lòng chọn ngày sinh",
                 validate: (value) => {
                   if (!value) return true;
                   const birthDate = new Date(value as string);
@@ -233,8 +242,18 @@ export function UserFormDialog({ open, onOpenChange, mode, userId }: UserFormDia
                     age--;
                   }
                   return age >= 16 || "Người dùng phải đủ 16 tuổi";
-                }
-              })} 
+                },
+              }}
+              render={({ field }) => (
+                <MiniCalendarDateField
+                  id="dateOfBirth"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  minDateStr="1920-01-01"
+                  emptyLabel="Chọn ngày sinh"
+                  className={cn(errors.dateOfBirth && "border-destructive")}
+                />
+              )}
             />
             {errors.dateOfBirth && <p className="text-xs text-destructive">{errors.dateOfBirth.message}</p>}
           </div>
