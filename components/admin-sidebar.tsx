@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Building2,
   LayoutDashboard,
   MessageSquare,
   Users,
@@ -30,6 +31,7 @@ type NavItem = {
 
 const MAIN_NAV: NavItem[] = [
   { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { title: "Quản lí garage", href: "/admin/garages", icon: Building2 },
   { title: "Quản lí người dùng", href: "/admin/users", icon: Users },
   { title: "Quản lí phản hồi", href: "/admin/feedback", icon: MessageSquare },
 ];
