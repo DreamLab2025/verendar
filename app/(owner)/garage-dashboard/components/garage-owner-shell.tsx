@@ -2,8 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useMemo } from "react";
-import { GarageDialog } from "@/components/dialog/garage/GarageDialog";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +10,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
+import { GarageOwnerShellPrimaryAction } from "./garage-owner-shell-primary-action";
 import { GarageOwnerShellMobileHeader } from "./garage-owner-shell-mobile-header";
 import { getGaragePortalViewFromRoles } from "@/lib/auth/garage-portal-roles";
 import { readAuthRolesFromCookies } from "@/lib/auth/read-auth-cookie-user";
@@ -64,11 +63,7 @@ export function GarageOwnerShell({ children }: { children: ReactNode }) {
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <GarageDialog>
-              <Button type="button" className="w-full shadow-sm">
-                Tạo garage
-              </Button>
-            </GarageDialog>
+            <GarageOwnerShellPrimaryAction className="w-full" />
           </SidebarContent>
           <SidebarFooter className="mt-auto" />
         </Sidebar>

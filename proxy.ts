@@ -15,6 +15,7 @@ const KNOWN_APP_ROUTE_PATTERNS = [
   "/",
   "/admin/dashboard",
   "/admin/feedback",
+  "/admin/garages",
   "/admin/users",
   "/garage",
   "/garage-dashboard",

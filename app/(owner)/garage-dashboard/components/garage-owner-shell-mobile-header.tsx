@@ -2,7 +2,6 @@
 
 import { CarFront, LogOut, Menu } from "lucide-react";
 
-import { GarageDialog } from "@/components/dialog/garage/GarageDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +14,8 @@ import { getInitialsFromDisplayName } from "@/lib/auth/read-auth-cookie-user";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { cn } from "@/lib/utils";
 
-/** Mobile: trái logo xe — phải Tạo garage + initials + menu (đăng xuất). */
+import { GarageOwnerShellPrimaryAction } from "./garage-owner-shell-primary-action";
+
 export function GarageOwnerShellMobileHeader() {
   const user = useAuthStore((s) => s.user);
   const initials = user
@@ -34,16 +34,11 @@ export function GarageOwnerShellMobileHeader() {
       </div>
 
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-1.5">
-        <GarageDialog>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 shrink-0 px-3 text-xs font-medium shadow-sm sm:text-sm"
-          >
-            Tạo garage
-          </Button>
-        </GarageDialog>
+        <GarageOwnerShellPrimaryAction
+          variant="outline"
+          size="sm"
+          className="h-9 shrink-0 px-3 text-xs font-medium shadow-sm sm:text-sm"
+        />
 
         <div
           className="grid size-10 shrink-0 place-items-center rounded-full border border-border/80 bg-primary/10 text-sm font-semibold text-primary"

@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyGarageQuery } from "@/hooks/useGarage";
+import { isApiNotFoundError } from "@/lib/api/is-api-not-found";
 
 import { GarageOwnerBranchCard } from "./components/garage-owner-branch-card";
 
@@ -19,6 +20,19 @@ export default function GarageOwnerBranchesSectionPage() {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <Skeleton className="h-36 rounded-xl" />
           <Skeleton className="h-36 rounded-xl" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError && isApiNotFoundError(error)) {
+    return (
+      <Card className="border-border/80 bg-card/80 shadow-sm rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-lg md:text-xl">Các chi nhánh của tôi</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground">Bạn chưa đăng ký garage.</p>
         </CardContent>
       </Card>
     );
