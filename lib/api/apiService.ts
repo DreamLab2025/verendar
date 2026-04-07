@@ -112,6 +112,12 @@ export class ApiService {
     }
   }
 
+  private readTokenFromCookie(): string | null {
+    if (typeof document === "undefined") return null;
+    const match = document.cookie.match(/(?:^|;\s*)authToken=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
   private readPersistedRefreshToken(): string | null {
     // ✅ Ưu tiên Zustand store (in-memory, luôn up-to-date ngay sau login)
     // localStorage persist có thể bị trễ vài ms → đây là root cause redirect sớm
@@ -298,9 +304,9 @@ export class ApiService {
 
   private setupInterceptors() {
     this.client.interceptors.request.use((config) => {
-      // Ưu tiên token trong memory; fallback sang Zustand store
-      // (đảm bảo instance khác đã refresh sẽ được pickup)
-      const token = this.authToken ?? useAuthStore.getState().token ?? null;
+      // Ưu tiên token trong memory → Zustand store → cookie
+      // Cookie fallback giúp tránh gọi refresh sau F5 khi Zustand chưa rehydrate
+      const token = this.authToken ?? useAuthStore.getState().token ?? this.readTokenFromCookie();
       if (token) {
         // Đồng bộ lại instance nếu store có token mới hơn
         if (!this.authToken && token) this.authToken = token;
