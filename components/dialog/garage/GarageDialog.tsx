@@ -13,13 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateGarage, useGarageBusinessLookupQuery } from "@/hooks/useGarage";
+import { uploadMediaFile } from "@/hooks/useMedia";
 import { cn } from "@/lib/utils";
 
 function emptyForm() {
   return {
+    logoUrl: "",
     businessName: "",
     shortName: "",
     taxCode: "",
@@ -39,13 +42,14 @@ export function GarageDialog({ children }: { children: ReactNode }) {
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const logoUrl = form.logoUrl.trim();
     const businessName = form.businessName.trim();
     const shortName = form.shortName.trim();
     const taxCode = form.taxCode.trim();
     if (!businessName || !shortName) return;
 
     createGarage.mutate(
-      { businessName, shortName, taxCode: taxCode || undefined, logoUrl: null },
+      { businessName, shortName, taxCode: taxCode || undefined, logoUrl: logoUrl || null },
       {
         onSuccess: () => {
           setOpen(false);
@@ -81,6 +85,19 @@ export function GarageDialog({ children }: { children: ReactNode }) {
           <DialogDescription>Nhập thông tin đăng ký garage. Bạn có thể chỉnh sửa sau khi tạo.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
+          <ImageUrlDropzone
+            id="garage-dialog-logo"
+            label="Logo garage"
+            shape="circle"
+            value={form.logoUrl}
+            onChange={(next) => setForm((f) => ({ ...f, logoUrl: next }))}
+            disabled={pending}
+            description="Không bắt buộc. Ảnh sẽ được tải lên storage trước khi tạo garage."
+            resolveFileUpload={async (file) => {
+              const result = await uploadMediaFile(file, "GarageLogo");
+              return result.imageUrl;
+            }}
+          />
           <div className="space-y-2">
             <Label htmlFor="garage-dialog-tax-code">Mã số thuế (không bắt buộc)</Label>
             <Input

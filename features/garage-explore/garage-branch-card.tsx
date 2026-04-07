@@ -29,6 +29,7 @@ export interface GarageBranchCardProps {
 
 export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCardProps) {
   const garageId = branch.garage?.id;
+  const garageLogoUrl = branch.garage?.logoUrl?.trim() || null;
   const businessName = branch.garage?.businessName?.trim() || null;
   const branchName = branch.name?.trim() || null;
   const headline = businessName || branchName || "Garage";
@@ -118,9 +119,20 @@ export function GarageBranchCard({ branch, selected, onSelect }: GarageBranchCar
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 md:gap-2 md:p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-1 text-[13px] font-semibold leading-tight tracking-tight text-foreground md:line-clamp-2 md:text-[15px] md:font-bold">
-              {headline}
-            </p>
+            <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
+              <span className="relative size-4 shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted md:size-5">
+                {garageLogoUrl ? (
+                  <SafeImage src={garageLogoUrl} alt={headline} fill className="object-cover" />
+                ) : (
+                  <span className="grid size-full place-items-center text-muted-foreground/70">
+                    <Building2 className="size-2.5 md:size-3" aria-hidden />
+                  </span>
+                )}
+              </span>
+              <p className="line-clamp-1 min-w-0 text-[13px] font-semibold leading-tight tracking-tight text-foreground md:line-clamp-2 md:text-[15px] md:font-bold">
+                {headline}
+              </p>
+            </div>
             {subline ? (
               <p className="mt-0 line-clamp-1 text-[11px] text-muted-foreground md:mt-0.5 md:text-xs">{subline}</p>
             ) : null}

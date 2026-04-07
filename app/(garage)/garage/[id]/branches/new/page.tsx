@@ -111,7 +111,7 @@ export default function GarageNewBranchPage() {
           payload: {
             name: branchInfo.name.trim(),
             description: branchInfo.description.trim(),
-            coverImageUrl: null,
+            coverImageUrl: branchInfo.coverImageUrl.trim() || null,
             phoneNumber: branchInfo.phoneNumber.trim(),
             taxCode: branchInfo.taxCode.trim(),
             address: {

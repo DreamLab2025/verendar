@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { usePatchMaintenanceProposalMutation } from "@/hooks/useMaintenanceProposals";
+import {
+  useApplyMaintenanceProposalMutation,
+  usePatchMaintenanceProposalMutation,
+} from "@/hooks/useMaintenanceProposals";
 import type { MaintenanceProposalDto } from "@/lib/api/services/fetchMaintenanceProposals";
 import { cn } from "@/lib/utils";
 import { useMobile } from "@/hooks/useMobile";
@@ -30,6 +33,7 @@ export function EditProposalDialog({
 }: EditProposalDialogProps) {
   const isMobile = useMobile();
   const patchMutation = usePatchMaintenanceProposalMutation(vehicleId);
+  const applyMutation = useApplyMaintenanceProposalMutation(vehicleId);
 
   const [odometerInput, setOdometerInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
@@ -54,6 +58,16 @@ export function EditProposalDialog({
 
   const patching =
     patchMutation.isPending && patchMutation.variables?.proposalId === p.id;
+  const applying =
+    applyMutation.isPending && applyMutation.variables === p.id;
+  const submitting = patching || applying;
+
+  const formatVnd = (n: number) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      maximumFractionDigits: 0,
+    }).format(n);
 
   const onPatch = () => {
     const odo = parseOdometer();
@@ -72,8 +86,26 @@ export function EditProposalDialog({
       {
         onSuccess: (body) => {
           if (body?.isSuccess) {
-            toast.success(body.message?.trim() || "Đã cập nhật đề xuất.");
-            onOpenChange(false);
+            applyMutation.mutate(p.id, {
+              onSuccess: (applyBody) => {
+                if (applyBody?.isSuccess) {
+                  const extra = applyBody.data?.trackingUpdated?.length
+                    ? ` (Đã cập nhật: ${applyBody.data.trackingUpdated.join(", ")})`
+                    : "";
+                  toast.success(
+                    (applyBody.message?.trim() || "Đã cập nhật và xác nhận áp dụng.") + extra,
+                  );
+                  onOpenChange(false);
+                } else {
+                  toast.error(
+                    applyBody?.message?.trim() || "Đã cập nhật nhưng không xác nhận được.",
+                  );
+                }
+              },
+              onError: (err: Error) => {
+                toast.error(err.message || "Đã cập nhật nhưng xác nhận thất bại.");
+              },
+            });
           } else {
             toast.error(body?.message?.trim() || "Không cập nhật được.");
           }
@@ -121,119 +153,138 @@ export function EditProposalDialog({
                   "fixed z-50 grid w-full gap-0 border bg-background shadow-lg overflow-hidden",
                   isMobile
                     ? "inset-x-0 bottom-0 h-[90vh] rounded-t-2xl rounded-b-none p-0"
-                    : "left-[50%] top-[50%] h-fit max-h-[95vh] sm:rounded-xl sm:max-w-md p-0"
+                    : "left-[50%] top-[50%] h-fit max-h-[95vh] sm:max-w-3xl sm:rounded-xl p-0"
                 )}
               >
                 <div className="flex flex-col h-full max-h-[90vh]">
                   {/* Header */}
-                  <div className="p-6 border-b bg-muted/20">
-                    <div className="flex items-center gap-4">
-                      <div className="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg shadow-inner shrink-0">
-                        <ClipboardEdit className="size-6" />
+                  <div className="border-b border-border/50 bg-muted/20 px-4 py-4 sm:px-5">
+                    <div className="flex items-start gap-3">
+                      <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary shadow-inner">
+                        <ClipboardEdit className="size-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <DialogPrimitive.Title className="text-xl font-bold tracking-tight text-foreground">
+                        <DialogPrimitive.Title className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                           Cập nhật đề xuất
                         </DialogPrimitive.Title>
-                        <DialogPrimitive.Description className="text-xs text-muted-foreground font-medium mt-0.5">
-                          Điều chỉnh ODO, ghi chú và theo dõi phụ tùng.
+                        <DialogPrimitive.Description className="mt-0.5 text-xs font-medium text-muted-foreground">
+                          Điều chỉnh ODO, ghi chú và tự động xác nhận áp dụng.
                         </DialogPrimitive.Description>
+
+                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                          <div className="rounded-md border border-border/60 bg-background px-2.5 py-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Mã đề xuất</p>
+                            <p className="mt-1 font-mono text-sm font-semibold text-foreground">{p.id.slice(-6).toUpperCase()}</p>
+                          </div>
+                          <div className="rounded-md border border-border/60 bg-background px-2.5 py-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Số hạng mục</p>
+                            <p className="mt-1 text-sm font-semibold text-foreground">{p.items.length} mục</p>
+                          </div>
+                          <div className="rounded-md border border-border/60 bg-background px-2.5 py-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Tổng chi phí</p>
+                            <p className="mt-1 truncate text-sm font-semibold text-foreground">{formatVnd(p.totalAmount)}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Body */}
-                  <div className="flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-6">
-                    {/* ODO Section */}
-                    <div className="space-y-2.5">
-                      <Label htmlFor={`dlg-odo-${p.id}`} className="text-sm font-semibold text-foreground/80">
-                        ODO tại dịch vụ (km)
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id={`dlg-odo-${p.id}`}
-                          inputMode="numeric"
-                          placeholder="Ví dụ: 40.000"
-                          value={odometerInput}
-                          onChange={(e) => setOdometerInput(e.target.value)}
-                          className="h-12 rounded-xl bg-muted/20 pl-4 font-mono text-lg font-bold tabular-nums ring-offset-background focus-visible:ring-1 focus-visible:ring-primary shadow-xs"
-                          disabled={patching}
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-sm font-bold text-muted-foreground/60">km</span>
-                      </div>
-                    </div>
+                  <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+                      <section className="space-y-4 rounded-xl border border-border/60 bg-card p-4">
+                        <div className="space-y-2.5">
+                          <Label htmlFor={`dlg-odo-${p.id}`} className="text-sm font-semibold text-foreground/80">
+                            ODO tại dịch vụ (km)
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id={`dlg-odo-${p.id}`}
+                              inputMode="numeric"
+                              placeholder="Ví dụ: 40.000"
+                              value={odometerInput}
+                              onChange={(e) => setOdometerInput(e.target.value)}
+                              className="h-11 rounded-lg border-border/60 bg-muted/20 pl-3 font-mono text-base font-semibold tabular-nums"
+                              disabled={submitting}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-muted-foreground/70">km</span>
+                          </div>
+                        </div>
 
-                    {/* Notes Section */}
-                    <div className="space-y-2.5">
-                      <Label htmlFor={`dlg-notes-${p.id}`} className="text-sm font-semibold text-foreground/80">
-                        Ghi chú
-                      </Label>
-                      <Textarea
-                        id={`dlg-notes-${p.id}`}
-                        placeholder="Ghi chú cho garage hoặc kỹ thuật viên…"
-                        value={notesInput}
-                        onChange={(e) => setNotesInput(e.target.value)}
-                        rows={3}
-                        className="min-h-[100px] resize-none rounded-xl bg-muted/20 p-4 ring-offset-background focus-visible:ring-1 focus-visible:ring-primary shadow-xs"
-                        disabled={patching}
-                      />
-                    </div>
+                        <div className="space-y-2.5">
+                          <Label htmlFor={`dlg-notes-${p.id}`} className="text-sm font-semibold text-foreground/80">
+                            Ghi chú
+                          </Label>
+                          <Textarea
+                            id={`dlg-notes-${p.id}`}
+                            placeholder="Ghi chú cho garage hoặc kỹ thuật viên..."
+                            value={notesInput}
+                            onChange={(e) => setNotesInput(e.target.value)}
+                            rows={5}
+                            className="min-h-[140px] resize-none rounded-lg border-border/60 bg-muted/20 p-3"
+                            disabled={submitting}
+                          />
+                        </div>
+                      </section>
 
-                    {/* Tracking Section */}
-                    <div className="space-y-3.5">
-                      <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                        Cập nhật theo dõi phụ tùng
-                      </p>
-                      <ul className="space-y-2.5">
-                        {p.items.map((it) => (
-                          <li
-                            key={it.id}
-                            className={cn(
-                              "flex items-center justify-between gap-4 rounded-2xl border border-border/40 bg-primary/3 p-3.5 shadow-xs transition-colors",
-                              "hover:border-primary/20",
-                            )}
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-bold text-foreground">
+                      <aside className="space-y-3 rounded-xl border border-border/60 bg-card p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          Theo dõi phụ tùng
+                        </p>
+                        <ul className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
+                          {p.items.map((it) => (
+                            <li
+                              key={it.id}
+                              className={cn(
+                                "rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5",
+                                "transition-colors hover:bg-muted/30",
+                              )}
+                            >
+                              <p className="truncate text-sm font-semibold text-foreground">
                                 {it.itemName}
                               </p>
-                              <p className="text-[10px] font-semibold text-muted-foreground/70">
+                              <p className="text-[10px] font-semibold text-muted-foreground/80">
                                 {it.partCategoryName}
                               </p>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                            </li>
+                          ))}
+                        </ul>
+                      </aside>
                     </div>
                   </div>
 
                   {/* Footer */}
-                  <div className="p-4 bg-muted/10 border-t mt-auto">
+                  <div className="mt-auto border-t border-border/50 bg-muted/20 p-4">
                     <div className="flex gap-3 justify-end">
                       <Button
                         type="button"
                         variant="outline"
-                        className="rounded-xl px-6 h-12 flex-1 sm:flex-none font-bold"
+                        className="h-10 flex-1 rounded-lg px-6 font-semibold sm:flex-none"
                         onClick={() => onOpenChange(false)}
-                        disabled={patching}
+                        disabled={submitting}
                       >
                         Huỷ
                       </Button>
                       <Button
                         type="button"
-                        className="rounded-xl px-8 h-12 flex-1 sm:flex-none font-bold shadow-sm shadow-primary/20"
+                        className="h-10 flex-1 rounded-lg px-8 font-semibold sm:flex-none"
                         onClick={onPatch}
-                        disabled={patching}
+                        disabled={submitting}
                       >
                         {patching ? (
                           <>
-                            <Loader2 className="mr-2 size-5 animate-spin" />
-                            Đang lưu…
+                            <Loader2 className="mr-2 size-4 animate-spin" />
+                            Đang cập nhật…
+                          </>
+                        ) : applying ? (
+                          <>
+                            <Loader2 className="mr-2 size-4 animate-spin" />
+                            Đang xác nhận…
                           </>
                         ) : (
                           <>
-                            <Save className="mr-2 size-5" />
-                            Lưu thay đổi
+                            <Save className="mr-2 size-4" />
+                            Lưu và xác nhận
                           </>
                         )}
                       </Button>

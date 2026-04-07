@@ -43,6 +43,7 @@ function detailToAddressDraft(detail: GarageBranchDetailDto): NewBranchAddressDr
 
 function detailToBranchInfoDraft(detail: GarageBranchDetailDto): NewBranchInfoDraft {
   return {
+    coverImageUrl: detail.coverImageUrl?.trim() ?? "",
     name: detail.name?.trim() ?? "",
     phoneNumber: detail.phoneNumber?.trim() ?? "",
     taxCode: detail.taxCode?.trim() ?? "",
@@ -131,7 +132,7 @@ function GarageEditBranchWizard({ garageId, branchId, detail, exitHref }: Garage
           payload: {
             name: branchInfo.name.trim(),
             description: branchInfo.description.trim(),
-            coverImageUrl: detail.coverImageUrl ?? null,
+            coverImageUrl: branchInfo.coverImageUrl.trim() || null,
             phoneNumber: branchInfo.phoneNumber.trim(),
             taxCode: branchInfo.taxCode.trim(),
             address: {
@@ -156,7 +157,6 @@ function GarageEditBranchWizard({ garageId, branchId, detail, exitHref }: Garage
     workingHours,
     updateGarageBranch,
     goExit,
-    detail,
   ]);
 
   const step1NextDisabled = step === 1 && !isStep1AddressComplete(address);

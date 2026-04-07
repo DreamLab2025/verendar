@@ -2,11 +2,14 @@
 
 import type { ReactNode } from "react";
 
+import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadMediaFile } from "@/hooks/useMedia";
 import { cn } from "@/lib/utils";
 
 export type NewBranchInfoDraft = {
+  coverImageUrl: string;
   name: string;
   phoneNumber: string;
   taxCode: string;
@@ -15,6 +18,7 @@ export type NewBranchInfoDraft = {
 
 export function createEmptyBranchInfoDraft(): NewBranchInfoDraft {
   return {
+    coverImageUrl: "",
     name: "",
     phoneNumber: "",
     taxCode: "",
@@ -77,6 +81,27 @@ export function NewBranchStep2({ info, onInfoChange }: NewBranchStep2Props) {
       </header>
 
       <div className="border-t border-border/50">
+        <div className="border-b border-border/50 py-5">
+          <div className="space-y-3">
+            <p className="text-base font-semibold text-foreground sm:text-lg">Ảnh bìa chi nhánh</p>
+            <div className="sm:-mx-3 md:-mx-6">
+              <ImageUrlDropzone
+                id="branch-cover-image"
+                label="Cover image"
+                previewMode="inside"
+                inputClassName="min-h-50 md:min-h-100"
+                value={info.coverImageUrl}
+                onChange={(next) => onInfoChange({ coverImageUrl: next })}
+                description="Không bắt buộc. Ảnh sẽ được tải lên storage trước khi lưu chi nhánh."
+                resolveFileUpload={async (file) => {
+                  const result = await uploadMediaFile(file, "GarageBranchCover");
+                  return result.imageUrl;
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
         <FormRow label="Mã số thuế" labelId="branch-tax-label" htmlFor="branch-tax" largeLabel>
           <Input
             id="branch-tax"
