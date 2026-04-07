@@ -403,7 +403,10 @@ export function AdminDashboardContent() {
   const activityAreaData = useMemo<ChartData<"line">>(() => {
     const points = chartData?.points ?? [];
     return {
-      labels: points.map((point) => point.period),
+      labels: points.map((point) => {
+        const date = dayjs(point.period);
+        return groupBy === "day" ? date.format("DD/MM") : date.format("MM/YYYY");
+      }),
       datasets: [
         {
           label: "Người dùng mới",
@@ -417,7 +420,7 @@ export function AdminDashboardContent() {
         },
       ],
     };
-  }, [chartData?.points]);
+  }, [chartData?.points, groupBy]);
 
   const activityAreaOptions = useMemo<ChartOptions<"line">>(
     () => ({
@@ -435,9 +438,12 @@ export function AdminDashboardContent() {
         x: {
           ticks: {
             color: "#6b7280",
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 10,
           },
           grid: {
-            color: THEME_GRID,
+            display: false,
           },
         },
         y: {

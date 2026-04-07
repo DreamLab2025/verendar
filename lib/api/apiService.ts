@@ -132,7 +132,8 @@ export class ApiService {
       const parsed = JSON.parse(rawPersist) as {
         state?: { refreshToken?: string | null };
       };
-      return parsed.state?.refreshToken ?? null;
+      const token = parsed.state?.refreshToken;
+      return typeof token === "string" ? token : null;
     } catch {
       return null;
     }
@@ -218,9 +219,11 @@ export class ApiService {
           return null;
         }
 
-        const gatewayBase = process.env.NEXT_PUBLIC_API_URL_API_GATEWAY || this.client.defaults.baseURL || "";
+        const gatewayBase = process.env.NEXT_PUBLIC_API_URL_API_GATEWAY || 
+                           (this.client.defaults.baseURL?.includes("8080") ? this.client.defaults.baseURL : "");
+        
         if (!gatewayBase) {
-          console.debug("[Auth] ❌ Gateway base URL missing");
+          console.debug("[Auth] ❌ Gateway base URL missing, cannot call refresh-token");
           return null;
         }
 
@@ -327,6 +330,13 @@ export class ApiService {
         if (error.response?.status === 401) {
           const originalRequest = error.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined;
 
+          // TRÁNH VÒNG LẶP: Nếu request bị 401 CHÍNH LÀ request refresh-token thì logout ngay
+          if (originalRequest?.url?.includes("/auth/refresh-token")) {
+            console.warn("[Auth] ❌ Refresh token request itself failed with 401. Logging out...");
+            this.handleTerminalUnauthorized();
+            return Promise.reject(error);
+          }
+
           if (originalRequest && !originalRequest._retry) {
             originalRequest._retry = true;
             console.debug("[Auth] 401 intercepted, attempting refresh...", originalRequest.url);
@@ -363,17 +373,7 @@ export class ApiService {
           // CHỈ REDIRECT KHI:
           // 1. Không tìm thấy refreshToken hoặc API refresh trả về lỗi (nextAccessToken === null)
           // 2. Hoặc đã retry với token mới nhất mà vẫn bị 401
-          if (typeof window !== "undefined" && !ApiService.isRedirecting) {
-            console.debug("[Auth] ❌ Terminal 401, redirecting to /login");
-            ApiService.isRedirecting = true;
-            
-            this.setAuthToken(null);
-            deleteCookie("authToken", { path: "/" });
-            this.clearPersistedAuth();
-            useAuthStore.getState().logout();
-
-            window.location.href = "/login";
-          }
+          this.handleTerminalUnauthorized();
 
           return Promise.reject(new Error("Unauthorized"));
         }
@@ -390,6 +390,20 @@ export class ApiService {
         return Promise.reject(apiError);
       },
     );
+  }
+
+  private handleTerminalUnauthorized() {
+    if (typeof window !== "undefined" && !ApiService.isRedirecting) {
+      console.debug("[Auth] ❌ Terminal 401, redirecting to /login");
+      ApiService.isRedirecting = true;
+
+      this.setAuthToken(null);
+      deleteCookie("authToken", { path: "/" });
+      this.clearPersistedAuth();
+      useAuthStore.getState().logout();
+
+      window.location.href = "/login";
+    }
   }
 
   /* ---------- Helpers ---------- */
