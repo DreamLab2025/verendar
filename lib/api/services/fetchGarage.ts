@@ -128,7 +128,7 @@ export interface GaragesQueryParams extends RequestParams {
 export interface CreateGaragePayload {
   businessName: string;
   shortName: string;
-  taxCode: string;
+  taxCode?: string;
   logoUrl: string | null;
 }
 
