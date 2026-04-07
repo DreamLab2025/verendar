@@ -133,9 +133,11 @@ export function BookingDetailBody({ data: q, garageId, branchId, onRequestAssign
               <dd className="mt-0.5 tabular-nums text-foreground">{q.customer.phone}</dd>
             </div>
           </dl>
-          <p className="mt-3 font-mono text-[11px] leading-tight text-muted-foreground sm:mt-4 sm:text-xs">
-            userId: {q.raw.userId}
-          </p>
+          {q.raw.userId ? (
+            <p className="mt-3 font-mono text-[11px] leading-tight text-muted-foreground sm:mt-4 sm:text-xs">
+              userId: {q.raw.userId}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-xl border border-border/60 bg-card/40 px-4 py-4 sm:rounded-2xl sm:px-5 sm:py-5">
           <h3 className="text-sm font-semibold text-foreground sm:text-base">Xe</h3>
@@ -155,9 +157,11 @@ export function BookingDetailBody({ data: q, garageId, branchId, onRequestAssign
               </div>
             ) : null}
           </dl>
-          <p className="mt-3 font-mono text-[11px] leading-tight text-muted-foreground sm:mt-4 sm:text-xs">
-            userVehicleId: {q.raw.userVehicleId}
-          </p>
+          {q.raw.userVehicleId ? (
+            <p className="mt-3 font-mono text-[11px] leading-tight text-muted-foreground sm:mt-4 sm:text-xs">
+              userVehicleId: {q.raw.userVehicleId}
+            </p>
+          ) : null}
         </div>
         <div className="sm:col-span-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
