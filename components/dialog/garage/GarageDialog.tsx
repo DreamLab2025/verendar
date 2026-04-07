@@ -42,10 +42,10 @@ export function GarageDialog({ children }: { children: ReactNode }) {
     const businessName = form.businessName.trim();
     const shortName = form.shortName.trim();
     const taxCode = form.taxCode.trim();
-    if (!businessName || !shortName || !taxCode) return;
+    if (!businessName || !shortName) return;
 
     createGarage.mutate(
-      { businessName, shortName, taxCode, logoUrl: null },
+      { businessName, shortName, taxCode: taxCode || undefined, logoUrl: null },
       {
         onSuccess: () => {
           setOpen(false);
@@ -82,7 +82,7 @@ export function GarageDialog({ children }: { children: ReactNode }) {
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="garage-dialog-tax-code">Mã số thuế</Label>
+            <Label htmlFor="garage-dialog-tax-code">Mã số thuế (không bắt buộc)</Label>
             <Input
               id="garage-dialog-tax-code"
               name="taxCode"
@@ -94,7 +94,6 @@ export function GarageDialog({ children }: { children: ReactNode }) {
                 void lookupByTaxCode();
               }}
               placeholder="Mã số thuế doanh nghiệp"
-              required
               disabled={pending}
             />
             {lookup.isFetching ? (

@@ -5,7 +5,6 @@ import {
   GARAGE_HOME_ROUTE,
   USER_HOME_ROUTE,
   hasAdminRole,
-  hasGarageRole,
   normalizeJwtRolesClaim,
   resolveHomeRouteFromRoles,
 } from "@/lib/auth/role-routing";
@@ -16,6 +15,7 @@ const KNOWN_APP_ROUTE_PATTERNS = [
   "/",
   "/admin/dashboard",
   "/admin/feedback",
+  "/admin/garages",
   "/admin/users",
   "/garage",
   "/garage-dashboard",
@@ -30,8 +30,7 @@ const KNOWN_APP_ROUTE_PATTERNS = [
 const routeMatches = (pathname: string, route: string) =>
   route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
 
-const isKnownAppRoute = (pathname: string) =>
-  KNOWN_APP_ROUTE_PATTERNS.some((route) => routeMatches(pathname, route));
+const isKnownAppRoute = (pathname: string) => KNOWN_APP_ROUTE_PATTERNS.some((route) => routeMatches(pathname, route));
 
 const getUserRoles = (token: string | undefined): string[] => {
   if (!token) return [];
@@ -77,7 +76,6 @@ export function proxy(request: NextRequest) {
   const isAdminRoute = pathname.startsWith("/admin");
   const isGarageRoute = pathname === GARAGE_HOME_ROUTE || pathname.startsWith(`${GARAGE_HOME_ROUTE}/`);
   const isAdmin = hasAdminRole(userRoles);
-  const isGarageMember = hasGarageRole(userRoles);
 
   if (isAuthRoute) {
     return NextResponse.redirect(new URL(homeRoute, request.url));
@@ -105,15 +103,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(homeRoute, request.url));
   }
 
-  if (isGarageRoute && !isGarageMember) {
-    return NextResponse.redirect(new URL(USER_HOME_ROUTE, request.url));
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|xml|glb)$).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|xml|glb)$).*)"],
 };

@@ -48,9 +48,6 @@ export function GarageBookingDateField({ value, onChange, minDate, labelId }: Ga
     setOpen(false);
   };
 
-  const canPrevMonth = !viewMonth.clone().subtract(1, "month").endOf("month").isBefore(minD, "day");
-  const canNextMonth = !viewMonth.clone().add(1, "month").startOf("month").isAfter(maxD, "day");
-
   return (
     <div className="min-w-0 w-full space-y-2 sm:space-y-3">
       {summary ? (
@@ -156,18 +153,11 @@ export function GarageBookingDateField({ value, onChange, minDate, labelId }: Ga
         >
           <MiniCalendarGrid
             viewMonth={viewMonth}
-            onPrevMonth={() => {
-              if (canPrevMonth) setViewMonth((m) => m.clone().subtract(1, "month"));
-            }}
-            onNextMonth={() => {
-              if (canNextMonth) setViewMonth((m) => m.clone().add(1, "month"));
-            }}
+            onViewMonthChange={setViewMonth}
             selectedIso={value}
             onSelectDay={handlePick}
             minDayjs={minD}
             maxDayjs={maxD}
-            disablePrev={!canPrevMonth}
-            disableNext={!canNextMonth}
           />
         </PopoverContent>
       </Popover>

@@ -50,6 +50,20 @@ async function resolveCustomerDisplay(d: BookingDetailDto): Promise<CustomerDisp
   if (d.customer) {
     return customerFromEmbedded(d.customer);
   }
+  if (d.customerName?.trim() || d.customerPhone?.trim()) {
+    return {
+      name: d.customerName?.trim() || "—",
+      email: "—",
+      phone: d.customerPhone?.trim() || "—",
+    };
+  }
+  if (!d.userId) {
+    return {
+      name: "—",
+      email: "—",
+      phone: "—",
+    };
+  }
   try {
     const r = await UserService.getUserById(d.userId);
     if (r.isSuccess && r.data) {
@@ -83,6 +97,22 @@ function vehicleFromEmbedded(v: BookingVehicleDto): VehicleDisplay {
 async function resolveVehicleDisplay(d: BookingDetailDto): Promise<VehicleDisplay> {
   if (d.vehicle) {
     return vehicleFromEmbedded(d.vehicle);
+  }
+  if (d.vehicleBrand?.trim() || d.vehicleModel?.trim()) {
+    return {
+      brand: d.vehicleBrand?.trim() || "—",
+      model: d.vehicleModel?.trim() || "—",
+      licensePlate: "",
+      imageUrl: null,
+    };
+  }
+  if (!d.userVehicleId) {
+    return {
+      brand: "—",
+      model: "—",
+      licensePlate: "",
+      imageUrl: null,
+    };
   }
   try {
     const r = await UserVehicleService.getUserVehicleById(d.userVehicleId);
@@ -185,9 +215,9 @@ export async function fetchAndEnrichBookingDetail(id: string): Promise<EnrichedB
 
   const historyEntries = d.statusHistory.map((entry) => ({
     entry,
-    changedByLabel: entry.changedByUserId
-      ? historyUserMap.get(entry.changedByUserId) ?? entry.changedByUserId
-      : "—",
+    changedByLabel:
+      entry.changedByName?.trim() ||
+      (entry.changedByUserId ? historyUserMap.get(entry.changedByUserId) ?? entry.changedByUserId : "—"),
   }));
 
   return {
@@ -205,8 +235,21 @@ export async function fetchAndEnrichBookingDetail(id: string): Promise<EnrichedB
  * Dùng cho trang success và preview nhanh.
  */
 export function minimalEnrichedFromBookingDetailDto(d: BookingDetailDto): EnrichedBookingDetail {
-  const customer = d.customer ? customerFromEmbedded(d.customer) : { name: "—", email: "—", phone: "—" };
-  const vehicle = d.vehicle ? vehicleFromEmbedded(d.vehicle) : { brand: "—", model: "—", licensePlate: "", imageUrl: null };
+  const customer = d.customer
+    ? customerFromEmbedded(d.customer)
+    : {
+        name: d.customerName?.trim() || "—",
+        email: "—",
+        phone: d.customerPhone?.trim() || "—",
+      };
+  const vehicle = d.vehicle
+    ? vehicleFromEmbedded(d.vehicle)
+    : {
+        brand: d.vehicleBrand?.trim() || "—",
+        model: d.vehicleModel?.trim() || "—",
+        licensePlate: "",
+        imageUrl: null,
+      };
   const mechanicLabel = d.mechanicDisplayName?.trim() || (d.mechanicId ?? "—");
   const lineItems = d.lineItems.map((line) => ({
     line,
@@ -214,7 +257,7 @@ export function minimalEnrichedFromBookingDetailDto(d: BookingDetailDto): Enrich
   }));
   const historyEntries = d.statusHistory.map((entry) => ({
     entry,
-    changedByLabel: entry.changedByUserId ?? "—",
+    changedByLabel: entry.changedByName?.trim() || entry.changedByUserId || "—",
   }));
   return {
     raw: d,
