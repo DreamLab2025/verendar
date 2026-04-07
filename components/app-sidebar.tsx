@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, CarFront, ClipboardList, HomeIcon, PenLine } from "lucide-react";
+import { Building2, CalendarClock, CarFront, ClipboardList, HomeIcon, PenLine } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,10 +28,11 @@ type NavItem = {
 
 const MAIN_NAV: NavItem[] = [
   { title: "Phương tiện", href: "/", icon: CarFront },
-  { title: "Garage", href: "/user/garage", icon: HomeIcon },
+  { title: "Dịch vụ", href: "/user/garage", icon: HomeIcon },
   { title: "Thông báo", href: "/notifications", icon: CalendarClock },
   { title: "Lịch sử", href: "/user/booking-history", icon: ClipboardList },
   { title: "Phản hồi", href: "/feedback", icon: PenLine },
+  { title: "Quản lí garage", href: "/garage", icon: Building2 },
 ];
 
 // const HELP_NAV: NavItem[] = [

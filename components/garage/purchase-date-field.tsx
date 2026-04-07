@@ -34,7 +34,9 @@ export function PurchaseDateField({
 
   useEffect(() => {
     if (value && dayjs(value).isValid()) {
-      setViewMonth(dayjs(value).startOf("month"));
+      setTimeout(() => {
+        setViewMonth(dayjs(value).startOf("month"));
+      }, 0);
     }
   }, [value]);
 
@@ -44,9 +46,6 @@ export function PurchaseDateField({
     onChange(iso);
     setOpen(false);
   };
-
-  const canPrevMonth = !viewMonth.clone().subtract(1, "month").endOf("month").isBefore(minD, "day");
-  const canNextMonth = !viewMonth.clone().add(1, "month").startOf("month").isAfter(maxD, "day");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -71,18 +70,11 @@ export function PurchaseDateField({
       >
         <MiniCalendarGrid
           viewMonth={viewMonth}
-          onPrevMonth={() => {
-            if (canPrevMonth) setViewMonth((m) => m.clone().subtract(1, "month"));
-          }}
-          onNextMonth={() => {
-            if (canNextMonth) setViewMonth((m) => m.clone().add(1, "month"));
-          }}
+          onViewMonthChange={setViewMonth}
           selectedIso={value}
           onSelectDay={handlePick}
           minDayjs={minD}
           maxDayjs={maxD}
-          disablePrev={!canPrevMonth}
-          disableNext={!canNextMonth}
         />
       </PopoverContent>
     </Popover>
