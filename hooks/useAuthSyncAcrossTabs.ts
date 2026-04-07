@@ -114,7 +114,12 @@ export function useAuthSyncAcrossTabs() {
 
     if (!didBootstrapRefreshRef.current) {
       didBootstrapRefreshRef.current = true;
-      triggerRefresh();
+      // Chỉ refresh ngay khi bootstrap nếu token sắp hết hạn (< REFRESH_BUFFER_MS còn lại)
+      // Tránh gọi refresh vô ích mỗi lần F5 khi token vẫn còn hàng giờ hạn dùng
+      const remainingMs = expMs - Date.now();
+      if (remainingMs <= REFRESH_BUFFER_MS) {
+        triggerRefresh();
+      }
       return;
     }
 

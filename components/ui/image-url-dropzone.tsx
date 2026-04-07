@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import SafeImage from "./SafeImage";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/svg+xml";
@@ -31,9 +32,22 @@ export type ImageUrlDropzoneProps = {
   onChange: (next: string) => void;
   disabled?: boolean;
   description?: string;
+  /**
+   * Khi có: chọn/kéo file sẽ gọi hàm này (upload S3, v.v.) và gán chuỗi trả về (URL ảnh).
+   * Nếu không có: đọc file thành data URL như cũ.
+   */
+  resolveFileUpload?: (file: File) => Promise<string>;
 };
 
-export function ImageUrlDropzone({ id, label, value, onChange, disabled, description }: ImageUrlDropzoneProps) {
+export function ImageUrlDropzone({
+  id,
+  label,
+  value,
+  onChange,
+  disabled,
+  description,
+  resolveFileUpload,
+}: ImageUrlDropzoneProps) {
   const autoId = useId();
   const inputId = id ?? `image-url-drop-${autoId}`;
   const [dragActive, setDragActive] = useState(false);
@@ -50,6 +64,20 @@ export function ImageUrlDropzone({ id, label, value, onChange, disabled, descrip
         toast.error("Ảnh tối đa 5MB.");
         return;
       }
+      if (resolveFileUpload) {
+        setReading(true);
+        void resolveFileUpload(file)
+          .then((url) => {
+            onChange(url);
+          })
+          .catch((e: unknown) => {
+            toast.error(e instanceof Error ? e.message : "Upload thất bại.");
+          })
+          .finally(() => {
+            setReading(false);
+          });
+        return;
+      }
       setReading(true);
       const reader = new FileReader();
       reader.onload = () => {
@@ -63,7 +91,7 @@ export function ImageUrlDropzone({ id, label, value, onChange, disabled, descrip
       };
       reader.readAsDataURL(file);
     },
-    [disabled, onChange],
+    [disabled, onChange, resolveFileUpload],
   );
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,8 +143,7 @@ export function ImageUrlDropzone({ id, label, value, onChange, disabled, descrip
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
         {preview ? (
           <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted/30 max-md:border-0 md:border md:border-border sm:h-auto sm:min-h-[120px] sm:w-36">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={value.trim()} alt="" className="h-full w-full object-contain p-1" />
+            <SafeImage src={value.trim()} alt="" fill className="object-contain p-1" />
           </div>
         ) : null}
 
@@ -141,7 +168,9 @@ export function ImageUrlDropzone({ id, label, value, onChange, disabled, descrip
             onChange={onInputChange}
           />
           {reading ? (
-            <span className="text-sm text-muted-foreground">Đang xử lý…</span>
+            <span className="text-sm text-muted-foreground">
+              {resolveFileUpload ? "Đang tải ảnh lên…" : "Đang xử lý…"}
+            </span>
           ) : (
             <>
               <div className="flex size-10 items-center justify-center rounded-full bg-muted/80">

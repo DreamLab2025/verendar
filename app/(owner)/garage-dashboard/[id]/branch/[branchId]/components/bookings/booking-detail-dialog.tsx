@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import { BookingDetailBody } from "@/components/booking/booking-detail-body";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogSheetHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBookingDetailEnrichedQuery } from "@/hooks/useBookings";
 import { cn } from "@/lib/utils";
@@ -32,20 +32,23 @@ export function BookingDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        showCloseButton
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={onOpenChange}
+        showCloseButton={false}
         className={cn(
-          "flex max-h-[min(90dvh,100svh)] w-[calc(100vw-0.75rem)] max-w-[calc(100vw-0.75rem)] flex-col gap-0 overflow-hidden rounded-xl border p-0 shadow-xl",
-          "sm:max-h-[min(92vh,900px)] sm:w-full sm:max-w-[min(56rem,calc(100vw-1.5rem))] sm:rounded-2xl",
+          "flex max-h-[min(92dvh,100svh)] w-full flex-col gap-0 overflow-hidden p-0 shadow-xl",
+          "md:max-h-[min(92vh,900px)] md:max-w-[min(56rem,calc(100vw-1.5rem))] md:rounded-2xl md:border",
         )}
       >
-        <DialogHeader className="shrink-0 space-y-0 border-b border-border/60 px-3 pb-2.5 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
-          <DialogTitle className="pr-10 text-left text-base font-semibold leading-snug sm:pr-8 sm:text-lg">
+        <DialogSheetHeader className="shrink-0 space-y-0 sm:px-6 sm:pb-3 sm:pt-4">
+          <DialogTitle className="pr-0 text-left text-base font-semibold leading-snug sm:text-lg">
             Chi tiết lịch hẹn
           </DialogTitle>
           <p className="text-[11px] leading-snug text-muted-foreground sm:text-xs">
             Khách, xe, dòng đặt chỗ và lịch sử trạng thái.
           </p>
-        </DialogHeader>
+        </DialogSheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-6 sm:py-4">
           {q.isPending ? (

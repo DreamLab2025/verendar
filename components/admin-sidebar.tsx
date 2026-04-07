@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Building2,
   LayoutDashboard,
   MessageSquare,
   Users,
-  Shield,
 } from "lucide-react";
 
 import {
@@ -21,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import SafeImage from "./ui/SafeImage";
 
 type NavItem = {
   title: string;
@@ -30,6 +31,7 @@ type NavItem = {
 
 const MAIN_NAV: NavItem[] = [
   { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { title: "Quản lí garage", href: "/admin/garages", icon: Building2 },
   { title: "Quản lí người dùng", href: "/admin/users", icon: Users },
   { title: "Quản lí phản hồi", href: "/admin/feedback", icon: MessageSquare },
 ];
@@ -41,8 +43,8 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader>
         <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/60 p-2.5 backdrop-blur-sm">
-          <div className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary shadow-sm">
-            <Shield className="size-4" />
+          <div className="relative size-8 shrink-0 overflow-hidden rounded-xl">
+            <SafeImage src="/icon.svg" alt="Verendar" fill className="object-contain object-left" priority />
           </div>
           <div className="min-w-0 group-data-[state=collapsed]/sidebar:hidden">
             <p className="truncate text-sm font-semibold">Admin Dashboard</p>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogSheetHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,7 +61,11 @@ export function AssignMechanicDialog({
   const assign = useAssignBookingMutation(branchId || undefined);
 
   useEffect(() => {
-    if (open) setSelectedId("");
+    if (open) {
+      setTimeout(() => {
+        setSelectedId("");
+      }, 0);
+    }
   }, [open, bookingId]);
 
   const handleConfirm = () => {
@@ -81,18 +85,22 @@ export function AssignMechanicDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        showCloseButton
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={onOpenChange}
+        showCloseButton={false}
         className={cn(
-          "flex max-h-[min(88dvh,100svh)] w-[calc(100vw-0.75rem)] max-w-[calc(100vw-0.75rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[min(85vh,640px)] sm:w-full sm:max-w-md sm:rounded-2xl",
+          "flex max-h-[min(92dvh,100svh)] w-full flex-col gap-0 overflow-hidden p-0",
+          "md:max-h-[min(85vh,640px)] md:max-w-md md:rounded-2xl md:border",
         )}
       >
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-5">
+        <DialogSheetHeader className="shrink-0 sm:px-5">
           <DialogTitle className="text-left text-base font-semibold sm:text-lg">Gán thợ máy</DialogTitle>
           <p className="text-left text-[11px] leading-snug text-muted-foreground sm:text-xs">
             Chọn thành viên vai trò Thợ máy đang hoạt động tại chi nhánh này. Sau khi xác nhận, lịch hẹn chuyển sang Đã
             xác nhận.
           </p>
-        </DialogHeader>
+        </DialogSheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-5 sm:py-4">
           {membersQ.isPending ? (

@@ -22,6 +22,7 @@ import {
   useGarageServicesByBranchQuery,
 } from "@/hooks/useGarage";
 import type { CreateGarageBundlePayload } from "@/lib/api/services/fetchGarage";
+import { uploadMediaFile } from "@/lib/api/services/fetchMedia";
 import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -231,6 +232,11 @@ export function CreateGarageBundleDialog({ open, onOpenChange, branchId }: Creat
               value={form.imageUrl}
               onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
               disabled={pending}
+              description="Ảnh được tải lên qua S3 (GarageBundleImage)."
+              resolveFileUpload={async (file) => {
+                const { imageUrl } = await uploadMediaFile(file, "GarageBundleImage");
+                return imageUrl;
+              }}
             />
 
             <div className="grid gap-4 sm:grid-cols-2">

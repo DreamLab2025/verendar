@@ -2,10 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useMemo } from "react";
-import { CarFront } from "lucide-react";
-
-import { GarageDialog } from "@/components/dialog/garage/GarageDialog";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -14,10 +10,12 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
+import { GarageOwnerShellPrimaryAction } from "./garage-owner-shell-primary-action";
 import { GarageOwnerShellMobileHeader } from "./garage-owner-shell-mobile-header";
 import { getGaragePortalViewFromRoles } from "@/lib/auth/garage-portal-roles";
 import { readAuthRolesFromCookies } from "@/lib/auth/read-auth-cookie-user";
 import { cn } from "@/lib/utils";
+import SafeImage from "@/components/ui/SafeImage";
 
 export function GarageOwnerShell({ children }: { children: ReactNode }) {
   const branchStaffOnly = useMemo(() => {
@@ -48,22 +46,24 @@ export function GarageOwnerShell({ children }: { children: ReactNode }) {
       <div className="flex h-full min-h-0 w-full flex-1 overflow-hidden">
         <Sidebar collapsible="offcanvas" variant="sidebar">
           <SidebarHeader>
-            <div className="flex items-center gap-3 px-1">
-              <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
-                <CarFront className="size-5" />
+            <div className="flex min-w-0 items-center gap-3 px-1">
+              <div className="relative size-8 shrink-0 overflow-hidden rounded-xl">
+                <SafeImage
+                  src="/icon.svg"
+                  alt="Verendar"
+                  fill
+                  className="object-contain object-left"
+                  priority
+                />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">Verendar</p>
                 <p className="truncate text-xs text-muted-foreground">Hệ thống garage</p>
               </div>
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <GarageDialog>
-              <Button type="button" className="w-full shadow-sm">
-                Tạo garage
-              </Button>
-            </GarageDialog>
+            <GarageOwnerShellPrimaryAction className="w-full" />
           </SidebarContent>
           <SidebarFooter className="mt-auto" />
         </Sidebar>

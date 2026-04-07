@@ -104,7 +104,8 @@ export interface BookingStatusHistoryDto {
   id: string;
   fromStatus: string;
   toStatus: string;
-  changedByUserId: string | null;
+  changedByUserId?: string | null;
+  changedByName?: string | null;
   note: string | null;
   changedAt: string;
   createdAt: string;
@@ -112,8 +113,12 @@ export interface BookingStatusHistoryDto {
 
 export interface BookingDetailDto {
   id: string;
-  userId: string;
-  userVehicleId: string;
+  userId?: string;
+  userVehicleId?: string;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  vehicleBrand?: string | null;
+  vehicleModel?: string | null;
   garageBranchId: string;
   mechanicId: string | null;
   mechanicDisplayName: string | null;

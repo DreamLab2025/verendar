@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, CarFront, HomeIcon, LayoutDashboard, LogOut, MessageSquare, Settings, Users } from "lucide-react";
+import {
+  Building2,
+  CalendarClock,
+  CarFront,
+  HomeIcon,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  Settings,
+  Users,
+} from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +35,7 @@ const USER_ITEMS = [
 
 const ADMIN_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, match: (p: string) => p.startsWith("/admin/dashboard") },
+  { href: "/admin/garages", label: "Garage", icon: Building2, match: (p: string) => p.startsWith("/admin/garages") },
   { href: "/admin/users", label: "Người dùng", icon: Users, match: (p: string) => p.startsWith("/admin/users") },
   { href: "/admin/feedback", label: "Phản hồi", icon: MessageSquare, match: (p: string) => p.startsWith("/admin/feedback") },
 ];

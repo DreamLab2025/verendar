@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CarFront, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, User, Lock } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resolveHomeRouteFromRoles } from "@/lib/auth/role-routing";
@@ -15,6 +14,7 @@ import { ForgotPasswordDialog } from "@/components/dialog/auth/ForgotPasswordDia
 import { OtpDialog } from "@/components/dialog/auth/OtpDialog";
 import { ChangePasswordDialog } from "@/components/dialog/auth/ChangePasswordDialog";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +28,6 @@ export default function LoginPage() {
     user,
     accessToken,
     loading: authLoading,
-    error,
     clearError,
   } = useAuth();
 
@@ -111,89 +110,95 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/10 via-background to-background" />
-
-      <Card className="relative z-10 w-full max-w-md border-border/70 bg-background/85 shadow-xl backdrop-blur">
-        <CardHeader className="space-y-4">
-          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/15 text-primary">
-            <CarFront className="size-6" />
-          </div>
-          <div className="space-y-1 text-center">
-            <CardTitle className="text-2xl">Đăng nhập Verendar</CardTitle>
-            <CardDescription>Đăng nhập để tiếp tục quản lý phương tiện của bạn.</CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
+    <>
+      <div className="w-full max-w-[440px] shrink-0">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col items-center space-y-3 sm:space-y-4 text-center">
+            <div className="flex size-20 items-center justify-center rounded-2xl bg-white">
+              <Image width={48} height={48} src="/icon.svg" alt="Verendar Icon" className="size-12" style={{ width: "auto", height: "auto" }} />
             </div>
-
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mật khẩu</Label>
-                <button
-                  type="button"
-                  onClick={() => setIsForgotPasswordOpen(true)}
-                  className="text-xs font-medium text-primary hover:underline"
-                >
-                  Quên mật khẩu?
-                </button>
+              <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900">Đăng nhập</h1>
+              <p className="text-[15px] text-zinc-500 font-medium font-quicksand">
+                Vui lòng đăng nhập để tiếp tục quản lý
+              </p>
+            </div>
+          </div>
+
+          <form className="space-y-5" onSubmit={onSubmit}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="sr-only">Email</Label>
+                <div className="relative group">
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="Nhập email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="pl-11 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm"
+                    required
+                  />
+                  <User className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+                </div>
               </div>
 
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="Nhập mật khẩu"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="sr-only">Mật khẩu</Label>
+                <div className="relative group">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Nhập mật khẩu"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="pl-11 pr-12 h-14 rounded-2xl bg-white border border-zinc-200 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-primary/10 transition-all font-medium shadow-sm"
+                    required
+                  />
+                  <Lock className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-primary" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-2 flex w-10 items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                  </button>
+                </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={authLoading}>
+            <Button type="submit" className="w-full h-14 text-[16px] rounded-2xl font-bold shadow-sm hover:shadow-lg active:scale-[0.98] transition-all bg-primary hover:bg-primary/90" disabled={authLoading}>
               {authLoading ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Đang đăng nhập...
+                  <Loader2 className="mr-2 size-5 animate-spin" />
+                  Đang xử lý...
                 </>
               ) : (
-                "Đăng nhập"
+                "Đăng nhập ngay"
               )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
             Chưa có tài khoản?{" "}
-            <Link href="/register" className="font-medium text-primary hover:underline">
+            <Link href="/register" className="font-semibold text-primary hover:underline underline-offset-4">
               Đăng ký ngay
             </Link>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
       <ForgotPasswordDialog
         open={isForgotPasswordOpen}
         onOpenChange={setIsForgotPasswordOpen}
@@ -214,6 +219,6 @@ export default function LoginPage() {
         onSuccess={handleChangePasswordSuccess}
         isLoading={authLoading}
       />
-    </main>
+    </>
   );
 }

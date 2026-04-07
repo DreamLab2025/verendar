@@ -29,6 +29,21 @@ export function isGarageStatusActive(status: string | null | undefined): boolean
   return status === GarageStatus.Active;
 }
 
+/** Chờ duyệt — chưa cho vào owner dashboard. */
+export function isGarageStatusPendingApproval(status: string | null | undefined): boolean {
+  return status === GarageStatus.Pending;
+}
+
+/** Bị từ chối — chưa cho vào owner dashboard (có thể gửi lại hồ sơ). */
+export function isGarageStatusRejected(status: string | null | undefined): boolean {
+  return status === GarageStatus.Rejected;
+}
+
+/** Không mở được `/garage-dashboard/{id}`: chờ duyệt hoặc bị từ chối. */
+export function isGarageOwnerDashboardBlocked(status: string | null | undefined): boolean {
+  return isGarageStatusPendingApproval(status) || isGarageStatusRejected(status);
+}
+
 export interface GarageDto {
   id: string;
   ownerId: string;
@@ -128,7 +143,7 @@ export interface GaragesQueryParams extends RequestParams {
 export interface CreateGaragePayload {
   businessName: string;
   shortName: string;
-  taxCode: string;
+  taxCode?: string;
   logoUrl: string | null;
 }
 

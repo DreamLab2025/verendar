@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImageUrlDropzone } from "@/components/ui/image-url-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateGarageService } from "@/hooks/useGarage";
+import { uploadMediaFile } from "@/lib/api/services/fetchMedia";
 import type { ServiceCategoryDto } from "@/lib/api/services/fetchGarage";
 import { requestCloseBottomSheet } from "@/lib/ui/bottom-sheet-motion";
 import { cn } from "@/lib/utils";
@@ -219,6 +220,11 @@ export function CreateGarageServiceDialog({
             value={form.imageUrl}
             onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
             disabled={pending}
+            description="Ảnh được tải lên qua S3 (GarageServiceImage)."
+            resolveFileUpload={async (file) => {
+              const { imageUrl } = await uploadMediaFile(file, "GarageServiceImage");
+              return imageUrl;
+            }}
           />
           </div>
 

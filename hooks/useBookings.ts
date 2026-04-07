@@ -118,6 +118,16 @@ export function useBranchBookingsScrollInfinity(
 }
 
 /**
+ {@link useBranchBookingsScrollInfinity}; tên gợi nhớ khi cần “get all” theo từng trang.
+ */
+export function useBranchBookingsInfiniteScroll(
+  branchId: string | undefined,
+  options?: BranchBookingsScrollInfinityOptions,
+) {
+  return useBranchBookingsScrollInfinity(branchId, options);
+}
+
+/**
  * Danh sách booking theo chi nhánh (Owner/Manager): `branchId` + phân trang.
  */
 export function useBranchBookingsQuery(branchId: string | undefined, options?: BranchBookingsQueryOptions) {
@@ -221,6 +231,46 @@ export function useUserBookingsCalendarQuery(options?: { status?: string; enable
   });
 }
 
+/**
+ * Tải toàn bộ booking theo chi nhánh (lặp phân trang) cho calendar — tối đa CALENDAR_MAX_PAGES trang.
+ */
+export function useBranchBookingsCalendarQuery(
+  branchId: string | undefined,
+  options?: { status?: string; enabled?: boolean },
+) {
+  const status = options?.status;
+  const enabled = options?.enabled ?? true;
+  const hasBranch = Boolean(branchId);
+
+  return useQuery({
+    queryKey: ["bookings", "branch", branchId, "calendar", status ?? ""],
+    queryFn: async () => {
+      const all: BookingListItemDto[] = [];
+      let page = 1;
+      while (page <= CALENDAR_MAX_PAGES) {
+        const body = await BookingsService.getBookings({
+          branchId: branchId!,
+          PageNumber: page,
+          PageSize: CALENDAR_FETCH_PAGE_SIZE,
+          IsDescending: false,
+          ...(status != null && status !== "" ? { status } : {}),
+        });
+        if (!body.isSuccess) {
+          throw new Error(body.message || "Không tải được danh sách lịch hẹn.");
+        }
+        all.push(...body.data);
+        if (!body.metadata?.hasNextPage) break;
+        page += 1;
+      }
+      return all;
+    },
+    enabled: hasBranch && enabled,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 /** GET /api/v1/bookings/{id} + tra cứu tên khách, xe, dịch vụ / sản phẩm / combo theo ID. */
 export function useBookingDetailEnrichedQuery(bookingId: string | undefined, enabled = true) {
   return useQuery({
@@ -246,6 +296,7 @@ export function useAssignBookingMutation(branchId: string | undefined) {
     onSuccess: (data, variables) => {
       if (branchId) {
         void qc.invalidateQueries({ queryKey: ["bookings", "branch", branchId] });
+        void qc.invalidateQueries({ queryKey: ["bookings", "branch", branchId, "calendar"] });
         void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", branchId] });
       }
       void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", "assigned-to-me"] });
@@ -277,6 +328,7 @@ export function usePatchBookingStatusMutation(branchId: string | undefined) {
     onSuccess: (data, variables) => {
       if (branchId) {
         void qc.invalidateQueries({ queryKey: ["bookings", "branch", branchId] });
+        void qc.invalidateQueries({ queryKey: ["bookings", "branch", branchId, "calendar"] });
         void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", branchId] });
       }
       void qc.invalidateQueries({ queryKey: ["bookings", "branch", "infinite", "assigned-to-me"] });
