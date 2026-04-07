@@ -32,6 +32,9 @@ export type ImageUrlDropzoneProps = {
   onChange: (next: string) => void;
   disabled?: boolean;
   description?: string;
+  shape?: "default" | "circle";
+  previewMode?: "split" | "inside";
+  inputClassName?: string;
   /**
    * Khi có: chọn/kéo file sẽ gọi hàm này (upload S3, v.v.) và gán chuỗi trả về (URL ảnh).
    * Nếu không có: đọc file thành data URL như cũ.
@@ -46,6 +49,9 @@ export function ImageUrlDropzone({
   onChange,
   disabled,
   description,
+  shape = "default",
+  previewMode = "split",
+  inputClassName,
   resolveFileUpload,
 }: ImageUrlDropzoneProps) {
   const autoId = useId();
@@ -60,8 +66,8 @@ export function ImageUrlDropzone({
         toast.error("Chỉ chấp nhận file ảnh.");
         return;
       }
-      if (file.size > MAX_BYTES) {
-        toast.error("Ảnh tối đa 5MB.");
+      if (file.size >= MAX_BYTES) {
+        toast.error("Ảnh phải nhỏ hơn 5MB.");
         return;
       }
       if (resolveFileUpload) {
@@ -120,6 +126,8 @@ export function ImageUrlDropzone({
   };
 
   const preview = value.trim().length > 0 && canPreview(value);
+  const circle = shape === "circle";
+  const previewInside = circle || previewMode === "inside";
 
   return (
     <div className="space-y-2">
@@ -140,9 +148,21 @@ export function ImageUrlDropzone({
       </div>
       {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-        {preview ? (
-          <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted/30 max-md:border-0 md:border md:border-border sm:h-auto sm:min-h-[120px] sm:w-36">
+      <div
+        className={cn(
+          "flex flex-col gap-3",
+          circle ? "items-center" : "sm:flex-row sm:items-stretch",
+        )}
+      >
+        {preview && !previewInside ? (
+          <div
+            className={cn(
+              "relative shrink-0 overflow-hidden bg-muted/30",
+              circle
+                ? "size-36 rounded-full border border-border"
+                : "h-28 w-full rounded-lg max-md:border-0 md:border md:border-border sm:h-auto sm:min-h-30 sm:w-36",
+            )}
+          >
             <SafeImage src={value.trim()} alt="" fill className="object-contain p-1" />
           </div>
         ) : null}
@@ -153,12 +173,16 @@ export function ImageUrlDropzone({
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           className={cn(
-            "flex min-h-[120px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-3 py-5 text-center transition-colors",
+            "relative flex min-h-30 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-3 py-5 text-center transition-colors",
+            circle && "size-40 min-h-0 flex-none overflow-hidden rounded-full p-3",
+            !circle && previewInside && preview && "overflow-hidden",
             dragActive && "border-primary bg-primary/5",
             !dragActive && "border-muted-foreground/25 hover:border-muted-foreground/45 hover:bg-muted/25",
             (disabled || reading) && "pointer-events-none cursor-not-allowed opacity-50",
+            inputClassName,
           )}
         >
+          {previewInside && preview ? <SafeImage src={value.trim()} alt="" fill className="object-cover" /> : null}
           <input
             id={inputId}
             type="file"
@@ -168,22 +192,49 @@ export function ImageUrlDropzone({
             onChange={onInputChange}
           />
           {reading ? (
-            <span className="text-sm text-muted-foreground">
+            <span
+              className={cn(
+                "text-sm text-muted-foreground",
+                previewInside && preview && "relative z-10 rounded-full bg-background/80 px-2 py-1 text-foreground",
+              )}
+            >
               {resolveFileUpload ? "Đang tải ảnh lên…" : "Đang xử lý…"}
             </span>
           ) : (
             <>
-              <div className="flex size-10 items-center justify-center rounded-full bg-muted/80">
-                <ImageIcon className="size-5 text-muted-foreground" aria-hidden />
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium text-foreground">Kéo thả ảnh vào đây</p>
-                <p className="text-xs text-muted-foreground">hoặc bấm để chọn · JPG, PNG, WebP, GIF · tối đa 5MB</p>
-              </div>
-              <span className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm">
-                <Upload className="size-3.5 text-muted-foreground" aria-hidden />
-                Chọn ảnh từ máy
-              </span>
+              {previewInside && preview ? (
+                <span
+                  className={cn(
+                    "relative z-10 mt-auto mb-1 rounded-full bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-sm",
+                    !circle && "text-xs",
+                  )}
+                >
+                  {circle ? "Bấm để đổi logo" : "Bấm để đổi ảnh"}
+                </span>
+              ) : (
+                <>
+                  <div className="flex size-10 items-center justify-center rounded-full bg-muted/80">
+                    <ImageIcon className="size-5 text-muted-foreground" aria-hidden />
+                  </div>
+                </>
+              )}
+              {circle && !preview ? (
+                <div className="space-y-0.5 px-2">
+                  <p className="text-sm font-medium text-foreground">Chọn logo</p>
+                  <p className="text-[11px] leading-4 text-muted-foreground">JPG, PNG, WebP, GIF</p>
+                </div>
+              ) : !circle && !(previewInside && preview) ? (
+                <>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-foreground">Kéo thả ảnh vào đây</p>
+                    <p className="text-xs text-muted-foreground">hoặc bấm để chọn · JPG, PNG, WebP, GIF · dưới 5MB</p>
+                  </div>
+                  <span className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                    <Upload className="size-3.5 text-muted-foreground" aria-hidden />
+                    Chọn ảnh từ máy
+                  </span>
+                </>
+              ) : null}
             </>
           )}
         </label>

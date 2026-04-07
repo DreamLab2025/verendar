@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AuthService, JwtPayload, AuthState, AuthResult, User } from "@/lib/api/services/fetchAuth";
-import { setCookie, getCookie } from "cookies-next";
+import { deleteCookie, setCookie, getCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import api8080Service from "@/lib/api/api8080Service";
@@ -317,6 +317,7 @@ export function useAuth() {
 
   const logout = () => {
     clearAuthSession();
+    deleteCookie("authToken", { path: "/" });
     api8080Service.setAuthToken(null);
     apiService.setAuthToken(null);
 

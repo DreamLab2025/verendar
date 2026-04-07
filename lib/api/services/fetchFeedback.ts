@@ -18,6 +18,14 @@ export enum FeedbackCategory {
   Other = 5,
 }
 
+export type FeedbackCategoryText =
+  | "General"
+  | "Bug"
+  | "Feature"
+  | "UX"
+  | "Performance"
+  | "Other";
+
 export enum FeedbackStatus {
   Pending = 0,
   Reviewed = 1,
@@ -34,6 +42,7 @@ export interface Feedback {
   content: string;
   rating: number | null;
   contactEmail: string | null;
+  imageUrls: string[];
   status: string;
   createdAt: string;
 }
@@ -59,6 +68,15 @@ export interface FeedbackQueryParams extends RequestParams {
   pageSize: number;
 }
 
+export interface CreateFeedbackPayload {
+  category: FeedbackCategoryText;
+  subject: string;
+  content: string;
+  imageUrls?: string[];
+  rating?: number;
+  contactEmail?: string;
+}
+
 
 // ===== Service (fetch functions) =====
 
@@ -67,13 +85,7 @@ export const FeedbackService = {
    * 1. Gửi feedback (Mọi user đã đăng nhập)
    * POST /api/v1/feedback
    */
-  createFeedback: async (payload: {
-    category: FeedbackCategory;
-    subject: string;
-    content: string;
-    rating?: number;
-    contactEmail?: string;
-  }) => {
+  createFeedback: async (payload: CreateFeedbackPayload) => {
     const response = await api8080Service.post<FeedbackSingleResponse>("/api/v1/feedback", payload);
     return response.data;
   },

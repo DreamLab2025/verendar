@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useFeedbacks, useUpdateFeedbackStatus } from "@/hooks/useFeedback";
 import { FeedbackCategory, FeedbackStatus } from "@/lib/api/services/fetchFeedback";
 import { FeedbackDialog } from "@/components/dialog/feedback/FeedbackDialog";
-import { Eye, Filter, RefreshCcw, Search, MessageSquareX } from "lucide-react";
+import { Eye, RefreshCcw, MessageSquareX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -50,6 +50,11 @@ export const STATUS_MAP: Record<FeedbackStatus, { label: string; colorClass: str
 };
 
 export function AdminFeedbackList() {
+  const hasHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null);
@@ -117,10 +122,10 @@ export function AdminFeedbackList() {
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            disabled={isFetching}
+            disabled={hasHydrated ? isFetching : false}
             className="h-9 px-3 gap-2 rounded-xl border-border/60 hover:bg-muted"
           >
-            <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCcw className={`h-4 w-4 ${hasHydrated && isFetching ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Làm mới</span>
           </Button>
         </div>
