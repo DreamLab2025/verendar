@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 
 import { useBranchBookingsCalendarQuery } from "@/hooks/useBookings";
 import type { BookingListItemDto } from "@/lib/api/services/fetchBookings";
+import { cn } from "@/lib/utils";
 
 import { AssignMechanicDialog } from "./assign-mechanic-dialog";
 import { BookingDetailDialog } from "./booking-detail-dialog";
@@ -26,13 +27,21 @@ export default function BranchBookingsPage() {
     q.error instanceof Error ? q.error : q.error != null ? new Error(String(q.error)) : null;
 
   return (
-    <div className="w-[calc(100%+2rem)] -mx-4 min-w-0 space-y-5 md:space-y-8 md:w-[calc(100%+3rem)] md:-mx-6">
+    <div
+      className={cn(
+        "w-[calc(100%+2rem)] -mx-4 min-w-0 md:w-[calc(100%+3rem)] md:-mx-6",
+        branchId
+          ? "flex min-h-[calc(100dvh-5rem)] flex-1 flex-col md:min-h-0 md:space-y-8"
+          : "space-y-5 md:space-y-8",
+      )}
+    >
       {!branchId ? (
         <p className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
           Thiếu mã chi nhánh.
         </p>
       ) : (
         <BranchBookingsCalendar
+          className="min-h-0 flex-1 md:min-h-auto md:flex-none"
           bookings={bookings}
           isPending={q.isPending}
           isError={q.isError}
