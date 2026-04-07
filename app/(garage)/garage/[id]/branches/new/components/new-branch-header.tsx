@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import SafeImage from "@/components/ui/SafeImage";
 
 export interface NewBranchHeaderProps {
   garageId: string;
@@ -25,10 +26,16 @@ export function NewBranchHeader({ garageId, exitHref, className }: NewBranchHead
           href={`/garage/${garageId}`}
           className="flex min-w-0 items-center gap-3 rounded-xl outline-none ring-offset-background transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary shadow-sm">
-            <CarFront className="size-5" aria-hidden />
+          <div className="relative size-10 shrink-0 overflow-hidden rounded-xl">
+            <SafeImage
+              src="/icon.svg"
+              alt="Verendar"
+              fill
+              className="object-contain object-left"
+              priority
+            />
           </div>
-          <span className="truncate text-base font-semibold tracking-tight text-foreground">Verendar</span>
+          <span className="truncate text-base font-semibold tracking-tight text-brand-primary">Verendar</span>
         </Link>
 
         <Button variant="outline" className="shrink-0 gap-2 rounded-xl px-3 text-muted-foreground hover:text-foreground hover:bg-muted/50" asChild>
