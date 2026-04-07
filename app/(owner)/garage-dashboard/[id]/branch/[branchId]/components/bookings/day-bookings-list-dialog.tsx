@@ -4,7 +4,13 @@ import { Eye, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogSheetHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { flattenInfinitePages, useBranchBookingsInfiniteScroll } from "@/hooks/useBookings";
 import type { BookingListItemDto } from "@/lib/api/services/fetchBookings";
 import { cn } from "@/lib/utils";
@@ -81,12 +87,16 @@ export function DayBookingsListDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        showCloseButton
+        variant="bottomSheet"
+        open={open}
+        onOpenChange={onOpenChange}
+        showCloseButton={false}
         className={cn(
-          "flex max-h-[min(88dvh,100svh)] w-[calc(100vw-0.75rem)] max-w-[calc(100vw-0.75rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[min(85vh,720px)] sm:max-w-lg",
+          "flex max-h-[min(92dvh,100svh)] w-full flex-col gap-0 overflow-hidden p-0",
+          "md:max-h-[min(85vh,720px)] md:max-w-lg md:rounded-lg",
         )}
       >
-        <DialogHeader className="shrink-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-5">
+        <DialogSheetHeader className="shrink-0 sm:px-5">
           <DialogTitle className="text-left text-base font-semibold sm:text-lg">
             {dateKey ? formatDayTitle(dateKey) : "Lịch hẹn trong ngày"}
           </DialogTitle>
@@ -99,7 +109,7 @@ export function DayBookingsListDialog({
               </span>
             ) : null}
           </DialogDescription>
-        </DialogHeader>
+        </DialogSheetHeader>
 
         <div
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4"
