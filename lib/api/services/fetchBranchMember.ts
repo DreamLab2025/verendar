@@ -108,6 +108,34 @@ export interface BranchMemberStatusUpdateResponse {
   metadata: null;
 }
 
+/** GET /api/v1/members/{memberId}/password?memberId=…&garageId=… */
+export interface MemberPasswordDto {
+  memberId: string;
+  staffPassword: string | null;
+}
+
+export interface MemberPasswordResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: MemberPasswordDto;
+  metadata: null;
+}
+
+export interface MemberPasswordQueryParams extends RequestParams {
+  memberId: string;
+  garageId: string;
+}
+
+/** DELETE /api/v1/members/{id} */
+export interface BranchMemberDeleteResponse {
+  isSuccess: boolean;
+  statusCode?: number;
+  message: string | null;
+  data: boolean;
+  metadata: null;
+}
+
 export const BranchMemberService = {
   getMembers: async (params: BranchMembersQueryParams) => {
     const res = await api8080Service.get<BranchMembersListResponse>("/api/v1/members", params);
@@ -129,6 +157,23 @@ export const BranchMemberService = {
     const res = await api8080Service.patch<BranchMemberStatusUpdateResponse>(
       `/api/v1/members/${memberId}/status`,
       payload,
+    );
+    return res.data;
+  },
+
+  /** GET /api/v1/members/{memberId}/password */
+  getMemberPassword: async (memberId: string, params: Pick<MemberPasswordQueryParams, "garageId">) => {
+    const res = await api8080Service.get<MemberPasswordResponse>(
+      `/api/v1/members/${encodeURIComponent(memberId)}/password`,
+      { memberId, garageId: params.garageId },
+    );
+    return res.data;
+  },
+
+  /** DELETE /api/v1/members/{id} */
+  deleteMember: async (memberId: string) => {
+    const res = await api8080Service.delete<BranchMemberDeleteResponse>(
+      `/api/v1/members/${encodeURIComponent(memberId)}`,
     );
     return res.data;
   },

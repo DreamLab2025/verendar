@@ -9,6 +9,18 @@ import BranchMemberService, {
   type UpdateBranchMemberStatusPayload,
 } from "@/lib/api/services/fetchBranchMember";
 
+export function useMemberPasswordQuery(
+  garageId: string | undefined,
+  memberId: string | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ["members", garageId, memberId, "password"],
+    queryFn: () => BranchMemberService.getMemberPassword(memberId!, { garageId: garageId! }),
+    enabled: Boolean(garageId && memberId) && enabled,
+  });
+}
+
 type UseBranchMembersParams = Pick<
   BranchMembersQueryParams,
   "PageNumber" | "PageSize" | "IsDescending"
@@ -67,6 +79,23 @@ export function useUpdateBranchMemberStatus() {
     },
     onError: (error: Error & { message?: string }) => {
       toast.error(error.message || "Cập nhật trạng thái thất bại");
+    },
+  });
+}
+
+export function useDeleteBranchMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (vars: { garageId: string; memberId: string }) =>
+      BranchMemberService.deleteMember(vars.memberId),
+    onSuccess: (data, { garageId, memberId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["members", garageId] });
+      void queryClient.removeQueries({ queryKey: ["members", garageId, memberId, "password"] });
+      toast.success(data.message?.trim() || "Xóa nhân viên thành công");
+    },
+    onError: (error: Error & { message?: string }) => {
+      toast.error(error.message || "Xóa nhân viên thất bại");
     },
   });
 }
