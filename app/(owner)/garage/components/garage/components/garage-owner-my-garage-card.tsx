@@ -6,6 +6,7 @@ import { Building2, ChevronRight, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SafeImage from "@/components/ui/SafeImage";
 import { useResubmitGarage } from "@/hooks/useGarage";
 import {
   GarageStatus,
@@ -24,6 +25,7 @@ interface GarageOwnerMyGarageCardProps {
 export function GarageOwnerMyGarageCard({ garage, dashboardHref }: GarageOwnerMyGarageCardProps) {
   const businessName = garage.businessName ?? "Garage";
   const shortName = garage.shortName ?? "—";
+  const logoUrl = garage.logoUrl?.trim() || null;
   const canOpenDashboard = Boolean(dashboardHref);
   const isRejected = garage.status === GarageStatus.Rejected;
   const resubmit = useResubmitGarage();
@@ -40,8 +42,12 @@ export function GarageOwnerMyGarageCard({ garage, dashboardHref }: GarageOwnerMy
       <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-accent/5" />
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary shadow-inner">
-            <Building2 className="size-6" />
+          <div className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/15 text-primary shadow-inner">
+            {logoUrl ? (
+              <SafeImage src={logoUrl} alt={businessName} fill className="object-cover" />
+            ) : (
+              <Building2 className="size-6" />
+            )}
           </div>
           <div>
             <p className="text-lg font-semibold md:text-xl">{businessName}</p>

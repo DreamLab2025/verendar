@@ -9,7 +9,10 @@ function decodeJwtPayload(raw: string): Record<string, unknown> | null {
     const part = raw.split(".")[1];
     if (!part) return null;
     const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64)) as Record<string, unknown>;
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const json = new TextDecoder("utf-8").decode(bytes);
+    return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;
   }

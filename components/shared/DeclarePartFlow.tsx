@@ -276,9 +276,13 @@ export function DeclarePartFlow({
       ? cn("flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden")
       : "flex  min-h-0 flex-1 flex-col overflow-hidden";
 
+  /** Trong dialog: lề + chừa chỗ nút đóng (góc phải trên) */
+  const embeddedChrome =
+    variant === "embedded" ? "px-4 pt-10 pb-0 sm:px-6 sm:pt-11" : "";
+
   if (questionnaireLoading) {
     return (
-      <div className={cn(shellClass, variant === "embedded" && "min-h-[280px]")}>
+      <div className={cn(shellClass, embeddedChrome, variant === "embedded" && "min-h-[280px]")}>
         <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
           <h2 className="text-left text-base font-semibold text-neutral-900 dark:text-neutral-100">
             {part.partCategoryName}
@@ -299,7 +303,7 @@ export function DeclarePartFlow({
 
   if (questionnaireError) {
     return (
-      <div className={cn(shellClass, variant === "embedded" && "min-h-[280px]")}>
+      <div className={cn(shellClass, embeddedChrome, variant === "embedded" && "min-h-[280px]")}>
         <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
           <h2 className="text-left text-base font-semibold text-neutral-900 dark:text-neutral-100">
             {part.partCategoryName}
@@ -322,7 +326,7 @@ export function DeclarePartFlow({
 
   if (!config) {
     return (
-      <div className={cn(shellClass, variant === "embedded" && "min-h-[280px]")}>
+      <div className={cn(shellClass, embeddedChrome, variant === "embedded" && "min-h-[280px]")}>
         <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:px-5">
           <h2 className="text-left text-base font-semibold text-neutral-900 dark:text-neutral-100">
             {part.partCategoryName}
@@ -341,7 +345,7 @@ export function DeclarePartFlow({
   }
 
   return (
-    <div className={shellClass}>
+    <div className={cn(shellClass, embeddedChrome)}>
       <div className="shrink-0">
         <div className="flex items-start gap-3">
           {variant === "embedded" ? (
@@ -390,7 +394,12 @@ export function DeclarePartFlow({
         ) : null}
       </div>
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-5">
+      <div
+        className={cn(
+          "scrollbar-hide min-h-0 min-w-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain py-3 [-webkit-overflow-scrolling:touch]",
+          variant === "embedded" ? "px-0" : "px-3 sm:px-5",
+        )}
+      >
         <AnimatePresence mode="wait">
           {phase === "form" ? (
             <motion.div
@@ -509,7 +518,7 @@ export function DeclarePartFlow({
                               transition={{ duration: 0.28, ease: easeUi }}
                               className="overflow-hidden"
                             >
-                              <div className="scrollbar-hide flex max-h-[min(45dvh,288px)] flex-col gap-1.5 overflow-y-auto overflow-x-hidden overscroll-contain  pr-0.5 sm:gap-2 sm:pt-3">
+                              <div className="flex flex-col gap-1.5 overflow-x-hidden pt-3 sm:gap-2">
                                 {question.options.map((opt, optIdx) => {
                                   const active = answers[question.id] === opt.value;
                                   return (
@@ -731,7 +740,12 @@ export function DeclarePartFlow({
         </AnimatePresence>
       </div>
 
-      <div className="shrink-0 border-t border-neutral-200 px-3 py-3 dark:border-neutral-800 sm:px-5">
+      <div
+        className={cn(
+          "shrink-0 border-t border-neutral-200 py-3 dark:border-neutral-800",
+          variant === "embedded" ? "px-0" : "px-3 sm:px-5",
+        )}
+      >
         {phase === "form" ? (
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" size="sm" onClick={onDismiss}>

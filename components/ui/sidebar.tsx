@@ -98,7 +98,9 @@ export function SidebarProvider({
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const isShortcut = event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT;
+      const key = event.key;
+      if (key == null || key === "") return;
+      const isShortcut = key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT;
       if (!isShortcut || !(event.metaKey || event.ctrlKey)) return;
       event.preventDefault();
       toggleSidebar();

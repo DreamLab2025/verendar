@@ -37,7 +37,7 @@ export default function AuthLayout({
       <div className="relative flex w-full flex-col items-center justify-center p-4">
         {/* On mobile show logo */}
         <div className="absolute top-4 left-4 lg:hidden">
-          <Image width={56} height={56} src="/icon.svg" alt="Verendar Icon" className="h-14 w-auto aspect-square" style={{ width: "auto" }} />
+          <Image width={180} height={180} src="/logo.svg" alt="Verendar Icon" className="h-20 w-auto aspect-square" style={{ width: "auto" }} />
         </div>
         {children}
       </div>

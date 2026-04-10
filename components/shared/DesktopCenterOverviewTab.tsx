@@ -31,7 +31,9 @@ const LEGEND_LEVELS = ["Normal", "Low", "Medium", "High", "Critical"] as const;
 function SectionLabel({ kicker, title, hint }: { kicker: string; title: string; hint?: string }) {
   return (
     <div className="mb-3">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">{kicker}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">
+        {kicker}
+      </p>
       <h3 className="mt-1 text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">{title}</h3>
       {hint ? <p className="mt-1 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">{hint}</p> : null}
     </div>
@@ -39,14 +41,21 @@ function SectionLabel({ kicker, title, hint }: { kicker: string; title: string; 
 }
 
 function Hairline() {
-  return <div className="h-px w-full bg-linear-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-800" aria-hidden />;
+  return (
+    <div
+      className="h-px w-full bg-linear-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-800"
+      aria-hidden
+    />
+  );
 }
 
 function SpecRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2.5">
       <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{label}</span>
-      <span className="max-w-[min(100%,16rem)] text-right text-[12px] font-medium text-neutral-900 dark:text-neutral-100">{value}</span>
+      <span className="max-w-[min(100%,16rem)] text-right text-[12px] font-medium text-neutral-900 dark:text-neutral-100">
+        {value}
+      </span>
     </div>
   );
 }
@@ -64,7 +73,15 @@ function RingGauge({ label, value, stroke }: { label: string; value: number; str
   return (
     <div className="flex flex-col items-center gap-0.5">
       <svg width={72} height={72} className="-rotate-90" aria-hidden>
-        <circle cx={36} cy={36} r={r} fill="none" stroke="currentColor" strokeWidth={5} className="text-neutral-200 dark:text-neutral-800" />
+        <circle
+          cx={36}
+          cy={36}
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={5}
+          className="text-neutral-200 dark:text-neutral-800"
+        />
         <circle
           cx={36}
           cy={36}
@@ -81,7 +98,9 @@ function RingGauge({ label, value, stroke }: { label: string; value: number; str
       <span className="line-clamp-2 max-w-[92px] text-center text-[9px] font-medium leading-tight text-neutral-600 dark:text-neutral-400">
         {label}
       </span>
-      <span className="text-[12px] font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{Math.round(pct)}%</span>
+      <span className="text-[12px] font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
+        {Math.round(pct)}%
+      </span>
     </div>
   );
 }
@@ -103,7 +122,9 @@ function OverviewReminderHighlight({ r }: { r: VehicleReminder }) {
         </div>
       )}
       <RingGauge label={r.partCategory.name} value={r.percentageRemaining} stroke={cfg.hexColor} />
-      <span className={cn("rounded-full border px-2.5 py-0.5 text-[9px] font-semibold", getLevelBadgeClasses(r.level))}>{cfg.labelVi}</span>
+      <span className={cn("rounded-full border px-2.5 py-0.5 text-[9px] font-semibold", getLevelBadgeClasses(r.level))}>
+        {cfg.labelVi}
+      </span>
     </div>
   );
 }
@@ -149,10 +170,17 @@ export function DesktopCenterOverviewTab({
       {/* Nhận diện xe + thông số — bento nhẹ, không card dày */}
       <motion.section variants={item} className="pb-6">
         <div className="relative overflow-hidden rounded-xl border border-neutral-200/70 bg-linear-to-br from-[#F9F8F6] to-neutral-100/40 px-4 py-4 dark:border-neutral-800 dark:from-neutral-950 dark:to-neutral-900/80">
-          <div className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full bg-[#E22028]/[0.07] blur-2xl dark:bg-[#E22028]/10" aria-hidden />
+          <div
+            className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full bg-[#E22028]/[0.07] blur-2xl dark:bg-[#E22028]/10"
+            aria-hidden
+          />
           <div className="relative border-l-2 border-[#E22028] pl-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500">Xe đang chọn</p>
-            <p className="mt-1 text-[17px] font-semibold leading-snug tracking-tight text-neutral-900 dark:text-neutral-50">{headline}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500">
+              Xe đang chọn
+            </p>
+            <p className="mt-1 text-[17px] font-semibold leading-snug tracking-tight text-neutral-900 dark:text-neutral-50">
+              {headline}
+            </p>
             {subline ? <p className="mt-0.5 text-[12px] text-neutral-500 dark:text-neutral-400">{subline}</p> : null}
           </div>
         </div>
@@ -189,19 +217,20 @@ export function DesktopCenterOverviewTab({
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
             <p className="flex min-w-0 items-center gap-2 text-[13px] text-neutral-700 dark:text-neutral-200">
-              <ClipboardList className="size-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" strokeWidth={2} aria-hidden />
+              <ClipboardList
+                className="size-3.5 shrink-0 text-neutral-400 dark:text-neutral-500"
+                strokeWidth={2}
+                aria-hidden
+              />
               <span className="tabular-nums">
-                <span className="text-[22px] font-semibold leading-none text-neutral-950 dark:text-neutral-50">{Math.round(pct)}%</span>
-                <span className="ml-1.5 text-[12px] font-normal text-neutral-500 dark:text-neutral-400">đã khai báo</span>
+                <span className="text-[22px] font-semibold leading-none text-neutral-950 dark:text-neutral-50">
+                  {Math.round(pct)}%
+                </span>
+                <span className="ml-1.5 text-[12px] font-normal text-neutral-500 dark:text-neutral-400">
+                  đã khai báo
+                </span>
               </span>
             </p>
-            <Link
-              href={`/vehicle/${vehicle.id}`}
-              className="group inline-flex shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#E22028] underline-offset-4 hover:underline dark:text-red-400 dark:hover:text-red-300"
-            >
-              Bổ sung khai báo
-              <ChevronRight className="size-3.5 opacity-80 transition-transform group-hover:translate-x-px" aria-hidden />
-            </Link>
           </div>
           <div className="h-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
             <motion.div
@@ -253,7 +282,10 @@ export function DesktopCenterOverviewTab({
           {LEGEND_LEVELS.map((level) => {
             const cfg = getReminderLevelConfig(level);
             return (
-              <span key={level} className="inline-flex items-center gap-1.5 rounded-full border border-transparent px-2 py-0.5 text-[10px] text-neutral-600 dark:text-neutral-400">
+              <span
+                key={level}
+                className="inline-flex items-center gap-1.5 rounded-full border border-transparent px-2 py-0.5 text-[10px] text-neutral-600 dark:text-neutral-400"
+              >
                 <span className="h-2 w-2 shrink-0 rounded-full shadow-sm" style={{ backgroundColor: cfg.hexColor }} />
                 {cfg.labelVi}
               </span>

@@ -118,6 +118,31 @@ export function FeedbackDialog({ open, onOpenChange, feedback: propFeedback }: F
                                             </div>
                                         </div>
 
+                                        {Array.isArray(feedback.imageUrls) && feedback.imageUrls.length > 0 && (
+                                            <div className="space-y-3">
+                                                <h4 className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                                                    Hình ảnh đính kèm
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                    {feedback.imageUrls.map((url, index) => (
+                                                        <a
+                                                            key={`${url}-${index}`}
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="group block overflow-hidden rounded-lg border border-border/60"
+                                                        >
+                                                            <img
+                                                                src={url}
+                                                                alt={`Feedback image ${index + 1}`}
+                                                                className="h-28 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                                            />
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Info grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-background p-4 rounded-xl border border-border/50 shadow-sm">
                                             <div className="space-y-1.5 border-b sm:border-b-0 sm:border-r border-border/50 pb-3 sm:pb-0 sm:pr-4">

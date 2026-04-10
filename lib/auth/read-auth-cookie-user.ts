@@ -13,7 +13,13 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
     const payload = token.split(".")[1];
     if (!payload) return null;
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64)) as Record<string, unknown>;
+
+    // Decode JWT payload as UTF-8 to preserve Vietnamese characters.
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const json = new TextDecoder("utf-8").decode(bytes);
+
+    return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return null;
   }

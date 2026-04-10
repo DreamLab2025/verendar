@@ -1,12 +1,18 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import NotificationService, { ApiNotification, InAppNotificationPayload, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
+import NotificationService, { ApiNotification, InAppNotificationPayload, MarkAsReadResponse, NotificationDetailResponse, NotificationListResponse, NotificationQueryParams, NotificationStatusResponse, NotificationType } from "@/lib/api/services/fetchNotification";
+import { setCookie } from "cookies-next";
+
 import notificationHubService from "@/hubs/notificationHub";
 import { isAccessTokenValid } from "./useAuth";
 import { toast } from "sonner";
 import { ReminderLevel } from "@/lib/api/services/fetchTrackingReminder";
 import { Notification } from "@/lib/api/services/fetchNotification";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { AuthService } from "@/lib/api/services/fetchAuth";
+import { getAuthCookieConfig } from "@/utils/cookieConfig";
+import api8080Service from "@/lib/api/api8080Service";
+import apiService from "@/lib/api/apiService";
 
 /** Tránh 2 toast giống hệt trong cửa sổ ngắn (push trùng hoặc edge case hub). */
 let lastInAppToastSig = "";
@@ -206,10 +212,32 @@ export function useNotificationListener() {
     };
 
     const subscribe = async () => {
-      const tokenForConnect = accessToken;
+      let tokenForConnect = accessToken;
+
+      // If access token is missing/expired but refresh token exists, refresh first before SignalR negotiate.
+      if ((!tokenForConnect || !isAccessTokenValid(tokenForConnect)) && refreshToken) {
+        try {
+          const response = await AuthService.refreshToken(refreshToken);
+          const nextAccessToken = response.data.data.accessToken;
+          const nextRefreshToken = response.data.data.refreshToken ?? null;
+
+          if (response.data.isSuccess && nextAccessToken) {
+            setCookie("authToken", nextAccessToken, getAuthCookieConfig());
+            setAuthSession({ accessToken: nextAccessToken, refreshToken: nextRefreshToken });
+            api8080Service.setAuthToken(nextAccessToken);
+            apiService.setAuthToken(nextAccessToken);
+            tokenForConnect = nextAccessToken;
+          }
+        } catch {
+          logout();
+          api8080Service.setAuthToken(null);
+          apiService.setAuthToken(null);
+          void notificationHubService.stopConnection();
+          return;
+        }
+      }
 
       if (!tokenForConnect || !isAccessTokenValid(tokenForConnect)) {
-        console.debug("[SignalR] No valid token, skipping subscribe.");
         return;
       }
 
@@ -261,7 +289,7 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: (id: string) => NotificationService.markAsRead(id),
-    onSuccess: () => {
+    onSuccess: (data: MarkAsReadResponse) => {
       // Invalidate notification status, list, and detail to refresh
       queryClient.invalidateQueries({ queryKey: ["notifications", "status"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });

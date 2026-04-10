@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AuthService, JwtPayload, AuthState, AuthResult, User } from "@/lib/api/services/fetchAuth";
-import { setCookie, getCookie } from "cookies-next";
+import { deleteCookie, setCookie, getCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import api8080Service from "@/lib/api/api8080Service";
@@ -13,13 +13,25 @@ import { getPrimaryRoleFromRoles, normalizeJwtRolesClaim } from "@/lib/auth/role
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { toast } from "sonner";
 
+function decodeJwtPayloadUtf8<T extends object = Record<string, unknown>>(token: string): T | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const json = new TextDecoder("utf-8").decode(bytes);
+    return JSON.parse(json) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function isAccessTokenValid(token: string | null | undefined): boolean {
   if (!token) return false;
   try {
-    const part = token.split(".")[1];
-    if (!part) return false;
-    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = JSON.parse(atob(base64)) as { exp?: number };
+    const decoded = decodeJwtPayloadUtf8<{ exp?: number }>(token);
+    if (!decoded) return false;
     const expMs = decoded.exp ? decoded.exp * 1000 : 0;
     if (expMs && expMs < Date.now()) return false;
     return true;
@@ -40,14 +52,8 @@ export function useAuth() {
   /* ---------- JWT HELPERS ---------- */
 
   const decodeJwt = (token: string): JwtPayload => {
-    try {
-      const payload = token.split(".")[1];
-      if (!payload) return {};
-      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      return JSON.parse(atob(base64));
-    } catch {
-      return {};
-    }
+    const decoded = decodeJwtPayloadUtf8<JwtPayload>(token);
+    return decoded ?? {};
   };
 
   const buildUserFromToken = (token: string): User => {
@@ -317,6 +323,7 @@ export function useAuth() {
 
   const logout = () => {
     clearAuthSession();
+    deleteCookie("authToken", { path: "/" });
     api8080Service.setAuthToken(null);
     apiService.setAuthToken(null);
 
