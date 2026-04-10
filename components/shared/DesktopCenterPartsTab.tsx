@@ -7,6 +7,7 @@ import { Package, Wrench } from "lucide-react";
 
 import { DeclarePartFlow } from "@/components/shared/DeclarePartFlow";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ScrollPickerPanel, { type PickerItem } from "@/components/ui/customize/scroll-picker-panel";
 import SafeImage from "@/components/ui/SafeImage";
 import type { UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
@@ -38,9 +39,13 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
   const part = (item as PartPickerItem).part;
   const partCategorySlug = part?.partCategorySlug?.trim();
   const { reminders, isLoading, isError, refetch } = usePartCategoryReminders(userVehicleId, partCategorySlug, true);
-  /** Chỉ hiện flow khai báo khi đúng part đang được mở (đổi part trong picker là tự ẩn, không cần effect) */
-  const [declarePartId, setDeclarePartId] = useState<string | null>(null);
-  const showDeclareFlow = declarePartId === part.id && !part.isDeclared;
+  /** Mở dialog khai báo — không nhúng câu hỏi trong panel */
+  const [declareDialogOpen, setDeclareDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setDeclareDialogOpen(false);
+  }, [part.id]);
+
   if (!part) return null;
   const reminder = reminders.find((r) => r.status === "Active") ?? reminders[0];
   const partMeta = reminder?.partCategory;
@@ -175,24 +180,6 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
     );
   }
 
-  if (showDeclareFlow && !part.isDeclared) {
-    return (
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <DeclarePartFlow
-          key={part.id}
-          userVehicleId={userVehicleId}
-          part={part}
-          variant="embedded"
-          onDismiss={() => setDeclarePartId(null)}
-          onDeclared={() => {
-            void refetch();
-            setDeclarePartId(null);
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-4 px-2 py-8 text-center">
       <div className="rounded-full bg-red-600/10 p-4 dark:bg-red-500/15">
@@ -207,14 +194,39 @@ function PartStatusDetail({ item, userVehicleId }: { item: PickerItem; userVehic
         </p>
       </div>
       {!part.isDeclared ? (
-        <Button
-          type="button"
-          onClick={() => setDeclarePartId(part.id)}
-          className="rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-          style={{ backgroundColor: BRAND }}
-        >
-          Khai báo phụ tùng
-        </Button>
+        <>
+          <Dialog open={declareDialogOpen} onOpenChange={setDeclareDialogOpen}>
+            <DialogContent
+              className="flex max-h-[min(92dvh,800px)] min-h-0 w-[calc(100vw-1.25rem)] max-w-2xl flex-col gap-0 overflow-hidden border-neutral-200/90 p-0 sm:max-h-[min(90vh,800px)] sm:w-full"
+              showCloseButton
+            >
+              <DialogTitle className="sr-only">Khai báo phụ tùng — {part.partCategoryName}</DialogTitle>
+              {declareDialogOpen ? (
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <DeclarePartFlow
+                    key={part.id}
+                    userVehicleId={userVehicleId}
+                    part={part}
+                    variant="embedded"
+                    onDismiss={() => setDeclareDialogOpen(false)}
+                    onDeclared={() => {
+                      void refetch();
+                      setDeclareDialogOpen(false);
+                    }}
+                  />
+                </div>
+              ) : null}
+            </DialogContent>
+          </Dialog>
+          <Button
+            type="button"
+            onClick={() => setDeclareDialogOpen(true)}
+            className="rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+            style={{ backgroundColor: BRAND }}
+          >
+            Khai báo phụ tùng
+          </Button>
+        </>
       ) : null}
     </div>
   );

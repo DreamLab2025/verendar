@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Gauge } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Gauge, Loader2, Trash2 } from "lucide-react";
 import type { UserVehicle, UserVehiclePart } from "@/lib/api/services/fetchUserVehicle";
 import type { MaintenanceRecordListItem } from "@/lib/api/services/fetchMaintenanceRecord";
 import type { OdometerHistoryItem } from "@/lib/api/services/fetchOdometer";
@@ -15,8 +16,22 @@ import { DesktopCenterRemindersTab } from "@/components/shared/DesktopCenterRemi
 import { CreateVehicleFlow } from "@/features/vehicle-create";
 import { VehicleHistoryTabContent } from "@/components/shared/VehicleHistoryTabContent";
 import { UpdateOdometerDialog } from "@/components/shared/UpdateOdometerDialog";
+import { useDeleteUserVehicle } from "@/hooks/useUserVehice";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const labelMuted = "text-[12px] text-neutral-500 dark:text-neutral-400";
+
+/** Nút dưới odometer: mobile đồng kích thước / cùng bo góc; desktop giữ nút gọn bên phải */
+const odometerActionBtnClass =
+  "h-12 min-h-12 touch-manipulation justify-center gap-2 rounded-xl px-3 text-[13px] font-semibold leading-none shadow-sm max-lg:w-full sm:h-auto sm:min-h-[50px] sm:w-auto sm:px-5 sm:py-3 sm:text-base";
 
 export type CenterPanelProps = {
   vehicle: UserVehicle | null;
@@ -49,9 +64,12 @@ export function CenterPanel({
   surface = "home",
   vehicleDetailHistory,
 }: CenterPanelProps) {
+  const router = useRouter();
   const isVehicleDetail = surface === "vehicleDetail";
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [odometerDialogOpen, setOdometerDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { deleteVehicle, isDeleting } = useDeleteUserVehicle();
 
   const { reminders, isLoading: isLoadingReminders } = useUserVehicleReminders(vehicle?.id ?? "");
 
@@ -90,6 +108,41 @@ export function CenterPanel({
           : "max-lg:flex-none lg:h-full lg:min-h-0 lg:w-[60%] lg:flex-none",
       )}
     >
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa xe?</AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              Xe{" "}
+              <span className="font-semibold text-foreground">{vehicle.licensePlate}</span> sẽ bị xóa vĩnh viễn. Bạn
+              không thể hoàn tác thao tác này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleting}
+              className="gap-2"
+              onClick={() => {
+                deleteVehicle(vehicle.id, {
+                  onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    if (isVehicleDetail) {
+                      router.push("/");
+                    }
+                  },
+                });
+              }}
+            >
+              {isDeleting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+              {isDeleting ? "Đang xóa…" : "Xóa xe"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {isVehicleDetail ? (
         <UpdateOdometerDialog
           open={odometerDialogOpen}
@@ -100,32 +153,61 @@ export function CenterPanel({
         />
       ) : null}
       <div className="shrink-0 space-y-1 max-lg:rounded-2xl max-lg:border max-lg:border-primary/15 max-lg:bg-primary/10 max-lg:px-3 max-lg:py-4 dark:max-lg:border-primary/20 dark:max-lg:bg-primary/15">
-        <div className="flex flex-wrap items-end justify-center gap-x-2 gap-y-2">
-          <p
+        <div className="flex w-full min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-end sm:gap-2">
+          <div className="hidden min-w-0 sm:flex sm:flex-1 sm:justify-end sm:pr-2" aria-hidden />
+          <div className="flex shrink-0 flex-wrap items-end justify-center gap-x-2 gap-y-1">
+            <p
+              className={cn(
+                "font-odo-seven-segment text-center text-[2.75rem] font-normal leading-none tabular-nums tracking-widest text-neutral-900 dark:text-neutral-100",
+                "sm:text-[3.25rem] md:text-[3.75rem] lg:text-[4.25rem] xl:text-[4.75rem]",
+              )}
+            >
+              {odoStr}
+            </p>
+            <span className="inline-block shrink-0 pb-1 font-sans text-lg font-semibold tracking-normal text-neutral-500 sm:text-xl md:pb-1.5 md:text-2xl">
+              Km
+            </span>
+          </div>
+          <div
             className={cn(
-              "font-odo-seven-segment text-center text-[2.75rem] font-normal leading-none tabular-nums tracking-widest text-neutral-900 dark:text-neutral-100",
-              "sm:text-[3.25rem] md:text-[3.75rem] lg:text-[4.25rem] xl:text-[4.75rem]",
+              "flex min-w-0 flex-1 items-stretch gap-2 sm:items-end sm:justify-end sm:gap-2.5 sm:pl-2",
+              isVehicleDetail
+                ? "max-lg:grid max-lg:w-full max-lg:grid-cols-2 max-lg:gap-2.5"
+                : "max-lg:flex max-lg:w-full max-lg:justify-center",
             )}
           >
-            {odoStr}
-          </p>
-          <span className="inline-block shrink-0 pb-1 font-sans text-lg font-semibold tracking-normal text-neutral-500 sm:text-xl md:pb-1.5 md:text-2xl">
-            Km
-          </span>
-          {isVehicleDetail ? (
+            {isVehicleDetail ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOdometerDialogOpen(true)}
+                className={cn(
+                  odometerActionBtnClass,
+                  "shrink-0 border-primary/40 bg-background/90 text-primary hover:bg-background dark:border-primary/45 dark:bg-neutral-900/70 dark:hover:bg-neutral-900",
+                )}
+                aria-label="Cập nhật số km"
+              >
+                <Gauge className="size-4 shrink-0 sm:size-4.5" aria-hidden />
+                <span className="max-lg:hidden">Cập nhật odo</span>
+                <span className="lg:hidden">Cập nhật</span>
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={() => setOdometerDialogOpen(true)}
-              className="mb-0.5 shrink-0 touch-manipulation gap-1.5 rounded-xl border-primary/35 bg-background/80 px-2.5 py-2 text-xs font-semibold text-primary shadow-sm hover:bg-background dark:border-primary/40 dark:bg-neutral-900/60 dark:hover:bg-neutral-900 max-lg:px-2"
-              aria-label="Cập nhật số km"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={isDeleting}
+              className={cn(
+                odometerActionBtnClass,
+                "shrink-0 border-destructive/45 bg-background/90 text-destructive hover:bg-destructive/10 dark:border-destructive/55 dark:bg-neutral-900/70 dark:hover:bg-destructive/15",
+                !isVehicleDetail && "max-lg:w-auto! max-lg:min-w-42 max-lg:px-5",
+              )}
+              aria-label="Xóa xe"
             >
-              <Gauge className="size-3.5 shrink-0" aria-hidden />
-              <span className="max-lg:hidden">Cập nhật odo</span>
-              <span className="lg:hidden">Cập nhật</span>
+              <Trash2 className="size-4 shrink-0 sm:size-5" aria-hidden />
+              Xóa Xe
             </Button>
-          ) : null}
+          </div>
         </div>
         <p className={`text-center ${labelMuted}`}>
           TRUNG BÌNH: <span className="font-semibold text-neutral-700 dark:text-neutral-300">{avg} km/ngày</span>
